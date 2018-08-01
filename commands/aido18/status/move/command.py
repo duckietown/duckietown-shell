@@ -3,9 +3,9 @@ from dt_shell import DTCommandAbs
 class DTCommand(DTCommandAbs):
 
     @staticmethod
-    def command(shell, line):
-        print 'This is init'
+    def command(shell, args):
+        print 'This is move with args %r' % args
 
     @staticmethod
-    def do_command(cls, shell, word):
+    def complete():
         return ['cane', 'gatto']

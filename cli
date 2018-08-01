@@ -49,6 +49,11 @@ class DTShell(Cmd, object):
 
     def emptyline(self): pass
 
+    def complete(self, text, state):
+        res = super(DTShell, self).complete(text, state)
+        if res is not None: res += ' '
+        return res
+
     def get_version(self): return self.VERSION
 
     def load_config(self):
