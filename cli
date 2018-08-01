@@ -6,9 +6,13 @@ from cmd import Cmd
 from lib import *
 import glob
 import json
+from git import Repo
+from git.exc import NoSuchPathError, InvalidGitRepositoryError
 from os.path import dirname, basename, isfile, isdir, expanduser, exists
-from os import makedirs
-sys.path.insert(0, "./lib/")
+from os import makedirs, remove
+sys.path.insert(0, dirname(__file__)+"/lib/")
+sys.path.insert(0, dirname(__file__)+"/commands/lib/")
+
 
 DEBUG = False
 
@@ -16,11 +20,11 @@ class DTShell(Cmd, object):
     NAME = 'Duckietown Shell'
     VERSION = '0.1 (beta)'
     prompt = 'dt> '
-    config = {
-        'version' : VERSION
-    }
+    config = {}
     config_path = expanduser('~/.dt-shell/')
     config_file = config_path+'config'
+    commands_path = dirname(__file__)+'/commands/'
+    commands_remote_url = 'https://github.com/duckietown/duckietown-shell-commands'
 
     def __init__(self):
         self.intro = "" \
@@ -34,9 +38,16 @@ class DTShell(Cmd, object):
             self.save_config()
         # load config
         self.load_config()
+        # init commands
+        if exists(self.commands_path) and isfile(self.commands_path):
+            remove(self.commands_path)
+        if not exists(self.commands_path):
+            if not self._init_commands(): exit()
         # discover commands
-        commands_path = dirname(__file__)+'/commands/'
-        commands = self._get_commands(commands_path)
+        commands = self._get_commands(self.commands_path)
+        if commands is None:
+            print( 'No commands found.' )
+            commands = {}
         # load commands
         for cmd, subcmds in commands.items():
             self._load_commands( 'commands.', cmd, subcmds, 0 )
@@ -64,16 +75,67 @@ class DTShell(Cmd, object):
         with open(self.config_file, 'w') as fp:
             json.dump(self.config, fp)
 
-    def _get_commands(self, path):
+    def _init_commands(self):
+        print( 'Downloading commands...' )
+        # create commands repo
+        commands_repo = Repo.init( self.commands_path )
+        # the repo now exists
+        origin = commands_repo.create_remote('origin', self.commands_remote_url)
+        # check existence of `origin`
+        if( not origin.exists() ):
+            print( 'The commands repository %r cannot be found. Exiting.' % origin.urls )
+            return False
+        # pull data
+        res = origin.fetch()
+        # create local.master <-> remote.master
+        commands_repo.create_head('master', origin.refs.master)
+        commands_repo.heads.master.set_tracking_branch(origin.refs.master)
+        # the repo is there and there is a `origin` remote, merge
+        commands_repo.heads.master.checkout()
+        return True
+
+    def update_commands(self):
+        # create commands repo
+        commands_repo = None
+        try:
+            commands_repo = Repo( self.commands_path )
+        except (NoSuchPathError, InvalidGitRepositoryError) as e:
+            # the repo does not exist
+            if not self._init_commands(): return False
+        # the repo exists
+        print( 'Updating commands...', end='' )
+        origin = commands_repo.remote('origin')
+        # check existence of `origin`
+        if( not origin.exists() ):
+            print( 'The commands repository %r cannot be found. Exiting.' % origin.urls )
+            return False
+        res = origin.fetch()
+        # pull data from remote.master to local.master
+        commands_repo.heads.master.checkout()
+        print('OK')
+        # update all submodules
+        print( commands_repo.submodules )
+        print( 'Updating libraries...', end='' )
+        commands_repo.submodule_update(recursive=True, to_latest_revision=True)
+
+        # for submodule in commands_repo.submodules:
+        #     submodule.update(recursive=True, to_latest_revision=True)
+
+
+        # everything should be fine
+        print('OK')
+        return True
+
+    def _get_commands(self, path, lvl=0):
         entries = glob.glob(path+"/*")
         files = [ basename(e) for e in entries if isfile(e) ]
-        dirs = [ e for e in entries if isdir(e) ]
+        dirs = [ e for e in entries if isdir(e) and (lvl>0 or basename(e)!='lib') ]
         # base case: empty dir
         if 'command.py' not in files and len(dirs) == 0: return None
         # check subcommands
         subcmds = {}
         for dir in dirs:
-            f = self._get_commands( dir )
+            f = self._get_commands( dir, lvl+1 )
             if f is not None: subcmds[ basename(dir) ] = f
         # return
         return subcmds
@@ -103,17 +165,21 @@ class DTShell(Cmd, object):
             if DEBUG: print( 'Command `%s` not found' % (package+command+'.command.DTCommand',) )
         # initialize list of subcommands
         klass.name = command
+        klass.level = lvl
         klass.commands = {}
         # attach first-level commands to the shell
         if lvl == 0:
             do_command = getattr(klass, 'do_command')
             complete_command = getattr(klass, 'complete_command')
+            help_command = getattr(klass, 'help_command')
             # wrap [klass, function] around a lambda function
             do_command_lam = lambda s,w: do_command(klass,s,w)
             complete_command_lam = lambda s,w,l,i,e: complete_command(klass,s,w,l,i,e)
+            help_command_lam = lambda s: help_command(klass,s)
             # add functions do_* and complete_* to the shell
             setattr( DTShell, 'do_'+command, do_command_lam )
             setattr( DTShell, 'complete_'+command, complete_command_lam )
+            setattr( DTShell, 'help_'+command, help_command_lam )
         # stop recursion if there is no subcommand
         if sub_commands is None: return
         # load sub-commands

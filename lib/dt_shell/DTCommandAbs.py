@@ -4,6 +4,8 @@ class DTCommandAbs(object):
     __metaclass__ = ABCMeta
 
     name = None
+    level = None
+    help = None
     commands = None
     fake = False
 
@@ -60,3 +62,7 @@ class DTCommandAbs(object):
                 return DTCommandAbs.complete_command(cls.commands[child], shell, word, nline, start_index, end_index)
         # print '!D'
         return []
+
+    @staticmethod
+    def help_command(cls, shell):
+        print cls.help if (cls.level==0 and cls.help is not None) else str(shell.nohelp % cls.name)
