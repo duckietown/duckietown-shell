@@ -11,8 +11,6 @@ from os.path import basename, isfile, isdir, exists
 from git import Repo
 from git.exc import NoSuchPathError, InvalidGitRepositoryError
 
-# sys.path.insert(0, dirname(__file__) + "/lib/")
-# sys.path.insert(0, dirname(__file__) + "/commands/lib/")
 from .constants import DTShellConstants
 from .dt_command_abs import DTCommandAbs
 from .dt_command_placeholder import DTCommandPlaceholder
@@ -68,7 +66,8 @@ class DTShell(Cmd, object):
 
     def complete(self, text, state):
         res = super(DTShell, self).complete(text, state)
-        if res is not None: res += ' '
+        if res is not None:
+            res += ' '
         return res
 
     def get_version(self):
@@ -86,9 +85,10 @@ class DTShell(Cmd, object):
         # get installed commands
         installed_commands = self.commands.keys()
         for command in installed_commands:
-            if (hasattr(DTShell, 'do_' + command)): delattr(DTShell, 'do_' + command)
-            if (hasattr(DTShell, 'complete_' + command)): delattr(DTShell, 'complete_' + command)
-            if (hasattr(DTShell, 'help_' + command)): delattr(DTShell, 'help_' + command)
+            for a in ['do_', 'complete_', 'help_']:
+                if hasattr(DTShell, a + command):
+                    delattr(DTShell, a + command)
+
         # re-install commands
         self.commands = self._get_commands(self.commands_path)
         if self.commands is None:
@@ -99,9 +99,10 @@ class DTShell(Cmd, object):
             self._load_commands('commands.', cmd, subcmds, 0)
 
     def enable_command(self, command_name):
-        if command_name in self.core_commands: return True
+        if command_name in self.core_commands:
+            return True
         # get list of all commands
-        res = self._get_commands(self.commands_path, all=True)
+        res = self._get_commands(self.commands_path, all_commands=True)
         present = res.keys() if res is not None else []
         # enable if possible
         if command_name in present:
@@ -110,9 +111,10 @@ class DTShell(Cmd, object):
         return True
 
     def disable_command(self, command_name):
-        if command_name in self.core_commands: return False
+        if command_name in self.core_commands:
+            return False
         # get list of all commands
-        res = self._get_commands(self.commands_path, all=True)
+        res = self._get_commands(self.commands_path, all_commands=True)
         present = res.keys() if res is not None else []
         # enable if possible
         if command_name in present:
@@ -127,7 +129,7 @@ class DTShell(Cmd, object):
         # the repo now exists
         origin = commands_repo.create_remote('origin', DTShellConstants.commands_remote_url)
         # check existence of `origin`
-        if (not origin.exists()):
+        if not origin.exists():
             print('The commands repository %r cannot be found. Exiting.' % origin.urls)
             return False
         # pull data
@@ -136,7 +138,7 @@ class DTShell(Cmd, object):
         commands_repo.create_head('master', origin.refs.master)
         commands_repo.heads.master.set_tracking_branch(origin.refs.master)
         # pull data
-        res = origin.pull()
+        _res = origin.pull()
         # the repo is there and there is a `origin` remote, merge
         commands_repo.heads.master.checkout()
         return True
@@ -157,7 +159,7 @@ class DTShell(Cmd, object):
         if not origin.exists():
             print('The commands repository %r cannot be found. Exiting.' % origin.urls)
             return False
-        res = origin.pull()
+        _res = origin.pull()
         # pull data from remote.master to local.master
         commands_repo.heads.master.checkout()
         print('OK')
@@ -233,16 +235,18 @@ class DTShell(Cmd, object):
             setattr(DTShell, 'complete_' + command, complete_command_lam)
             setattr(DTShell, 'help_' + command, help_command_lam)
         # stop recursion if there is no subcommand
-        if sub_commands is None: return
+        if sub_commands is None:
+            return
         # load sub-commands
         for cmd, subcmds in sub_commands.items():
-            if DEBUG: print('DEBUG:: Loading %s' % package + command + '.*')
+            if DEBUG:
+                print('DEBUG:: Loading %s' % package + command + '.*')
             kl = self._load_commands(package + command + '.', cmd, subcmds, lvl + 1)
-            if kl is not None: klass.commands[cmd] = kl
+            if kl is not None:
+                klass.commands[cmd] = kl
         # return class for this command
         return klass
 
     def _touch(self, path):
         with open(path, 'a'):
             utime(path, None)
-
