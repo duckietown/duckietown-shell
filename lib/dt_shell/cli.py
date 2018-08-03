@@ -11,6 +11,7 @@ from os.path import basename, isfile, isdir, exists
 from git import Repo
 from git.exc import NoSuchPathError, InvalidGitRepositoryError
 
+from . import __version__
 from .constants import DTShellConstants
 from .dt_command_abs import DTCommandAbs
 from .dt_command_placeholder import DTCommandPlaceholder
@@ -20,7 +21,7 @@ DEBUG = False
 
 class DTShell(Cmd, object):
     NAME = 'Duckietown Shell'
-    VERSION = '0.1 (beta)'
+    VERSION = __version__
     prompt = 'dt> '
     config = {}
     commands = {}
@@ -33,8 +34,17 @@ class DTShell(Cmd, object):
                      "Type help or ? to list commands.\n" % self.VERSION
         self.config_path = os.path.expanduser(DTShellConstants.ROOT)
         self.config_file = os.path.join(self.config_path, 'config')
-        self.commands_path = os.path.join(self.config_path, 'commands')
 
+        V = DTShellConstants.ENV_COMMANDS
+
+        if V in os.environ:
+            self.commands_path = os.environ[V]
+            self.commands_path_leave_alone = True
+            msg = 'Using path %r as prescribed by env variable %s.' % (self.commands_path, V)
+            print(msg)
+        else:
+            self.commands_path = os.path.join(self.config_path, 'commands')
+            self.commands_path_leave_alone = False
         # create config if it does not exist
         if not exists(self.config_path):
             makedirs(self.config_path, mode=0755)
@@ -123,6 +133,10 @@ class DTShell(Cmd, object):
         return True
 
     def _init_commands(self):
+        if self.commands_path_leave_alone:
+            msg = 'Will not try to update the commands path.'
+            print(msg)
+            return
         print('Downloading commands in %s ...' % self.commands_path)
         # create commands repo
         commands_repo = Repo.init(self.commands_path)
