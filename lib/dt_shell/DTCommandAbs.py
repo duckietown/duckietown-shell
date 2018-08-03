@@ -4,6 +4,8 @@ class DTCommandAbs(object):
     __metaclass__ = ABCMeta
 
     name = None
+    level = None
+    help = None
     commands = None
     fake = False
 
@@ -13,7 +15,7 @@ class DTCommandAbs(object):
         pass
 
     @staticmethod
-    def complete():
+    def complete(shell, word, line):
         return []
 
     @staticmethod
@@ -21,6 +23,7 @@ class DTCommandAbs(object):
         # print '>[%s]@(%s, %s)' % (line, cls.name, cls.__class__)
         line = line.strip()
         parts = [ p.strip() for p in line.split(' ') ]
+        args = [ p for p in parts if len(p)>0 ]
         word = parts[0]
         # print '[%s, %r]@(%s, %s)' % (word, parts, cls.name, cls.__class__)
         if len(word) > 0:
@@ -30,13 +33,13 @@ class DTCommandAbs(object):
                 else:
                     print 'Command `%s` not recognized.\nAvailable sub-commands are:\n\n\t%s' % ( word.strip(), '\n\t'.join(cls.commands.keys()) )
             else:
-                cls.command(shell, parts)
+                cls.command(shell, args)
         else:
             if len(cls.commands) > 0:
                 print 'Available sub-commands are:\n\n\t%s' % '\n\t'.join(cls.commands.keys())
             else:
                 if not cls.fake:
-                    cls.command(shell, parts)
+                    cls.command(shell, args)
 
     @staticmethod
     def complete_command(cls, shell, word, line, start_index, end_index):
@@ -49,7 +52,7 @@ class DTCommandAbs(object):
         partial_word = len(word) != 0
         if parts[0] == cls.name:
             if len(parts) == 1 or (len(parts) == 2 and partial_word):
-                static_comp = [ k for k in cls.complete() if (not partial_word or k.startswith(word)) ]
+                static_comp = [ k for k in cls.complete(shell, word, line) if (not partial_word or k.startswith(word)) ]
                 comp_subcmds = static_comp + [ k for k in subcmds if (not partial_word or k.startswith(word)) ]
                 # print '!T'
                 return comp_subcmds
@@ -60,3 +63,7 @@ class DTCommandAbs(object):
                 return DTCommandAbs.complete_command(cls.commands[child], shell, word, nline, start_index, end_index)
         # print '!D'
         return []
+
+    @staticmethod
+    def help_command(cls, shell):
+        print cls.help if (cls.level==0 and cls.help is not None) else str(shell.nohelp % cls.name)

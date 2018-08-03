@@ -5,5 +5,5 @@ class DTCommandPlaceholder(DTCommandAbs):
     fake = True
 
     @staticmethod
-    def command(shell, line):
+    def command(shell, args):
         return
