@@ -24,7 +24,7 @@ setup(name='duckietown-shell',
       package_dir={'': 'lib'},
       packages=find_packages('lib'),
       install_requires=[
-
+        'python-git',
       ],
 
       tests_require=[
