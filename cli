@@ -9,7 +9,7 @@ import json
 from git import Repo
 from git.exc import NoSuchPathError, InvalidGitRepositoryError
 from os.path import dirname, basename, isfile, isdir, expanduser, exists
-from os import makedirs, remove
+from os import makedirs, remove, utime
 sys.path.insert(0, dirname(__file__)+"/lib/")
 sys.path.insert(0, dirname(__file__)+"/commands/lib/")
 
@@ -21,10 +21,12 @@ class DTShell(Cmd, object):
     VERSION = '0.1 (beta)'
     prompt = 'dt> '
     config = {}
+    commands = {}
     config_path = expanduser('~/.dt-shell/')
     config_file = config_path+'config'
     commands_path = dirname(__file__)+'/commands/'
     commands_remote_url = 'https://github.com/duckietown/duckietown-shell-commands'
+    core_commands = ['install', 'uninstall', 'update', 'version', 'exit', 'help']
 
     def __init__(self):
         self.intro = "" \
@@ -44,13 +46,7 @@ class DTShell(Cmd, object):
         if not exists(self.commands_path):
             if not self._init_commands(): exit()
         # discover commands
-        commands = self._get_commands(self.commands_path)
-        if commands is None:
-            print( 'No commands found.' )
-            commands = {}
-        # load commands
-        for cmd, subcmds in commands.items():
-            self._load_commands( 'commands.', cmd, subcmds, 0 )
+        self.reload_commands()
         # call super constructor
         super(DTShell, self).__init__()
 
@@ -75,6 +71,44 @@ class DTShell(Cmd, object):
         with open(self.config_file, 'w') as fp:
             json.dump(self.config, fp)
 
+    def reload_commands(self):
+        # get installed commands
+        installed_commands = self.commands.keys()
+        for command in installed_commands:
+            if( hasattr(DTShell, 'do_'+command) ): delattr( DTShell, 'do_'+command)
+            if( hasattr(DTShell, 'complete_'+command) ): delattr( DTShell, 'complete_'+command)
+            if( hasattr(DTShell, 'help_'+command) ): delattr( DTShell, 'help_'+command)
+        # re-install commands
+        self.commands = self._get_commands(self.commands_path)
+        if self.commands is None:
+            print( 'No commands found.' )
+            self.commands = {}
+        # load commands
+        for cmd, subcmds in self.commands.items():
+            self._load_commands( 'commands.', cmd, subcmds, 0 )
+
+    def enable_command(self, command_name):
+        if command_name in self.core_commands: return True
+        # get list of all commands
+        res = shell._get_commands(shell.commands_path, all=True)
+        present = res.keys() if res is not None else []
+        # enable if possible
+        if command_name in present:
+            flag_file = '%s%s/enabled.flag' % (self.commands_path, command_name)
+            self._touch(flag_file)
+        return True
+
+    def disable_command(self, command_name):
+        if command_name in self.core_commands: return False
+        # get list of all commands
+        res = shell._get_commands(shell.commands_path, all=True)
+        present = res.keys() if res is not None else []
+        # enable if possible
+        if command_name in present:
+            flag_file = '%s%s/enabled.flag' % (self.commands_path, command_name)
+            remove(flag_file)
+        return True
+
     def _init_commands(self):
         print( 'Downloading commands...' )
         # create commands repo
@@ -86,7 +120,7 @@ class DTShell(Cmd, object):
             print( 'The commands repository %r cannot be found. Exiting.' % origin.urls )
             return False
         # pull data
-        res = origin.fetch()
+        res = origin.pull()
         # create local.master <-> remote.master
         commands_repo.create_head('master', origin.refs.master)
         commands_repo.heads.master.set_tracking_branch(origin.refs.master)
@@ -109,33 +143,33 @@ class DTShell(Cmd, object):
         if( not origin.exists() ):
             print( 'The commands repository %r cannot be found. Exiting.' % origin.urls )
             return False
-        res = origin.fetch()
+        res = origin.pull()
         # pull data from remote.master to local.master
         commands_repo.heads.master.checkout()
         print('OK')
         # update all submodules
-        print( commands_repo.submodules )
         print( 'Updating libraries...', end='' )
         commands_repo.submodule_update(recursive=True, to_latest_revision=True)
 
+        # TODO: make sure this is not necessary
         # for submodule in commands_repo.submodules:
         #     submodule.update(recursive=True, to_latest_revision=True)
-
 
         # everything should be fine
         print('OK')
         return True
 
-    def _get_commands(self, path, lvl=0):
+    def _get_commands(self, path, lvl=0, all=False):
         entries = glob.glob(path+"/*")
         files = [ basename(e) for e in entries if isfile(e) ]
         dirs = [ e for e in entries if isdir(e) and (lvl>0 or basename(e)!='lib') ]
         # base case: empty dir
         if 'command.py' not in files and len(dirs) == 0: return None
+        if not all and lvl==1 and 'enabled.flag' not in files: return None
         # check subcommands
         subcmds = {}
         for dir in dirs:
-            f = self._get_commands( dir, lvl+1 )
+            f = self._get_commands( dir, lvl+1, all )
             if f is not None: subcmds[ basename(dir) ] = f
         # return
         return subcmds
@@ -190,7 +224,13 @@ class DTShell(Cmd, object):
         # return class for this command
         return klass
 
+    def _touch(self, path):
+        with open(path, 'a'):
+            utime(path, None)
+
 
 if __name__ == '__main__':
+    #TODO: register handler for Ctrl-C
+
     shell = DTShell()
     shell.cmdloop()
