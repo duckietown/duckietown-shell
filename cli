@@ -124,10 +124,12 @@ class DTShell(Cmd, object):
             print( 'The commands repository %r cannot be found. Exiting.' % origin.urls )
             return False
         # pull data
-        res = origin.pull()
+        origin.fetch()
         # create local.master <-> remote.master
         commands_repo.create_head('master', origin.refs.master)
         commands_repo.heads.master.set_tracking_branch(origin.refs.master)
+        # pull data
+        res = origin.pull()
         # the repo is there and there is a `origin` remote, merge
         commands_repo.heads.master.checkout()
         return True
