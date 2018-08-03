@@ -235,6 +235,11 @@ class DTShell(Cmd, object):
 
 if __name__ == '__main__':
     #TODO: register handler for Ctrl-C
-
+    import sys
+    arguments = sys.argv[1:]
     shell = DTShell()
-    shell.cmdloop()
+    if arguments:
+        cmdline = " ".join(arguments)
+        shell.onecmd(cmdline)
+    else:
+        shell.cmdloop()
