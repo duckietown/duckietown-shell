@@ -6,7 +6,8 @@ The idea is that most of the functionality is implemented as Docker containers, 
 
 The installation should just be, on any platform:
 
-    $ pip install dt-shell
+    $ pip install -U duckietown-shell
+    $ dt help
 
 That is, we should not require any other dependency beside standard cross-platform Python libraries.
 
