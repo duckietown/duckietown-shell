@@ -1,20 +1,24 @@
-#! /usr/bin/env python
+# -*- coding: utf-8 -*-
 from __future__ import print_function
 
-import sys
-from cmd import Cmd
-from lib import *
 import glob
 import json
+import os
+from cmd import Cmd
+from os import makedirs, remove, utime
+from os.path import basename, isfile, isdir, exists
+
 from git import Repo
 from git.exc import NoSuchPathError, InvalidGitRepositoryError
-from os.path import dirname, basename, isfile, isdir, expanduser, exists
-from os import makedirs, remove, utime
-sys.path.insert(0, dirname(__file__)+"/lib/")
-sys.path.insert(0, dirname(__file__)+"/commands/lib/")
 
+# sys.path.insert(0, dirname(__file__) + "/lib/")
+# sys.path.insert(0, dirname(__file__) + "/commands/lib/")
+from .constants import DTShellConstants
+from .dt_command_abs import DTCommandAbs
+from .dt_command_placeholder import DTCommandPlaceholder
 
 DEBUG = False
+
 
 class DTShell(Cmd, object):
     NAME = 'Duckietown Shell'
@@ -22,17 +26,17 @@ class DTShell(Cmd, object):
     prompt = 'dt> '
     config = {}
     commands = {}
-    config_path = expanduser('~/.dt-shell/')
-    config_file = config_path+'config'
-    commands_path = dirname(__file__)+'/commands/'
-    commands_remote_url = 'https://github.com/duckietown/duckietown-shell-commands'
     core_commands = ['commands', 'install', 'uninstall', 'update', 'version', 'exit', 'help']
 
     def __init__(self):
         self.intro = "" \
-            "Welcome to the Duckietown shell.\n" \
-            "Version: %s\n\n" \
-            "Type help or ? to list commands.\n" % self.VERSION
+                     "Welcome to the Duckietown shell.\n" \
+                     "Version: %s\n\n" \
+                     "Type help or ? to list commands.\n" % self.VERSION
+        self.config_path = os.path.expanduser(DTShellConstants.ROOT)
+        self.config_file = os.path.join(self.config_path, 'config')
+        self.commands_path = os.path.join(self.config_path, 'commands')
+
         # create config if it does not exist
         if not exists(self.config_path):
             makedirs(self.config_path, mode=0755)
@@ -44,28 +48,31 @@ class DTShell(Cmd, object):
         if exists(self.commands_path) and isfile(self.commands_path):
             remove(self.commands_path)
         if not exists(self.commands_path):
-            if not self._init_commands(): exit()
+            if not self._init_commands():
+                exit()
         # discover commands
         self.reload_commands()
         # call super constructor
         super(DTShell, self).__init__()
-        # remove the char `-` fromt he list of word separators, this allows us to suggest flags
+        # remove the char `-` from the list of word separators, this allows us to suggest flags
         if self.use_rawinput and self.completekey:
             import readline
-            readline.set_completer_delims( readline.get_completer_delims().replace('-', '', 1) )
+            readline.set_completer_delims(readline.get_completer_delims().replace('-', '', 1))
 
     def postcmd(self, stop, line):
         if len(line.strip()) > 0:
             print('')
 
-    def emptyline(self): pass
+    def emptyline(self):
+        pass
 
     def complete(self, text, state):
         res = super(DTShell, self).complete(text, state)
         if res is not None: res += ' '
         return res
 
-    def get_version(self): return self.VERSION
+    def get_version(self):
+        return self.VERSION
 
     def load_config(self):
         with open(self.config_file, 'r') as fp:
@@ -79,22 +86,22 @@ class DTShell(Cmd, object):
         # get installed commands
         installed_commands = self.commands.keys()
         for command in installed_commands:
-            if( hasattr(DTShell, 'do_'+command) ): delattr( DTShell, 'do_'+command)
-            if( hasattr(DTShell, 'complete_'+command) ): delattr( DTShell, 'complete_'+command)
-            if( hasattr(DTShell, 'help_'+command) ): delattr( DTShell, 'help_'+command)
+            if (hasattr(DTShell, 'do_' + command)): delattr(DTShell, 'do_' + command)
+            if (hasattr(DTShell, 'complete_' + command)): delattr(DTShell, 'complete_' + command)
+            if (hasattr(DTShell, 'help_' + command)): delattr(DTShell, 'help_' + command)
         # re-install commands
         self.commands = self._get_commands(self.commands_path)
         if self.commands is None:
-            print( 'No commands found.' )
+            print('No commands found.')
             self.commands = {}
         # load commands
         for cmd, subcmds in self.commands.items():
-            self._load_commands( 'commands.', cmd, subcmds, 0 )
+            self._load_commands('commands.', cmd, subcmds, 0)
 
     def enable_command(self, command_name):
         if command_name in self.core_commands: return True
         # get list of all commands
-        res = shell._get_commands(shell.commands_path, all=True)
+        res = self._get_commands(self.commands_path, all=True)
         present = res.keys() if res is not None else []
         # enable if possible
         if command_name in present:
@@ -105,7 +112,7 @@ class DTShell(Cmd, object):
     def disable_command(self, command_name):
         if command_name in self.core_commands: return False
         # get list of all commands
-        res = shell._get_commands(shell.commands_path, all=True)
+        res = self._get_commands(self.commands_path, all=True)
         present = res.keys() if res is not None else []
         # enable if possible
         if command_name in present:
@@ -114,14 +121,14 @@ class DTShell(Cmd, object):
         return True
 
     def _init_commands(self):
-        print( 'Downloading commands...' )
+        print('Downloading commands in %s ...' % self.commands_path)
         # create commands repo
-        commands_repo = Repo.init( self.commands_path )
+        commands_repo = Repo.init(self.commands_path)
         # the repo now exists
-        origin = commands_repo.create_remote('origin', self.commands_remote_url)
+        origin = commands_repo.create_remote('origin', DTShellConstants.commands_remote_url)
         # check existence of `origin`
-        if( not origin.exists() ):
-            print( 'The commands repository %r cannot be found. Exiting.' % origin.urls )
+        if (not origin.exists()):
+            print('The commands repository %r cannot be found. Exiting.' % origin.urls)
             return False
         # pull data
         origin.fetch()
@@ -138,23 +145,24 @@ class DTShell(Cmd, object):
         # create commands repo
         commands_repo = None
         try:
-            commands_repo = Repo( self.commands_path )
+            commands_repo = Repo(self.commands_path)
         except (NoSuchPathError, InvalidGitRepositoryError) as e:
             # the repo does not exist
-            if not self._init_commands(): return False
+            if not self._init_commands():
+                return False
         # the repo exists
-        print( 'Updating commands...', end='' )
+        print('Updating commands...', end='')
         origin = commands_repo.remote('origin')
         # check existence of `origin`
-        if( not origin.exists() ):
-            print( 'The commands repository %r cannot be found. Exiting.' % origin.urls )
+        if not origin.exists():
+            print('The commands repository %r cannot be found. Exiting.' % origin.urls)
             return False
         res = origin.pull()
         # pull data from remote.master to local.master
         commands_repo.heads.master.checkout()
         print('OK')
         # update all submodules
-        print( 'Updating libraries...', end='' )
+        print('Updating libraries...', end='')
         commands_repo.submodule_update(recursive=True, to_latest_revision=False)
 
         # TODO: make sure this is not necessary
@@ -165,18 +173,20 @@ class DTShell(Cmd, object):
         print('OK')
         return True
 
-    def _get_commands(self, path, lvl=0, all=False):
-        entries = glob.glob(path+"/*")
-        files = [ basename(e) for e in entries if isfile(e) ]
-        dirs = [ e for e in entries if isdir(e) and (lvl>0 or basename(e)!='lib') ]
+    def _get_commands(self, path, lvl=0, all_commands=False):
+        entries = glob.glob(path + "/*")
+        files = [basename(e) for e in entries if isfile(e)]
+        dirs = [e for e in entries if isdir(e) and (lvl > 0 or basename(e) != 'lib')]
         # base case: empty dir
-        if 'command.py' not in files and len(dirs) == 0: return None
-        if not all and lvl==1 and 'installed.flag' not in files: return None
+        if 'command.py' not in files and not dirs:
+            return None
+        if not all_commands and lvl == 1 and 'installed.flag' not in files:
+            return None
         # check subcommands
         subcmds = {}
-        for dir in dirs:
-            f = self._get_commands( dir, lvl+1, all )
-            if f is not None: subcmds[ basename(dir) ] = f
+        for d in dirs:
+            f = self._get_commands(d, lvl + 1, all_commands)
+            if f is not None: subcmds[basename(d)] = f
         # return
         return subcmds
 
@@ -193,16 +203,18 @@ class DTShell(Cmd, object):
         klass = None
         error_loading = False
         try:
-            klass = self._load_class( package+command+'.command.DTCommand' )
+            klass = self._load_class(package + command + '.command.DTCommand')
         except AttributeError:
             error_loading = True
         # handle loading error and wrong class
         if error_loading:
             klass = DTCommandPlaceholder()
-            if DEBUG: print( 'ERROR while loading the command `%s`' % (package+command+'.command.DTCommand',) )
+            if DEBUG:
+                print('ERROR while loading the command `%s`' % (package + command + '.command.DTCommand',))
         if not issubclass(klass.__class__, DTCommandAbs.__class__):
             klass = DTCommandPlaceholder()
-            if DEBUG: print( 'Command `%s` not found' % (package+command+'.command.DTCommand',) )
+            if DEBUG:
+                print('Command `%s` not found' % (package + command + '.command.DTCommand',))
         # initialize list of subcommands
         klass.name = command
         klass.level = lvl
@@ -213,19 +225,19 @@ class DTShell(Cmd, object):
             complete_command = getattr(klass, 'complete_command')
             help_command = getattr(klass, 'help_command')
             # wrap [klass, function] around a lambda function
-            do_command_lam = lambda s,w: do_command(klass,s,w)
-            complete_command_lam = lambda s,w,l,i,e: complete_command(klass,s,w,l,i,e)
-            help_command_lam = lambda s: help_command(klass,s)
+            do_command_lam = lambda s, w: do_command(klass, s, w)
+            complete_command_lam = lambda s, w, l, i, e: complete_command(klass, s, w, l, i, e)
+            help_command_lam = lambda s: help_command(klass, s)
             # add functions do_* and complete_* to the shell
-            setattr( DTShell, 'do_'+command, do_command_lam )
-            setattr( DTShell, 'complete_'+command, complete_command_lam )
-            setattr( DTShell, 'help_'+command, help_command_lam )
+            setattr(DTShell, 'do_' + command, do_command_lam)
+            setattr(DTShell, 'complete_' + command, complete_command_lam)
+            setattr(DTShell, 'help_' + command, help_command_lam)
         # stop recursion if there is no subcommand
         if sub_commands is None: return
         # load sub-commands
         for cmd, subcmds in sub_commands.items():
-            if DEBUG: print('DEBUG:: Loading %s' % package+command+'.*')
-            kl = self._load_commands( package+command+'.', cmd, subcmds, lvl+1 )
+            if DEBUG: print('DEBUG:: Loading %s' % package + command + '.*')
+            kl = self._load_commands(package + command + '.', cmd, subcmds, lvl + 1)
             if kl is not None: klass.commands[cmd] = kl
         # return class for this command
         return klass
@@ -234,14 +246,3 @@ class DTShell(Cmd, object):
         with open(path, 'a'):
             utime(path, None)
 
-
-if __name__ == '__main__':
-    #TODO: register handler for Ctrl-C
-    import sys
-    arguments = sys.argv[1:]
-    shell = DTShell()
-    if arguments:
-        cmdline = " ".join(arguments)
-        shell.onecmd(cmdline)
-    else:
-        shell.cmdloop()
