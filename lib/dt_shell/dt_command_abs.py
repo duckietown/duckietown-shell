@@ -1,4 +1,7 @@
+# -*- coding: utf-8 -*-
+
 from abc import ABCMeta, abstractmethod
+
 
 class DTCommandAbs(object):
     __metaclass__ = ABCMeta
@@ -22,8 +25,8 @@ class DTCommandAbs(object):
     def do_command(cls, shell, line):
         # print '>[%s]@(%s, %s)' % (line, cls.name, cls.__class__)
         line = line.strip()
-        parts = [ p.strip() for p in line.split(' ') ]
-        args = [ p for p in parts if len(p)>0 ]
+        parts = [p.strip() for p in line.split(' ')]
+        args = [p for p in parts if len(p) > 0]
         word = parts[0]
         # print '[%s, %r]@(%s, %s)' % (word, parts, cls.name, cls.__class__)
         if len(word) > 0:
@@ -31,7 +34,8 @@ class DTCommandAbs(object):
                 if word in cls.commands:
                     cls.commands[word].do_command(cls.commands[word], shell, ' '.join(parts[1:]))
                 else:
-                    print 'Command `%s` not recognized.\nAvailable sub-commands are:\n\n\t%s' % ( word.strip(), '\n\t'.join(cls.commands.keys()) )
+                    print 'Command `%s` not recognized.\nAvailable sub-commands are:\n\n\t%s' % (
+                    word.strip(), '\n\t'.join(cls.commands.keys()))
             else:
                 cls.command(shell, args)
         else:
@@ -47,13 +51,13 @@ class DTCommandAbs(object):
         word = word.strip()
         line = line.strip()
         subcmds = cls.commands.keys()
-        parts = [ p.strip() for p in line.split(' ') ]
+        parts = [p.strip() for p in line.split(' ')]
         #
         partial_word = len(word) != 0
         if parts[0] == cls.name:
             if len(parts) == 1 or (len(parts) == 2 and partial_word):
-                static_comp = [ k for k in cls.complete(shell, word, line) if (not partial_word or k.startswith(word)) ]
-                comp_subcmds = static_comp + [ k for k in subcmds if (not partial_word or k.startswith(word)) ]
+                static_comp = [k for k in cls.complete(shell, word, line) if (not partial_word or k.startswith(word))]
+                comp_subcmds = static_comp + [k for k in subcmds if (not partial_word or k.startswith(word))]
                 # print '!T'
                 return comp_subcmds
             if len(parts) > 1 and parts[1] in cls.commands.keys():
@@ -66,4 +70,4 @@ class DTCommandAbs(object):
 
     @staticmethod
     def help_command(cls, shell):
-        print cls.help if (cls.level==0 and cls.help is not None) else str(shell.nohelp % cls.name)
+        print cls.help if (cls.level == 0 and cls.help is not None) else str(shell.nohelp % cls.name)
