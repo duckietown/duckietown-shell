@@ -26,7 +26,7 @@ class DTShell(Cmd, object):
     config_file = config_path+'config'
     commands_path = dirname(__file__)+'/commands/'
     commands_remote_url = 'https://github.com/duckietown/duckietown-shell-commands'
-    core_commands = ['install', 'uninstall', 'update', 'version', 'exit', 'help']
+    core_commands = ['commands', 'install', 'uninstall', 'update', 'version', 'exit', 'help']
 
     def __init__(self):
         self.intro = "" \
@@ -49,6 +49,10 @@ class DTShell(Cmd, object):
         self.reload_commands()
         # call super constructor
         super(DTShell, self).__init__()
+        # remove the char `-` fromt he list of word separators, this allows us to suggest flags
+        if self.use_rawinput and self.completekey:
+            import readline
+            readline.set_completer_delims( readline.get_completer_delims().replace('-', '', 1) )
 
     def postcmd(self, stop, line):
         if len(line.strip()) > 0:
@@ -94,7 +98,7 @@ class DTShell(Cmd, object):
         present = res.keys() if res is not None else []
         # enable if possible
         if command_name in present:
-            flag_file = '%s%s/enabled.flag' % (self.commands_path, command_name)
+            flag_file = '%s%s/installed.flag' % (self.commands_path, command_name)
             self._touch(flag_file)
         return True
 
@@ -105,7 +109,7 @@ class DTShell(Cmd, object):
         present = res.keys() if res is not None else []
         # enable if possible
         if command_name in present:
-            flag_file = '%s%s/enabled.flag' % (self.commands_path, command_name)
+            flag_file = '%s%s/installed.flag' % (self.commands_path, command_name)
             remove(flag_file)
         return True
 
@@ -149,11 +153,11 @@ class DTShell(Cmd, object):
         print('OK')
         # update all submodules
         print( 'Updating libraries...', end='' )
-        commands_repo.submodule_update(recursive=True, to_latest_revision=True)
+        commands_repo.submodule_update(recursive=True, to_latest_revision=False)
 
         # TODO: make sure this is not necessary
         # for submodule in commands_repo.submodules:
-        #     submodule.update(recursive=True, to_latest_revision=True)
+        #     submodule.update(recursive=True, to_latest_revision=False)
 
         # everything should be fine
         print('OK')
@@ -165,7 +169,7 @@ class DTShell(Cmd, object):
         dirs = [ e for e in entries if isdir(e) and (lvl>0 or basename(e)!='lib') ]
         # base case: empty dir
         if 'command.py' not in files and len(dirs) == 0: return None
-        if not all and lvl==1 and 'enabled.flag' not in files: return None
+        if not all and lvl==1 and 'installed.flag' not in files: return None
         # check subcommands
         subcmds = {}
         for dir in dirs:
