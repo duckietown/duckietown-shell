@@ -84,9 +84,6 @@ def get_id_from_token(s):
     """
         Returns a numeric ID from the token, or raises InvalidToken.
 
-        token = "dt1-3KmnB9bK8sF6zprqr-43dzqWFnWd8KBa1yev1g3UKnzVxZkkTbfUhvadVXcijurUR1AqHNH5otY4ng5RBwyB"
-        assert 128 == get_id_from_token(token)
-
     """
     try:
         token = DuckietownToken.from_string(s)
