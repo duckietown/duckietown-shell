@@ -116,7 +116,7 @@ class DTShell(Cmd, object):
         present = res.keys() if res is not None else []
         # enable if possible
         if command_name in present:
-            flag_file = '%s%s/installed.flag' % (self.commands_path, command_name)
+            flag_file = os.path.join(self.commands_path, command_name, 'installed.flag')
             self._touch(flag_file)
         return True
 
@@ -128,7 +128,7 @@ class DTShell(Cmd, object):
         present = res.keys() if res is not None else []
         # enable if possible
         if command_name in present:
-            flag_file = '%s%s/installed.flag' % (self.commands_path, command_name)
+            flag_file = os.path.join(self.commands_path, command_name, 'installed.flag')
             remove(flag_file)
         return True
 
@@ -190,7 +190,7 @@ class DTShell(Cmd, object):
         return True
 
     def _get_commands(self, path, lvl=0, all_commands=False):
-        entries = glob.glob(path + "/*")
+        entries = glob.glob( os.path.join(path, "*") )
         files = [basename(e) for e in entries if isfile(e)]
         dirs = [e for e in entries if isdir(e) and (lvl > 0 or basename(e) != 'lib')]
         # base case: empty dir
