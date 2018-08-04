@@ -1,1 +1,4 @@
 gitpython
+base58
+ecdsa
+json
