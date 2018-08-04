@@ -1,0 +1,32 @@
+version: 2
+jobs:
+    build:
+     docker:
+        - image: circleci/python:2.7
+          environment:
+
+     steps:
+        - checkout
+        - run:
+            name: deps
+            command: |
+                #apt install python-pip
+                pip install --user --upgrade -r requirements.txt
+
+
+        - run:
+            name: build
+            command: |
+              python setup.py install --user
+
+        - run:
+            name: dt help
+            command: |
+               export PATH=/home/circleci/.local/bin:$PATH
+               dt help
+
+        - run:
+            name: dt version
+            command: |
+               export PATH=/home/circleci/.local/bin:$PATH
+               dt version
