@@ -3,10 +3,10 @@ from __future__ import print_function
 
 import glob
 import json
-import os
+import sys, os
 from cmd import Cmd
 from os import makedirs, remove, utime
-from os.path import basename, isfile, isdir, exists
+from os.path import basename, isfile, isdir, exists, join
 
 from git import Repo
 from git.exc import NoSuchPathError, InvalidGitRepositoryError
@@ -33,18 +33,19 @@ class DTShell(Cmd, object):
                      "Version: %s\n\n" \
                      "Type help or ? to list commands.\n" % self.VERSION
         self.config_path = os.path.expanduser(DTShellConstants.ROOT)
-        self.config_file = os.path.join(self.config_path, 'config')
-
+        self.config_file = join(self.config_path, 'config')
+        # define commands_path
         V = DTShellConstants.ENV_COMMANDS
-
         if V in os.environ:
             self.commands_path = os.environ[V]
             self.commands_path_leave_alone = True
             msg = 'Using path %r as prescribed by env variable %s.' % (self.commands_path, V)
             print(msg)
         else:
-            self.commands_path = os.path.join(self.config_path, 'commands')
+            self.commands_path = join(self.config_path, 'commands')
             self.commands_path_leave_alone = False
+        # add commands_path to the path of this session
+        sys.path.insert(0, self.commands_path)
         # create config if it does not exist
         if not exists(self.config_path):
             makedirs(self.config_path, mode=0755)
@@ -98,7 +99,6 @@ class DTShell(Cmd, object):
             for a in ['do_', 'complete_', 'help_']:
                 if hasattr(DTShell, a + command):
                     delattr(DTShell, a + command)
-
         # re-install commands
         self.commands = self._get_commands(self.commands_path)
         if self.commands is None:
@@ -106,7 +106,7 @@ class DTShell(Cmd, object):
             self.commands = {}
         # load commands
         for cmd, subcmds in self.commands.items():
-            self._load_commands('commands.', cmd, subcmds, 0)
+            self._load_commands('', cmd, subcmds, 0)
 
     def enable_command(self, command_name):
         if command_name in self.core_commands:
@@ -116,7 +116,7 @@ class DTShell(Cmd, object):
         present = res.keys() if res is not None else []
         # enable if possible
         if command_name in present:
-            flag_file = '%s%s/installed.flag' % (self.commands_path, command_name)
+            flag_file = join(self.commands_path, command_name, 'installed.flag')
             self._touch(flag_file)
         return True
 
@@ -128,7 +128,7 @@ class DTShell(Cmd, object):
         present = res.keys() if res is not None else []
         # enable if possible
         if command_name in present:
-            flag_file = '%s%s/installed.flag' % (self.commands_path, command_name)
+            flag_file = join(self.commands_path, command_name, 'installed.flag')
             remove(flag_file)
         return True
 
@@ -190,7 +190,7 @@ class DTShell(Cmd, object):
         return True
 
     def _get_commands(self, path, lvl=0, all_commands=False):
-        entries = glob.glob(path + "/*")
+        entries = glob.glob( join(path,'*') )
         files = [basename(e) for e in entries if isfile(e)]
         dirs = [e for e in entries if isdir(e) and (lvl > 0 or basename(e) != 'lib')]
         # base case: empty dir
