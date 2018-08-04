@@ -22,6 +22,11 @@ jobs:
         - run:
             name: dt help
             command: |
-               find /home/circleci/.local
                export PATH=/home/circleci/.local/bin:$PATH
                dt help
+
+        - run:
+            name: dt version
+            command: |
+               export PATH=/home/circleci/.local/bin:$PATH
+               dt version
