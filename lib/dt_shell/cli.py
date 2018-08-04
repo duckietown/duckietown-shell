@@ -46,6 +46,8 @@ class DTShell(Cmd, object):
             self.commands_path_leave_alone = False
         # add commands_path to the path of this session
         sys.path.insert(0, self.commands_path)
+        # add third-party libraries dir to the path of this session
+        sys.path.insert(0, join(self.commands_path, 'lib') )
         # create config if it does not exist
         if not exists(self.config_path):
             makedirs(self.config_path, mode=0755)
