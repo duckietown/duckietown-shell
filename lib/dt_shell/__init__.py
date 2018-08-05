@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-__version__ = '0.2.2'
+import traceback
+
+__version__ = '0.2.4'
 
 
 from .cli import DTShell
@@ -15,8 +17,12 @@ def cli_main():
 
     arguments = sys.argv[1:]
     shell = DTShell()
-    if arguments:
-        cmdline = " ".join(arguments)
-        shell.onecmd(cmdline)
-    else:
-        shell.cmdloop()
+    try:
+        if arguments:
+            cmdline = " ".join(arguments)
+            shell.onecmd(cmdline)
+        else:
+            shell.cmdloop()
+    except Exception as e:
+        print(traceback.format_exc(e))
+        sys.exit(2)

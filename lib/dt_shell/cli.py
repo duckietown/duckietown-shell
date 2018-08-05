@@ -3,7 +3,8 @@ from __future__ import print_function
 
 import glob
 import json
-import sys, os
+import os
+import sys
 from cmd import Cmd
 from os import makedirs, remove, utime
 from os.path import basename, isfile, isdir, exists, join
@@ -17,6 +18,10 @@ from .dt_command_abs import DTCommandAbs
 from .dt_command_placeholder import DTCommandPlaceholder
 
 DEBUG = False
+
+
+class InvalidConfig(Exception):
+    pass
 
 
 class DTShell(Cmd, object):
@@ -44,10 +49,12 @@ class DTShell(Cmd, object):
         else:
             self.commands_path = join(self.config_path, 'commands')
             self.commands_path_leave_alone = False
+
         # add commands_path to the path of this session
         sys.path.insert(0, self.commands_path)
         # add third-party libraries dir to the path of this session
-        sys.path.insert(0, join(self.commands_path, 'lib') )
+        sys.path.insert(0, join(self.commands_path, 'lib'))
+
         # create config if it does not exist
         if not exists(self.config_path):
             makedirs(self.config_path, mode=0755)
@@ -107,6 +114,7 @@ class DTShell(Cmd, object):
             print('No commands found.')
             self.commands = {}
         # load commands
+        # print('commands: %s' % self.commands)
         for cmd, subcmds in self.commands.items():
             self._load_commands('', cmd, subcmds, 0)
 
@@ -192,7 +200,7 @@ class DTShell(Cmd, object):
         return True
 
     def _get_commands(self, path, lvl=0, all_commands=False):
-        entries = glob.glob( join(path,'*') )
+        entries = glob.glob(join(path, '*'))
         files = [basename(e) for e in entries if isfile(e)]
         dirs = [e for e in entries if isdir(e) and (lvl > 0 or basename(e) != 'lib')]
         # base case: empty dir
@@ -204,26 +212,40 @@ class DTShell(Cmd, object):
         subcmds = {}
         for d in dirs:
             f = self._get_commands(d, lvl + 1, all_commands)
-            if f is not None: subcmds[basename(d)] = f
+            if f is not None:
+                subcmds[basename(d)] = f
         # return
         return subcmds
 
     def _load_class(self, name):
-        if DEBUG: print('DEBUG:: Loading %s' % name)
+        if DEBUG:
+            print('DEBUG:: Loading %s' % name)
         components = name.split('.')
+
         mod = __import__(components[0])
+
         for comp in components[1:]:
-            mod = getattr(mod, comp)
+            try:
+                mod = getattr(mod, comp)
+            except AttributeError as e:
+                msg = 'Could not get field %r of module %r: %s' % (comp, mod.__name__, e)
+                msg += '\n module file %s' % mod.__file__
+                raise AttributeError(msg)
         return mod
 
     def _load_commands(self, package, command, sub_commands, lvl):
         # load command
         klass = None
         error_loading = False
-        try:
-            klass = self._load_class(package + command + '.command.DTCommand')
-        except AttributeError:
-            error_loading = True
+        if not sub_commands:
+            try:
+                spec = package + command + '.command.DTCommand'
+                klass = self._load_class(spec)
+            except AttributeError as e:
+                # error_loading = True
+                msg = 'Cannot load command class %r (package=%r, command=%r): %s' % (spec, package, command, e)
+                # msg += ' sys.path: %s' % sys.path
+                raise InvalidConfig(msg)
         # handle loading error and wrong class
         if error_loading:
             klass = DTCommandPlaceholder()
