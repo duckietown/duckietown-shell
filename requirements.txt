@@ -2,4 +2,4 @@ gitpython
 texttable
 base58
 ecdsa
-dateutil
+python-dateutil
