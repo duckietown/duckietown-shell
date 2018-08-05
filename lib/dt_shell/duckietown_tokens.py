@@ -98,12 +98,12 @@ def get_id_from_token(s):
         raise InvalidToken()
 
 
-SAMPLE_TOKEN = 'dt1-XXzMstGtdJhJeXv-43dzqWFnWd8KBa1yev1g3UKnzVxZkkTbfQj2vduBXhfPjK6FSSCHQZPr986b8tXASH'
+SAMPLE_TOKEN = 'dt1-9Hfd69b5ythetkCiNG12pKDrL987sLJT6KejWP2Eo5QQ-43dzqWFnWd8KBa1yev1g3UKnzVxZkkTbfWWn6of92V5Bf8qGV24rZHe6r7sueJNtWF'
 SAMPLE_TOKEN_UID = -1
-
+SAMPLE_TOKEN_EXP = '2018-10-20'
 
 def tests_private():
-    payload = json.dumps({'uid': SAMPLE_TOKEN_UID})
+    payload = json.dumps({'uid': SAMPLE_TOKEN_UID, 'exp': SAMPLE_TOKEN_EXP})
     # generate a token
     token = create_signed_token(payload)
     s = token.as_string()
@@ -120,8 +120,10 @@ def test1():
     data = json.loads(token.payload)
     print(data)
     assert data['uid'] == SAMPLE_TOKEN_UID
+    assert data['exp'] == SAMPLE_TOKEN_EXP
 
-    msg_bad = SAMPLE_TOKEN.replace('XX', 'XY')
+    seq = SAMPLE_TOKEN[6:8]
+    msg_bad = SAMPLE_TOKEN.replace(seq, 'XY')
     token = DuckietownToken.from_string(msg_bad)
     try:
         verify_token(token)
