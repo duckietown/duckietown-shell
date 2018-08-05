@@ -6,16 +6,20 @@ The idea is that most of the functionality is implemented as Docker containers, 
 
 The installation should just be, on any platform:
 
-    $ pip install -U duckietown-shell
+    $ pip install --no-cache-dir --user -U duckietown-shell
     $ dt help
 
 That is, we should not require any other dependency beside standard cross-platform Python libraries.
+
 
 ## Commands for Duckiebot setup
 
 This starts the SD-card flashing procedure:
 
     $ dt init-sd-card
+
+TODO: to implement
+
 
 ##  Commands for AI-DO
 
