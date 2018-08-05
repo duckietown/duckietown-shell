@@ -25,7 +25,9 @@ setup(name='duckietown-shell',
       packages=find_packages('lib'),
       install_requires=[
         'GitPython',
-        'texttable'
+        'texttable',
+        'base58',
+        'ecdsa'
       ],
 
       tests_require=[
