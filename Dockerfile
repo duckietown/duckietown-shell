@@ -1,4 +1,6 @@
-FROM resin/raspberry-pi-alpine-python:2-slim
+M resin/raspberry-pi-alpine-python:2-slim
+
+RUN [ "cross-build-start" ]
 
 COPY . duckietown-shell
 
@@ -9,5 +11,7 @@ RUN cd duckietown-shell && \
     pip install --no-cache-dir -U duckietown-shell && \
     cd .. && \
     rm -rf duckietown-shell
- 
+
+RUN [ "cross-build-end" ]
+
 CMD dt
