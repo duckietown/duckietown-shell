@@ -128,3 +128,9 @@ Alternatively, you can use the `--dt-data` argument to choose a different folder
 Alternatively, the directory can be specified using the environment variable `DT_DATA`.
 
     $ DT_DATA=/tmp/data dt logs summary
+
+## Docker
+
+To launch the Duckietown Shell in Docker, run the following command:
+
+`docker run -it duckietown/duckietown-shell`
