@@ -54,6 +54,29 @@ To install the shell, use:
 
 The shell itself does not require any other dependency beside standard cross-platform Python libraries.
 
+ 
+-----------------------
+        
+
+## Commands for compiling the Duckumentation
+
+To compile one of the books:
+
+    $ git clone https://github.com/duckietown/docs-duckumentation.git
+    $ cd docs-duckumentation
+    $ git submodule init
+    $ git submodule update
+    $ dts docs build
+
+There is an incremental build system. To clean and run from scratch:
+
+    $ dts docs clean
+    $ dts docs build
+
+TODO: link to docs
+
+    
+
 -----------------------
         
 
@@ -81,30 +104,8 @@ This exits with 0 if the token is valid, and writes on standard output the follo
     
 which means that the user is identified as uid 3 until the given expiration date.
  
- 
+
 -----------------------
-        
-
-## Commands for compiling the Duckumentation
-
-To compile one of the books:
-
-    $ git clone https://github.com/duckietown/docs-duckumentation.git
-    $ cd docs-duckumentation
-    $ git submodule init
-    $ git submodule update
-    $ dts docs build
-
-There is an incremental build system. To clean and run from scratch:
-
-    $ dts docs clean
-    $ dts docs build
-
-TODO: link to docs
-
-    
------------------------
-
 
 ## Commands for Duckiebot setup
 
