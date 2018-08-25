@@ -7,3 +7,4 @@ SystemCmd
 PyContracts
 whichcraft
 termcolor
+PyYAML

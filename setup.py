@@ -33,6 +33,7 @@ setup(name='duckietown-shell',
           'PyContracts',  # XXX: should be a dep for SystemCmd
           'whichcraft',
           'termcolor',
+          'PyYAML',
       ],
 
       tests_require=[
