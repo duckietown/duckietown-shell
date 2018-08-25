@@ -20,6 +20,7 @@ That is, we should not require any other dependency beside standard cross-platfo
     $ sudo pip install --no-cache-dir -U duckietown-shell
 
 
+
 ### Troubleshooting
 
 
@@ -33,11 +34,11 @@ That is, we should not require any other dependency beside standard cross-platfo
 
 This starts the SD-card flashing procedure:
 
-    $ dt init-sd-card
+    $ dts init-sd-card
 
 TODO: link to docs
 
-##  Commands for AI-DO 
+##  Commands for AI-DO 1 
 
 ### (TODO) AI-DO templates download
 
@@ -45,52 +46,50 @@ The subcommand `get-template` downloads the submission templates.
 
 Downloads the current template:
 
-    $ dt aido18 get-template TASK-LANG
+    $ dts aido1 get-template TASK-LANG
     checking out repository...
 
 Without arguments, the program writes a list of available templates.
-
-
-### AI-DO login
-
-The command `login` authenticates the AI-DO account. It is needed
-before running one of the next commands
-
-    $ dt aido18 login
-    Username: ...
-    Password: ...
 
 
 ### AI-DO submissions
 
 The command `submit` submits the entry in the current directory:
 
-    $ dt aido18 submit
+    $ dts aido1 submit
 
 ### Submissions status
 
 The command `status` displays the status of the submitted entries:
 
-    $ dt aido18 status
+    $ dts aido1 status
     jobname  task  docker hash  status
     jobname  task  docker hash  status
     ...
 
 ## Commands for duckumentation
 
-    $ dt docs build
-    $ dt docs clean
+To compile one of the books:
+
+    $ https://github.com/duckietown/docs-duckumentation.git
+    $ cd docs-duckumentation
+    $ dts docs build
+
+To clean:
+
+    $ dts docs clean
+    $ dts docs build
 
 ## (TODO) Commands for logs
 
 Wrappers are provided for the [EasyLogs commands][easy_logs].
 
-    $ dt logs summary
-    $ dt logs download
-    $ dt logs copy
-    $ dt logs details
-    $ dt logs make-thumbnails
-    $ dt logs make-video
+    $ dts logs summary
+    $ dts logs download
+    $ dts logs copy
+    $ dts logs details
+    $ dts logs make-thumbnails
+    $ dts logs make-video
 
 [easy_logs]: http://docs.duckietown.org/software_devel/out/easy_logs.html
 
@@ -98,32 +97,32 @@ Wrappers are provided for the [EasyLogs commands][easy_logs].
 
 Queries the list of logs that satisfy a query:
 
-    $ dt logs summary "vehicle:yaf,length:>120s"
+    $ dts logs summary "vehicle:yaf,length:>120s"
 
 Show more details about one log:
 
-    $ dt logs details 20171124170042_yaf
+    $ dts logs details 20171124170042_yaf
 
 ### Download, copy
 
 Downloads logs to the local computer:
 
-    $ dt logs download 20171124170042_yaf
+    $ dts logs download 20171124170042_yaf
 
 Copies the logs to a specific directory:
 
-    $ dt logs copy -o ![output dir] 20171124170042_yaf
+    $ dts logs copy -o ![output dir] 20171124170042_yaf
     Creating ![output dir]/20171124170042_yaf.bag
 
 ### Creating thumbnails
 
-    $ dt logs make-thumbnails 20171124170042_yaf
+    $ dts logs make-thumbnails 20171124170042_yaf
 
 ### Creating videos:
 
 Create a video of the camera data:
 
-    $ dt logs make-videos 20171124170042_yaf
+    $ dts logs make-videos 20171124170042_yaf
 
 ### Advanced configuration
 
@@ -131,12 +130,11 @@ By default, Duckietown Shell uses the folder `~/dt-data` for storing log data an
 
 Alternatively, you can use the `--dt-data` argument to choose a different folder:
 
-    $ dt logs --dt-data ![dir] ![command]
+    $ dts logs --dt-data ![dir] ![command]
 
 Alternatively, the directory can be specified using the environment variable `DT_DATA`.
 
     $ DT_DATA=/tmp/data dt logs summary
-
 
 
 ## Advanced

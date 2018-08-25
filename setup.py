@@ -30,6 +30,7 @@ setup(name='duckietown-shell',
           'ecdsa',
           'python-dateutil',
           'SystemCmd',
+          'PyContracts', # XXX: should be a dep for SystemCmd
       ],
 
       tests_require=[
