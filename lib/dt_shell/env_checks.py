@@ -9,10 +9,14 @@ class InvalidEnvironment(Exception):
 
 
 def check_docker_environment():
+    print('checking docker environment')
     check_executable_exists('docker')
 
     if on_linux():
         check_user_in_group('docker')
+        print('checked groups')
+    else:
+        print('skipping env check')
 
 
 def on_linux():
