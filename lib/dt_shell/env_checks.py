@@ -38,6 +38,14 @@ def check_user_in_group(name):
         msg += '\nIt belongs to groups: %s.' % ", ".join(sorted(active_groups))
         raise InvalidEnvironment(msg)
 
+def check_git_supports_superproject():
+    res = system_cmd_result('.', ['git', '--version'],
+                            display_stdout=False,
+                            display_stderr=False,
+                            raise_on_error=True,
+                            capture_keyboard_interrupt=False,
+                            env=None)
+
 
 def get_active_groups(username=None):
     cmd = ['groups']
