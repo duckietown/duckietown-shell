@@ -1,6 +1,12 @@
 # -*- coding: utf-8 -*-
+import logging
 import sys
 import traceback
+
+logging.basicConfig()
+
+dtslogger = logging.getLogger('dts')
+dtslogger.setLevel(logging.INFO)
 
 import termcolor
 
