@@ -22,6 +22,10 @@ class DTCommandAbs(object):
         return []
 
     @staticmethod
+    def fail(msg):
+        raise Exception(msg)
+
+    @staticmethod
     def do_command(cls, shell, line):
         # print '>[%s]@(%s, %s)' % (line, cls.name, cls.__class__)
         line = line.strip()
