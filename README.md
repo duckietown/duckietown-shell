@@ -4,38 +4,42 @@
 
 The idea is that most of the functionality is implemented as Docker containers, and `dt-shell` provides a nice interface for that, so that user should not type a very long `docker run` command line.
 
-The installation should just be, on any platform:
 
-    $ pip install --no-cache-dir --user -U duckietown-shell
-    $ dt help
+## Installation
+
+To install the shell, use:
+
+    $ sudo pip install --no-cache-dir -U duckietown-shell
 
 That is, we should not require any other dependency beside standard cross-platform Python libraries.
 
 
+### Ubuntu 18
+
+    $ sudo apt install -y python-pip git
+    $ sudo pip install --no-cache-dir -U duckietown-shell
+
+
+### Troubleshooting
+
+
+    Command dt not found, but can be installed with 
+    
+        sudo apt install ditrack
+        
+        
+    
 ## Commands for Duckiebot setup
 
 This starts the SD-card flashing procedure:
 
     $ dt init-sd-card
 
-TODO: to implement
+TODO: link to docs
 
+##  Commands for AI-DO 
 
-##  Commands for AI-DO
-
-### AI-DO registration
-
-You can register for the AI-DO via command line using:
-
-    $ dt aido18 register
-    First: ...
-    Last: ...
-    Email: ...
-    Password: ...
-
-This also creates a remote account on the website.
-
-### AI-DO templates download
+### (TODO) AI-DO templates download
 
 The subcommand `get-template` downloads the submission templates.
 
@@ -72,8 +76,12 @@ The command `status` displays the status of the submitted entries:
     jobname  task  docker hash  status
     ...
 
+## Commands for duckumentation
 
-## Commands for logs
+    $ dt docs build
+    $ dt docs clean
+
+## (TODO) Commands for logs
 
 Wrappers are provided for the [EasyLogs commands][easy_logs].
 
@@ -129,8 +137,22 @@ Alternatively, the directory can be specified using the environment variable `DT
 
     $ DT_DATA=/tmp/data dt logs summary
 
-## Docker
+
+
+## Advanced
+
+### Docker
 
 To launch the Duckietown Shell in Docker, run the following command:
 
-`docker run -it duckietown/duckietown-shell`
+    $ docker run -it duckietown/duckietown-shell
+    
+Note: the Duckietown Shell is supposed to be run natively from the host.
+
+### Local commands development
+
+Use the env variable to work on your local copy of the commands:
+
+    export DTSHELL_COMMANDS=/path/to/my/duckietown-shell-commands
+ 
+   

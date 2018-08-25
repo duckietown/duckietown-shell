@@ -27,7 +27,9 @@ setup(name='duckietown-shell',
         'GitPython',
         'texttable',
         'base58',
-        'ecdsa'
+        'ecdsa',
+        'python-dateutil',
+        'SystemCmd',
       ],
 
       tests_require=[
