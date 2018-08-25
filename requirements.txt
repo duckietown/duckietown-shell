@@ -6,3 +6,4 @@ python-dateutil
 SystemCmd
 PyContracts
 whichcraft
+termcolor

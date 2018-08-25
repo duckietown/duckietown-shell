@@ -38,13 +38,13 @@ class DTCommandAbs(object):
                 if word in cls.commands:
                     cls.commands[word].do_command(cls.commands[word], shell, ' '.join(parts[1:]))
                 else:
-                    print 'Command `%s` not recognized.\nAvailable sub-commands are:\n\n\t%s' % (
-                    word.strip(), '\n\t'.join(cls.commands.keys()))
+                    print('Command `%s` not recognized.\nAvailable sub-commands are:\n\n\t%s' % (
+                    word.strip(), '\n\t'.join(cls.commands.keys())))
             else:
                 cls.command(shell, args)
         else:
             if len(cls.commands) > 0:
-                print 'Available sub-commands are:\n\n\t%s' % '\n\t'.join(cls.commands.keys())
+                print('Available sub-commands are:\n\n\t%s' % '\n\t'.join(cls.commands.keys()))
             else:
                 if not cls.fake:
                     cls.command(shell, args)

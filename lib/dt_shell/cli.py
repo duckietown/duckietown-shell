@@ -9,10 +9,11 @@ from cmd import Cmd
 from os import makedirs, remove, utime
 from os.path import basename, isfile, isdir, exists, join
 
+import termcolor
 from git import Repo
 from git.exc import NoSuchPathError, InvalidGitRepositoryError
 
-from . import __version__
+from . import __version__, dtslogger
 from .constants import DTShellConstants
 from .dt_command_abs import DTCommandAbs
 from .dt_command_placeholder import DTCommandPlaceholder
@@ -24,19 +25,27 @@ class InvalidConfig(Exception):
     pass
 
 
+DNAME = 'Duckietown Shell'
+
+INTRO = """
+
+Welcome to the {Duckietown} ({version}).
+
+Type "help" or "?" to list commands.
+
+""".format(Duckietown=termcolor.colored(DNAME, "yellow", attrs=['bold']),
+           version=__version__).lstrip()
+
+
 class DTShell(Cmd, object):
-    NAME = 'Duckietown Shell'
-    VERSION = __version__
     prompt = 'dt> '
     config = {}
     commands = {}
     core_commands = ['commands', 'install', 'uninstall', 'update', 'version', 'exit', 'help']
 
     def __init__(self):
-        self.intro = "" \
-                     "Welcome to the Duckietown shell.\n" \
-                     "Version: %s\n\n" \
-                     "Type help or ? to list commands.\n" % self.VERSION
+        self.intro = INTRO
+
         self.config_path = os.path.expanduser(DTShellConstants.ROOT)
         self.config_file = join(self.config_path, 'config')
         # define commands_path
@@ -45,7 +54,7 @@ class DTShell(Cmd, object):
             self.commands_path = os.environ[V]
             self.commands_path_leave_alone = True
             msg = 'Using path %r as prescribed by env variable %s.' % (self.commands_path, V)
-            print(msg)
+            dtslogger.info(msg)
         else:
             self.commands_path = join(self.config_path, 'commands')
             self.commands_path_leave_alone = False
