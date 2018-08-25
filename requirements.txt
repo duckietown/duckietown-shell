@@ -5,3 +5,4 @@ ecdsa
 python-dateutil
 SystemCmd
 PyContracts
+whichcraft

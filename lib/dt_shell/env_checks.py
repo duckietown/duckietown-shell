@@ -1,7 +1,6 @@
 import sys
 
 from system_cmd import system_cmd_result, CmdException
-
 from whichcraft import which
 
 
@@ -15,8 +14,10 @@ def check_docker_environment():
     if on_linux():
         check_user_in_group('docker')
 
+
 def on_linux():
     return sys.platform == 'linux'
+
 
 def check_executable_exists(cmdname):
     p = which(cmdname)
