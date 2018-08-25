@@ -297,3 +297,12 @@ class DTShell(Cmd, object):
     def _touch(self, path):
         with open(path, 'a'):
             utime(path, None)
+
+    def get_dt1_token(self):
+        k = DTShellConstants.DT1_TOKEN_CONFIG_KEY
+        if k not in self.config:
+            msg = 'Please set up a token for this using "dts tok set".'
+            raise Exception(msg)
+
+        token = self.config[k]
+        return token
