@@ -20,7 +20,7 @@ def check_docker_environment():
 
 
 def on_linux():
-    return sys.platform == 'linux'
+    return sys.platform.startswith('linux')
 
 
 def check_executable_exists(cmdname):
