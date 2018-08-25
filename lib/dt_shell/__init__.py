@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import traceback
 
-__version__ = '0.2.10'
+__version__ = '0.2.11'
 
 
 from .cli import DTShell
