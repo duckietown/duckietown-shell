@@ -24,12 +24,12 @@ setup(name='duckietown-shell',
       package_dir={'': 'lib'},
       packages=find_packages('lib'),
       install_requires=[
-        'GitPython',
-        'texttable',
-        'base58',
-        'ecdsa',
-        'python-dateutil',
-        'SystemCmd',
+          'GitPython',
+          'texttable',
+          'base58',
+          'ecdsa',
+          'python-dateutil',
+          'SystemCmd',
       ],
 
       tests_require=[
@@ -43,10 +43,9 @@ setup(name='duckietown-shell',
       include_package_data=True,
 
       entry_points={
-          'paste.app_factory': ['app=mcdp_web:app_factory'],
-
           'console_scripts': [
               'dt = dt_shell:cli_main',
+              'dts = dt_shell:cli_main',
           ]
       }
       )
