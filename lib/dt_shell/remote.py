@@ -4,11 +4,19 @@ import urllib2
 
 import dateutil.parser
 
+from . import dtslogger
+
 
 def get_duckietown_server_url():
     V = 'DTSERVER'
-    DEFAULT = 'http://frankfurt.co-design.science:81'
-    return os.environ.get(V, DEFAULT)
+    DEFAULT = 'https://challenges.duckietown.org/v1'
+    if V in os.environ:
+        use = os.environ[V]
+        msg = 'Using server %s instead of default %s' % (use, DEFAULT)
+        dtslogger.info(msg)
+        return use
+    else:
+        return DEFAULT
 
 
 def get_dtserver_user_info(token):
