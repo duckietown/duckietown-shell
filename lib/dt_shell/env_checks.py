@@ -35,7 +35,9 @@ def check_user_in_group(name):
 
     if name not in active_groups:
         msg = 'The user is not in group "%s".' % name
-        msg += '\nIt belongs to groups: %s.' % ", ".join(sorted(active_groups))
+        msg += '\n\nIt belongs to groups: %s.' % ", ".join(sorted(active_groups))
+
+        msg += '\n\nNote that when you add a user to a group, you need to login in and out.'
         raise InvalidEnvironment(msg)
 
 def check_git_supports_superproject():
