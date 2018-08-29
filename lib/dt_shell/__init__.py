@@ -10,13 +10,14 @@ dtslogger.setLevel(logging.INFO)
 
 import termcolor
 
-__version__ = '0.2.24'
+__version__ = '0.2.25-v2'
 
 from .cli import DTShell
 
 from .dt_command_abs import DTCommandAbs
 from .dt_command_placeholder import DTCommandPlaceholder
 
+dtslogger.info('duckietown-shell %s' % __version__)
 
 
 def cli_main():
