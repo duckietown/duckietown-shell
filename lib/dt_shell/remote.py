@@ -131,10 +131,11 @@ def dtserver_work_submission(token, submission_id=None, machine_id='unspecified'
     return make_server_request(token, endpoint, data=data, method=method)
 
 
-def dtserver_report_job(token, job_id, result, stats):
+def dtserver_report_job(token, job_id, result, stats, machine_id='unspecified'):
     endpoint = '/take-submission'
     method = 'POST'
     data = {'job_id': job_id,
             'result': result,
-            'stats': stats}
+            'stats': stats,
+            'machine_id': machine_id}
     return make_server_request(token, endpoint, data=data, method=method)
