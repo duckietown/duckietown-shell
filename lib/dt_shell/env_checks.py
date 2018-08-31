@@ -1,7 +1,10 @@
+import getpass
 import sys
 
 from system_cmd import system_cmd_result, CmdException
 from whichcraft import which
+
+from dt_shell.constants import DTShellConstants
 
 
 class InvalidEnvironment(Exception):
@@ -13,7 +16,9 @@ def check_docker_environment():
     check_executable_exists('docker')
 
     if on_linux():
-        check_user_in_group('docker')
+        username = getpass.getuser()
+        if username != 'root':
+            check_user_in_group('docker')
         print('checked groups')
     else:
         print('skipping env check')
@@ -39,6 +44,7 @@ def check_user_in_group(name):
 
         msg += '\n\nNote that when you add a user to a group, you need to login in and out.'
         raise InvalidEnvironment(msg)
+
 
 def check_git_supports_superproject():
     res = system_cmd_result('.', ['git', '--version'],
@@ -66,3 +72,13 @@ def get_active_groups(username=None):
         raise Exception(str(e))
     active_groups = res.stdout.split()  # XXX
     return active_groups
+
+
+def get_dockerhub_username(shell):
+    k = DTShellConstants.CONFIG_DOCKER_USERNAME
+    if k not in shell.config:
+        msg = 'Please set docker username using\n\n dts challenges config --docker-username <USERNAME>'
+        raise Exception(msg)
+
+    username = shell.config[k]
+    return username

@@ -96,13 +96,17 @@ def get_dtserver_user_info(token):
     data = None
     return make_server_request(token, endpoint, data=data, method=method)
 
+def dtserver_update_challenge(token, queue, challenge_parameters):
+    endpoint = '/challenge-update'
+    method = 'POST'
+    data = {'queue': queue, 'challenge_parameters': challenge_parameters}
+    return make_server_request(token, endpoint, data=data, method=method)
 
 def dtserver_submit(token, queue, data):
     endpoint = '/submissions'
     method = 'POST'
     data = {'queue': queue, 'parameters': data}
     return make_server_request(token, endpoint, data=data, method=method)
-
 
 def dtserver_retire(token, submission_id):
     endpoint = '/submissions'
