@@ -35,6 +35,8 @@ setup(name='duckietown-shell',
           'termcolor',
           'PyYAML',
           'docker',
+          'ruamel.yaml',
+          'ruamel.ordereddict',
       ],
 
       tests_require=[
