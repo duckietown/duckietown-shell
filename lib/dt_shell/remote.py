@@ -14,7 +14,7 @@ class Storage(object):
 
 def get_duckietown_server_url():
     V = 'DTSERVER'
-    DEFAULT = 'https://challenges.duckietown.org/v1'
+    DEFAULT = 'https://challenges.duckietown.org/v2'
     if V in os.environ:
         use = os.environ[V]
         if not Storage.done:
@@ -96,17 +96,20 @@ def get_dtserver_user_info(token):
     data = None
     return make_server_request(token, endpoint, data=data, method=method)
 
+
 def dtserver_update_challenge(token, queue, challenge_parameters):
     endpoint = '/challenge-update'
     method = 'POST'
     data = {'queue': queue, 'challenge_parameters': challenge_parameters}
     return make_server_request(token, endpoint, data=data, method=method)
 
+
 def dtserver_submit(token, queue, data):
     endpoint = '/submissions'
     method = 'POST'
     data = {'queue': queue, 'parameters': data}
     return make_server_request(token, endpoint, data=data, method=method)
+
 
 def dtserver_retire(token, submission_id):
     endpoint = '/submissions'
@@ -128,18 +131,26 @@ def dtserver_get_user_submissions(token):
     return submissions
 
 
-def dtserver_work_submission(token, submission_id=None, machine_id='unspecified'):
+def dtserver_work_submission(token, submission_id, machine_id, process_id, evaluator_version):
     endpoint = '/take-submission'
     method = 'GET'
-    data = {'submission_id': submission_id, 'machine_id': machine_id}
+    data = {'submission_id': submission_id,
+            'machine_id': machine_id,
+            'process_id': process_id,
+            'evaluator_version': evaluator_version}
     return make_server_request(token, endpoint, data=data, method=method)
 
 
-def dtserver_report_job(token, job_id, result, stats, machine_id='unspecified'):
+def dtserver_report_job(token, job_id, result, stats, machine_id,
+                        process_id, evaluation_container, evaluator_version):
     endpoint = '/take-submission'
     method = 'POST'
     data = {'job_id': job_id,
             'result': result,
             'stats': stats,
-            'machine_id': machine_id}
+            'machine_id': machine_id,
+            'process_id': process_id,
+            'evaluation_container': evaluation_container,
+            'evaluator_version': evaluator_version,
+            }
     return make_server_request(token, endpoint, data=data, method=method)
