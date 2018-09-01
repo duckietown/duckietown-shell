@@ -15,6 +15,15 @@ def check_docker_environment():
     print('checking docker environment')
     check_executable_exists('docker')
 
+    if on_linux():
+        username = getpass.getuser()
+        if username != 'root':
+            check_user_in_group('docker')
+        print('checked groups')
+    else:
+        print('skipping env check')
+
+
     try:
         import docker
     except Exception as e:
@@ -30,13 +39,6 @@ def check_docker_environment():
         msg += '\n\nMake sure the docker service is running.'
         raise InvalidEnvironment(msg)
 
-    if on_linux():
-        username = getpass.getuser()
-        if username != 'root':
-            check_user_in_group('docker')
-        print('checked groups')
-    else:
-        print('skipping env check')
 
 
 def on_linux():
@@ -89,7 +91,10 @@ def get_active_groups(username=None):
     return active_groups
 
 
-def get_dockerhub_username(shell):
+def get_dockerhub_username(shell=None):
+    if shell is None:
+        from .cli import DTShell
+        shell = DTShell()
     k = DTShellConstants.CONFIG_DOCKER_USERNAME
     if k not in shell.config:
         msg = 'Please set docker username using\n\n dts challenges config --docker-username <USERNAME>'
