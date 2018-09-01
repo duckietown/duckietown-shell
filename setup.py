@@ -34,6 +34,7 @@ setup(name='duckietown-shell',
           'whichcraft',
           'termcolor',
           'PyYAML',
+          'docker',
       ],
 
       tests_require=[
