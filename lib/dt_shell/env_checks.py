@@ -15,6 +15,21 @@ def check_docker_environment():
     print('checking docker environment')
     check_executable_exists('docker')
 
+    try:
+        import docker
+    except Exception as e:
+        msg ='Could not import package docker:\n%s' % e
+        msg += '\n\nTry    pip install --user -U docker'
+        raise InvalidEnvironment(msg)
+
+    try:
+        client = docker.from_env()
+        containers = client.containers.list(filters=dict(status='running'))
+    except Exception as e:
+        msg = 'I cannot communicate with Docker:\n%s' % e
+        msg += '\n\nMake sure the docker service is running.'
+        raise InvalidEnvironment(msg)
+
     if on_linux():
         username = getpass.getuser()
         if username != 'root':
