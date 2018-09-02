@@ -16,31 +16,33 @@ from . import __version__, dtslogger
 from .constants import DTShellConstants
 
 
-class CouldNotCheck(Exception):
+class CouldNotGetVersion(Exception):
     pass
 
 
 def get_last_version_fresh():
     url = 'https://pypi.org/pypi/duckietown-shell/json'
 
-    req = urllib2.Request(url)
     try:
-        res = urllib2.urlopen(req, timeout=1)
-        data = res.read()
+        req = urllib2.Request(url)
+        try:
+            res = urllib2.urlopen(req, timeout=1)
+            data = res.read()
 
-    except urllib2.URLError as e:
-        # msg = 'Cannot connect to server %s: %s' % (url, (e))
-        # raise Exception(msg)
-        if which('curl') is not None:
-            res = system_cmd_result('.', ['curl', url])
-            data = res.stdout
-        else:
-            raise CouldNotCheck()
+        except urllib2.URLError as e:
+            # msg = 'Cannot connect to server %s: %s' % (url, (e))
+            # raise Exception(msg)
+            if which('curl') is not None:
+                res = system_cmd_result('.', ['curl', url])
+                data = res.stdout
+            else:
+                raise CouldNotGetVersion()
 
-    info = json.loads(data)
-    last_version = info['info']['version']
-    return last_version
-
+        info = json.loads(data)
+        last_version = info['info']['version']
+        return last_version
+    except Exception as e:
+        raise CouldNotGetVersion(str(e))
 
 def get_cache_filename():
     d0 = os.path.expanduser(DTShellConstants.ROOT)
@@ -91,9 +93,8 @@ def get_last_version():
 
     if not update:
         delta = now - timestamp
-        print(delta)
-        if delta > datetime.timedelta(hours=1):
-            dtslogger.debug('Cache is outdated.')
+        if delta > datetime.timedelta(minutes=10):
+            dtslogger.debug('Version cache is outdated (%s).' % delta)
             update = True
 
     if update:
