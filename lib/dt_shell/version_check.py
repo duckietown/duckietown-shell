@@ -111,6 +111,6 @@ def check_if_outdated():
     if __version__ != latest_version:
         msg = 'There is an updated duckietown-shell available, version %s (you have %s).' % (
             latest_version, __version__)
-        msg += '\n\nPlease run:\n\npip update -U --no-cache-dir duckietown-shell==%s' % (latest_version)
+        msg += '\n\nPlease run:\n\npip install --user -U --no-cache-dir duckietown-shell==%s' % (latest_version)
         msg += '\n\n'
         print(termcolor.colored(msg, 'yellow'))
