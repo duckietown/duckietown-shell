@@ -37,7 +37,7 @@ setup(name='duckietown-shell',
           'docker',
           'ruamel.yaml',
           'ruamel.ordereddict',
-          'urllib2',
+
       ],
 
       tests_require=[
