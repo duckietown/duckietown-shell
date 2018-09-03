@@ -9,4 +9,5 @@ whichcraft
 termcolor
 PyYAML
 docker
-
+requests
+requests[security]

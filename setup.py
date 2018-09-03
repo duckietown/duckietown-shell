@@ -37,7 +37,8 @@ setup(name='duckietown-shell',
           'docker',
           'ruamel.yaml',
           'ruamel.ordereddict',
-
+          'requests',
+          'requests[security]'
       ],
 
       tests_require=[

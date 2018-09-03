@@ -5,9 +5,10 @@ import glob
 import json
 import os
 import sys
+import time
 from cmd import Cmd
 from os import makedirs, remove, utime
-from os.path import basename, isfile, isdir, exists, join
+from os.path import basename, isfile, isdir, exists, join, getmtime
 
 import termcolor
 from dt_shell.version_check import check_if_outdated
@@ -19,12 +20,15 @@ from .constants import DTShellConstants
 from .dt_command_abs import DTCommandAbs
 from .dt_command_placeholder import DTCommandPlaceholder
 
+import requests
+
 DEBUG = False
 
 
 class InvalidConfig(Exception):
     pass
 
+CHECK_CMDS_UPDATE_EVERY_MINS = 5
 
 DNAME = 'Duckietown Shell'
 
@@ -61,7 +65,7 @@ class DTShell(Cmd, object):
         else:
             self.commands_path = join(self.config_path, 'commands')
             self.commands_path_leave_alone = False
-
+        self.commands_update_check_flag = join(self.commands_path, '.updates-check')
         # add commands_path to the path of this session
         sys.path.insert(0, self.commands_path)
         # add third-party libraries dir to the path of this session
@@ -75,11 +79,13 @@ class DTShell(Cmd, object):
         # load config
         self.load_config()
         # init commands
+        cmds_just_initialized = False
         if exists(self.commands_path) and isfile(self.commands_path):
             remove(self.commands_path)
         if not exists(self.commands_path):
             if not self._init_commands():
                 exit()
+            cmds_just_initialized = True
         # discover commands
         self.reload_commands()
         # call super constructor
@@ -88,6 +94,9 @@ class DTShell(Cmd, object):
         if self.use_rawinput and self.completekey:
             import readline
             readline.set_completer_delims(readline.get_completer_delims().replace('-', '', 1))
+        # check for updates (if neede)
+        if not cmds_just_initialized:
+            self.check_commands_outdated()
 
     def postcmd(self, stop, line):
         if len(line.strip()) > 0:
@@ -112,6 +121,57 @@ class DTShell(Cmd, object):
     def save_config(self):
         with open(self.config_file, 'w') as fp:
             json.dump(self.config, fp)
+
+    def check_commands_outdated(self):
+        local_sha = None
+        remote_sha = None
+        # get local SHA
+        commands_repo = None
+        try: commands_repo = Repo(self.commands_path)
+        except (NoSuchPathError, InvalidGitRepositoryError) as e:
+            # the repo does not exist, this should never happen
+            return
+        local_sha = commands_repo.heads.master.commit.hexsha
+        # get remote SHA
+        use_cached_sha = False
+        if exists(self.commands_update_check_flag) and isfile(self.commands_update_check_flag):
+            now = time.time()
+            last_time_checked = getmtime(self.commands_update_check_flag)
+            use_cached_sha = now-last_time_checked < CHECK_CMDS_UPDATE_EVERY_MINS*60
+        # get remote SHA
+        if use_cached_sha:
+            # no need to check now
+            with open(self.commands_update_check_flag, 'r') as fp:
+                try:
+                    cached_check = json.load( fp )
+                except ValueError: return False
+                remote_sha = cached_check['remote']
+        else:
+            url = "https://api.github.com/repos/%s/%s/branches/%s" % (
+                DTShellConstants.COMMANDS_REPO_OWNER,
+                DTShellConstants.COMMANDS_REPO_NAME,
+                DTShellConstants.COMMANDS_REPO_BRANCH
+            )
+            try:
+                res = requests.get(url, timeout=1)
+                data = json.loads( res.content )
+                remote_sha = data['commit']['sha']
+            except Exception as e: return False
+        # check if we need to update
+        need_update = local_sha != remote_sha
+        if need_update:
+            print("\n" +
+            " *** UPDATE ***\n" +
+            " An updated version of the commands is available.\n" +
+            " Run the command {cmd} to retrieve the newest version.\n".format(
+                cmd=termcolor.colored('update', "red", attrs=['bold'])
+            ))
+        # cache remote SHA
+        if not use_cached_sha:
+            with open(self.commands_update_check_flag, 'w') as fp:
+                json.dump( {'remote' : remote_sha}, fp )
+        # return success
+        return True
 
     def reload_commands(self):
         # get installed commands
@@ -163,7 +223,7 @@ class DTShell(Cmd, object):
         # create commands repo
         commands_repo = Repo.init(self.commands_path)
         # the repo now exists
-        origin = commands_repo.create_remote('origin', DTShellConstants.commands_remote_url)
+        origin = commands_repo.create_remote('origin', DTShellConstants.COMMANDS_REMOTE_URL)
         # check existence of `origin`
         if not origin.exists():
             print('The commands repository %r cannot be found. Exiting.' % origin.urls)
@@ -209,6 +269,11 @@ class DTShell(Cmd, object):
 
         # everything should be fine
         print('OK')
+        # cache current (local=remote) SHA
+        current_sha = commands_repo.heads.master.commit.hexsha
+        with open(self.commands_update_check_flag, 'w') as fp:
+            json.dump( {'remote' : current_sha}, fp )
+        # return success
         return True
 
     def _get_commands(self, path, lvl=0, all_commands=False):

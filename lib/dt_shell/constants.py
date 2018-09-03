@@ -2,7 +2,10 @@
 
 
 class DTShellConstants(object):
-    commands_remote_url = 'https://github.com/duckietown/duckietown-shell-commands'
+    COMMANDS_REPO_OWNER = 'duckietown'
+    COMMANDS_REPO_NAME = 'duckietown-shell-commands'
+    COMMANDS_REPO_BRANCH = 'master'
+    COMMANDS_REMOTE_URL = 'https://github.com/%s/%s' % (COMMANDS_REPO_OWNER, COMMANDS_REPO_NAME)
     ROOT = '~/.dt-shell/'
     ENV_COMMANDS = 'DTSHELL_COMMANDS'
 
