@@ -94,8 +94,9 @@ class DTShell(Cmd, object):
         if self.use_rawinput and self.completekey:
             import readline
             readline.set_completer_delims(readline.get_completer_delims().replace('-', '', 1))
-        # check for updates (if neede)
-        if not cmds_just_initialized:
+        # check for updates (if needed)
+        # Do not check it if we are using custom commands_path_leave_alone
+        if not cmds_just_initialized and not self.commands_path_leave_alone:
             self.check_commands_outdated()
 
     def postcmd(self, stop, line):

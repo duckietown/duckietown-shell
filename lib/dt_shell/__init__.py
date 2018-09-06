@@ -18,6 +18,9 @@ from .dt_command_abs import DTCommandAbs
 from .dt_command_placeholder import DTCommandPlaceholder
 
 dtslogger.info('duckietown-shell %s' % __version__)
+dtslogger.info(
+        'Please report problems with specific commands at https://github.com/duckietown/duckietown-shell-commands/issues/new')
+dtslogger.info('Please report problems with the shell at https://github.com/duckietown/duckietown-shell/issues/new')
 
 
 def cli_main():
