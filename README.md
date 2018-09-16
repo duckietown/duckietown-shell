@@ -111,7 +111,7 @@ which means that the user is identified as uid 3 until the given expiration date
 
 This starts the SD-card flashing procedure:
 
-    $ dts init-sd-card
+    $ dts init_sd_card
 
 TODO: link to docs
 
