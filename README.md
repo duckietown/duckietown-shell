@@ -109,14 +109,29 @@ which means that the user is identified as uid 3 until the given expiration date
 
 ## Commands for Duckiebot setup
 
-This starts the SD-card flashing procedure:
+### Command for flashing SD card
+
+This command will install DuckieOS on the SD-card:
 
     $ dts init_sd_card
 
-TODO: link to docs
+-----------------------
+
+### Command for starting ROS GUIs
+
+This command will start the ROS GUI container:
+
+    $ dts start_gui_tools <DUCKIEBOT_NAME_GOES_HERE>
 
 -----------------------
 
+### Command for calibrating the Duckiebot
+
+This command will run the Duckiebot calibration procedure:
+
+    $ dts calibrate_duckiebot <DUCKIEBOT_NAME_GOES_HERE>
+
+-----------------------
 
 ##  Commands for AI-DO 1 
 
