@@ -4,7 +4,26 @@
 
 The idea is that most of the functionality is implemented as Docker containers, and `dt-shell` provides a nice interface for that, so that user should not type a very long `docker run` command line.
 
+## Prerequisites
 
+You must be using `pip` with Python 2.x to use Duckietown Shell:
+
+    $ pip --version # Should return something like: pip 18.0 from ...python2.7/site-packages/pip (python 2.7)
+    
+If not, first install `virtualenv`:
+
+    $ pip install virtualenv
+    
+Then create a new virtual environment, `dts`:
+
+    $ virtualenv -p <PATH_TO_PYTHON2_BINARY> dts
+    
+Then activate the `dts` environment:
+
+    $ source dts/bin/activate
+    (dts) $ 
+
+Now, you now should be ready to install duckietown-shell. To deactivate `dts` later, run `deactivate`.
 
 ## Installation
 
