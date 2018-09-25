@@ -1,4 +1,4 @@
-FROM resin/raspberry-pi-alpine-python:2-slim
+FROM resin/raspberry-pi-alpine-python:2
 
 RUN [ "cross-build-start" ]
 
