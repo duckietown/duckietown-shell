@@ -14,4 +14,4 @@ RUN cd duckietown-shell && \
 
 RUN [ "cross-build-end" ]
 
-CMD dt
+CMD dts
