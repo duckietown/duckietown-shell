@@ -26,6 +26,7 @@ setup(name='duckietown-shell',
       install_requires=[
           'GitPython',
           'texttable',
+          'docker',
           'base58',
           'ecdsa',
           'python-dateutil',
