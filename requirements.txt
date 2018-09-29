@@ -11,3 +11,4 @@ PyYAML
 docker
 requests
 requests[security]
+duckietown-challenges>=0.2.2
