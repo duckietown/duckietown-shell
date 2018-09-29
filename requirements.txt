@@ -9,7 +9,4 @@ whichcraft
 termcolor
 PyYAML
 docker
-requests
-requests[security]
-PyOpenSSL
 duckietown-challenges>=0.2.2

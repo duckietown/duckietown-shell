@@ -6,12 +6,12 @@ import json
 import os
 import sys
 import time
+import urllib2
 from cmd import Cmd
 from os import makedirs, remove, utime
 from os.path import basename, isfile, isdir, exists, join, getmtime
 
 import termcolor
-from dt_shell.version_check import check_if_outdated
 from git import Repo
 from git.exc import NoSuchPathError, InvalidGitRepositoryError
 
@@ -19,14 +19,14 @@ from . import __version__, dtslogger
 from .constants import DTShellConstants
 from .dt_command_abs import DTCommandAbs
 from .dt_command_placeholder import DTCommandPlaceholder
-
-import requests
+from .version_check import check_if_outdated
 
 DEBUG = False
 
 
 class InvalidConfig(Exception):
     pass
+
 
 CHECK_CMDS_UPDATE_EVERY_MINS = 5
 
@@ -124,13 +124,13 @@ class DTShell(Cmd, object):
             json.dump(self.config, fp)
 
     def check_commands_outdated(self):
-        local_sha = None
-        remote_sha = None
+
         # get local SHA
-        commands_repo = None
-        try: commands_repo = Repo(self.commands_path)
+        try:
+            commands_repo = Repo(self.commands_path)
         except (NoSuchPathError, InvalidGitRepositoryError) as e:
             # the repo does not exist, this should never happen
+            dtslogger.error('I cannot read the commands repo: %s' % e)
             return
         local_sha = commands_repo.heads.master.commit.hexsha
         # get remote SHA
@@ -138,14 +138,16 @@ class DTShell(Cmd, object):
         if exists(self.commands_update_check_flag) and isfile(self.commands_update_check_flag):
             now = time.time()
             last_time_checked = getmtime(self.commands_update_check_flag)
-            use_cached_sha = now-last_time_checked < CHECK_CMDS_UPDATE_EVERY_MINS*60
+            use_cached_sha = now - last_time_checked < CHECK_CMDS_UPDATE_EVERY_MINS * 60
         # get remote SHA
+
         if use_cached_sha:
             # no need to check now
             with open(self.commands_update_check_flag, 'r') as fp:
                 try:
-                    cached_check = json.load( fp )
-                except ValueError: return False
+                    cached_check = json.load(fp)
+                except ValueError:
+                    return False
                 remote_sha = cached_check['remote']
         else:
             url = "https://api.github.com/repos/%s/%s/branches/%s" % (
@@ -154,23 +156,26 @@ class DTShell(Cmd, object):
                 DTShellConstants.COMMANDS_REPO_BRANCH
             )
             try:
-                res = requests.get(url, timeout=1)
-                data = json.loads( res.content )
+                req = urllib2.Request(url)
+                res = urllib2.urlopen(req, timeout=3)
+                content = res.read()
+                data = json.loads(content)
                 remote_sha = data['commit']['sha']
-            except Exception as e: return False
+            except Exception as e:
+                return False
         # check if we need to update
         need_update = local_sha != remote_sha
         if need_update:
             print("\n" +
-            " *** UPDATE ***\n" +
-            " An updated version of the commands is available.\n" +
-            " Run the command {cmd} to retrieve the newest version.\n".format(
-                cmd=termcolor.colored('update', "red", attrs=['bold'])
-            ))
+                  " *** UPDATE ***\n" +
+                  " An updated version of the commands is available.\n" +
+                  " Run the command {cmd} to retrieve the newest version.\n".format(
+                          cmd=termcolor.colored('update', "red", attrs=['bold'])
+                  ))
         # cache remote SHA
         if not use_cached_sha:
             with open(self.commands_update_check_flag, 'w') as fp:
-                json.dump( {'remote' : remote_sha}, fp )
+                json.dump({'remote': remote_sha}, fp)
         # return success
         return True
 
@@ -273,7 +278,7 @@ class DTShell(Cmd, object):
         # cache current (local=remote) SHA
         current_sha = commands_repo.heads.master.commit.hexsha
         with open(self.commands_update_check_flag, 'w') as fp:
-            json.dump( {'remote' : current_sha}, fp )
+            json.dump({'remote': current_sha}, fp)
         # return success
         return True
 
