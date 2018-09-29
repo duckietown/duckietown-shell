@@ -14,7 +14,7 @@ class Storage(object):
 
 def get_duckietown_server_url():
     V = 'DTSERVER'
-    DEFAULT = 'https://challenges.duckietown.org/v2'
+    DEFAULT = 'https://challenges.duckietown.org/v3'
     if V in os.environ:
         use = os.environ[V]
         if not Storage.done:
@@ -118,6 +118,13 @@ def dtserver_retire(token, submission_id):
     return make_server_request(token, endpoint, data=data, method=method)
 
 
+def dtserver_challenge_define(token, yaml):
+    endpoint = '/challenge-define'
+    method = 'POST'
+    data = {'yaml': yaml}
+    return make_server_request(token, endpoint, data=data, method=method)
+
+
 def dtserver_get_user_submissions(token):
     """ Returns a dictionary with information about the user submissions """
     endpoint = '/submissions'
@@ -131,13 +138,14 @@ def dtserver_get_user_submissions(token):
     return submissions
 
 
-def dtserver_work_submission(token, submission_id, machine_id, process_id, evaluator_version):
+def dtserver_work_submission(token, submission_id, machine_id, process_id, evaluator_version, features):
     endpoint = '/take-submission'
     method = 'GET'
     data = {'submission_id': submission_id,
             'machine_id': machine_id,
             'process_id': process_id,
-            'evaluator_version': evaluator_version}
+            'evaluator_version': evaluator_version,
+            'features': features}
     return make_server_request(token, endpoint, data=data, method=method)
 
 
