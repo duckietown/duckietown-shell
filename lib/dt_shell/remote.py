@@ -12,18 +12,21 @@ class Storage(object):
     done = False
 
 
+DEFAULT_DTSERVER = 'https://challenges.duckietown.org/v3'
+
+
 def get_duckietown_server_url():
     V = 'DTSERVER'
-    DEFAULT = 'https://challenges.duckietown.org/v3'
+
     if V in os.environ:
         use = os.environ[V]
         if not Storage.done:
-            msg = 'Using server %s instead of default %s' % (use, DEFAULT)
+            msg = 'Using server %s instead of default %s' % (use, DEFAULT_DTSERVER)
             dtslogger.info(msg)
             Storage.done = True
         return use
     else:
-        return DEFAULT
+        return DEFAULT_DTSERVER
 
 
 class RequestException(Exception):
@@ -137,6 +140,7 @@ def dtserver_get_user_submissions(token):
             v[k] = dateutil.parser.parse(v[k])
     return submissions
 
+# TODO: you can delete the following around Oct 15
 
 def dtserver_work_submission(token, submission_id, machine_id, process_id, evaluator_version, features):
     endpoint = '/take-submission'
