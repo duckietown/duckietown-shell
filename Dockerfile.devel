@@ -13,4 +13,6 @@ RUN cd duckietown-shell && \
     cd .. && \
     rm -rf duckietown-shell
 
+WORKDIR /root/.dt-shell/
+
 CMD dts

@@ -51,7 +51,7 @@ class DTShell(Cmd, object):
     def __init__(self):
         self.intro = INTRO
 
-        check_if_outdated()
+        is_shell_outdated = check_if_outdated()
 
         self.config_path = os.path.expanduser(DTShellConstants.ROOT)
         self.config_file = join(self.config_path, 'config')
@@ -96,7 +96,7 @@ class DTShell(Cmd, object):
             readline.set_completer_delims(readline.get_completer_delims().replace('-', '', 1))
         # check for updates (if needed)
         # Do not check it if we are using custom commands_path_leave_alone
-        if not cmds_just_initialized and not self.commands_path_leave_alone:
+        if not is_shell_outdated and not cmds_just_initialized and not self.commands_path_leave_alone:
             self.check_commands_outdated()
 
     def postcmd(self, stop, line):
@@ -124,7 +124,6 @@ class DTShell(Cmd, object):
             json.dump(self.config, fp)
 
     def check_commands_outdated(self):
-
         # get local SHA
         try:
             commands_repo = Repo(self.commands_path)
@@ -140,7 +139,6 @@ class DTShell(Cmd, object):
             last_time_checked = getmtime(self.commands_update_check_flag)
             use_cached_sha = now - last_time_checked < CHECK_CMDS_UPDATE_EVERY_MINS * 60
         # get remote SHA
-
         if use_cached_sha:
             # no need to check now
             with open(self.commands_update_check_flag, 'r') as fp:
