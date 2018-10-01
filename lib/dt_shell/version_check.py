@@ -26,14 +26,15 @@ def get_last_version_fresh():
     try:
         req = urllib2.Request(url)
         try:
-            res = urllib2.urlopen(req, timeout=1)
+            res = urllib2.urlopen(req, timeout=2)
+            if res.getcode() != 200: return None
             data = res.read()
-
         except urllib2.URLError as e:
             # msg = 'Cannot connect to server %s: %s' % (url, (e))
             # raise Exception(msg)
             if which('curl') is not None:
-                res = system_cmd_result('.', ['curl', url])
+                res = system_cmd_result('.', ['curl', url, '-m', '2'])
+                if res.ret != 0: return None
                 data = res.stdout
             else:
                 raise CouldNotGetVersion()
@@ -100,7 +101,8 @@ def get_last_version():
     if update:
         dtslogger.debug('Getting last version from PyPI.')
         version = get_last_version_fresh()
-        write_cache(version, now)
+        if version:
+            write_cache(version, now)
 
     return version
 
@@ -109,7 +111,7 @@ def check_if_outdated():
     latest_version = get_last_version()
     # print('last version: %r' % latest_version)
     # print('installed: %r' % __version__)
-    if __version__ != latest_version:
+    if latest_version and __version__ != latest_version:
         msg = 'There is an updated duckietown-shell available, version %s (you have %s).' % (
             latest_version, __version__)
         msg += '\n\nPlease run:\n\npip install --user -U --no-cache-dir duckietown-shell==%s' % (latest_version)

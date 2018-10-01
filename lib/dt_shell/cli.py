@@ -202,7 +202,7 @@ class DTShell(Cmd, object):
         present = res.keys() if res is not None else []
         # enable if possible
         if command_name in present:
-            flag_file = join(self.commands_path, command_name, 'installed.flag')
+            flag_file = join(self.commands_path, command_name, 'installed.user.flag')
             self._touch(flag_file)
         return True
 
@@ -214,7 +214,7 @@ class DTShell(Cmd, object):
         present = res.keys() if res is not None else []
         # enable if possible
         if command_name in present:
-            flag_file = join(self.commands_path, command_name, 'installed.flag')
+            flag_file = join(self.commands_path, command_name, 'installed.user.flag')
             remove(flag_file)
         return True
 
@@ -287,7 +287,7 @@ class DTShell(Cmd, object):
         # base case: empty dir
         if 'command.py' not in files and not dirs:
             return None
-        if not all_commands and lvl == 1 and 'installed.flag' not in files:
+        if not all_commands and lvl == 1 and ('installed.flag' not in files and 'installed.user.flag' not in files):
             return None
         # check subcommands
         subcmds = {}
