@@ -38,7 +38,6 @@ setup(name='duckietown-shell',
           'docker',
           'ruamel.yaml',
           'ruamel.ordereddict',
-          'duckietown-challenges>=3.0.1',
       ],
 
       tests_require=[

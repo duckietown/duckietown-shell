@@ -9,4 +9,3 @@ whichcraft
 termcolor
 PyYAML
 docker
-duckietown-challenges>=3.0.1
