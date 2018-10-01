@@ -10,7 +10,7 @@ dtslogger.setLevel(logging.INFO)
 
 import termcolor
 
-__version__ = '0.2.39'
+__version__ = '0.2.40'
 
 from .cli import DTShell
 
