@@ -1,6 +1,13 @@
 from setuptools import find_packages, setup
 
 
+import sys
+
+if sys.version_info >= (3,):
+    msg = "duckietown-shell only works on Python 2.7. Python 3 is not supported yet."
+    raise Exception(msg)
+
+
 def get_version(filename):
     import ast
     version = None
@@ -16,11 +23,13 @@ def get_version(filename):
     return version
 
 
-mcdp_version = get_version(filename='lib/dt_shell/__init__.py')
+shell_version = get_version(filename='lib/dt_shell/__init__.py')
 
 setup(name='duckietown-shell',
-      version=mcdp_version,
-      download_url='http://github.com/duckietown/duckietown-shell/tarball/%s' % mcdp_version,
+      # only for Python 2
+      # python_requires="<3.0",
+      version=shell_version,
+      download_url='http://github.com/duckietown/duckietown-shell/tarball/%s' % shell_version,
       package_dir={'': 'lib'},
       packages=find_packages('lib'),
       install_requires=[
@@ -30,7 +39,7 @@ setup(name='duckietown-shell',
           'base58',
           'ecdsa',
           'python-dateutil',
-          'SystemCmd',
+          'SystemCmd>=2.0.9',
           'PyContracts',  # XXX: should be a dep for SystemCmd
           'whichcraft',
           'termcolor',
