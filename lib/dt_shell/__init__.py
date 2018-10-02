@@ -1,27 +1,61 @@
 # -*- coding: utf-8 -*-
 import logging
-import sys
 import traceback
+
+import sys
+
+if sys.version_info >= (3,):
+    msg = "duckietown-shell only works on Python 2.7. Python 3 is not supported yet."
+    raise ImportError(msg)
+
 
 logging.basicConfig()
 
 dtslogger = logging.getLogger('dts')
 dtslogger.setLevel(logging.INFO)
 
-import termcolor
 
 __version__ = '3.0.2'
+
+dtslogger.info('duckietown-shell %s' % __version__)
+
+msg = """
+
+    Problems with a step in the Duckiebot operation manual?
+    
+        Report here: https://github.com/duckietown/docs-opmanual_duckiebot/issues
+    
+    
+    Other problems?  
+    
+        Report here: https://github.com/duckietown/duckietown-shell-commands/issues
+        
+        Tips:
+        
+        - NEVER install duckietown-shell using "sudo". Instead use:
+            
+            pip install --user -U duckietown-shell
+            
+          Note the switch "--user" to install in ~/.local
+        
+        - Delete ~/.dt-shell to reset the shell to "factory settings".
+          This is useful if some update fails.
+          
+          (Note: you will have to re-configure)
+          
+        - Last resort is deleting ~/.local and re-install from scratch.
+
+"""
+dtslogger.info(msg)
+
+
+import termcolor
+
 
 from .cli import DTShell
 
 from .dt_command_abs import DTCommandAbs
 from .dt_command_placeholder import DTCommandPlaceholder
-
-dtslogger.info('duckietown-shell %s' % __version__)
-dtslogger.info(
-        'Please report problems with specific commands at https://github.com/duckietown/duckietown-shell-commands/issues/new')
-dtslogger.info('Please report problems with the shell at https://github.com/duckietown/duckietown-shell/issues/new')
-
 
 def cli_main():
     # TODO: register handler for Ctrl-C
