@@ -3,7 +3,7 @@ texttable
 base58
 ecdsa
 python-dateutil
-SystemCmd
+SystemCmd==2.0.9
 PyContracts
 whichcraft
 termcolor
