@@ -1,29 +1,38 @@
 # Duckietown Shell
 
-*Duckietown Shell* is a pure Python, easily distributable (no dependencies) utility for Duckietown.
+*Duckietown Shell* is a pure Python, easily distributable (few dependencies) utility for Duckietown.
 
 The idea is that most of the functionality is implemented as Docker containers, and `dt-shell` provides a nice interface for that, so that user should not type a very long `docker run` command line.
 
 ## Prerequisites
 
-You must be using `pip` with Python 2.x to use Duckietown Shell:
+You must be using `pip` with Python 2.x to use Duckietown Shell.
+
+Check the output of this command:
 
     $ pip --version # Should return something like: pip 18.0 from ...python2.7/site-packages/pip (python 2.7)
-    
-If not, first install `virtualenv`:
+
+If it says "2.7", you are golden and can skip down to "installation".
+
+Otherwise make a virtual environment as suggested below.
+
+
+### Python 2 virtual environment (necessary if Python 3 is the default)
+
+Install `virtualenv`:
 
     $ pip install virtualenv
     
 Then create a new virtual environment, `dts`:
 
-    $ virtualenv -p <PATH_TO_PYTHON2_BINARY> dts
+    $ virtualenv -p `which python2` dts
     
 Then activate the `dts` environment:
 
     $ source dts/bin/activate
     (dts) $ 
 
-Now, you now should be ready to install duckietown-shell. To deactivate `dts` later, run `deactivate`.
+Now, you now should be ready to install `duckietown-shell`. To deactivate `dts` later, run `deactivate`.
 
 ## Installation
 
