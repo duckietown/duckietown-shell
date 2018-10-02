@@ -42,9 +42,11 @@ Installs pip, git, git-lfs, docker, duckietown-shell:
     $ sudo apt install -y docker.io
     $ sudo adduser `whoami` docker
     
-    $ sudo pip install --no-cache-dir -U duckietown-shell
+    $ pip install --no-cache-dir -U duckietown-shell
     
 Note: you need to *log in and out* to have the group change take effect.
+
+**Note: Never use `sudo pip install` to install `duckietown-shell`.**
 
 ### Installation on Ubuntu 16.xx
 
@@ -58,10 +60,11 @@ Installs pip, git, git-lfs, docker, duckietown-shell:
     $ curl -fsSL https://get.docker.com | sudo bash
     $ sudo usermod -aG docker `whoami` 
     
-    $ sudo pip install --no-cache-dir -U duckietown-shell
+    $ pip install --no-cache-dir -U duckietown-shell
     
 Note: you need to *log in and out* to have the group change take effect.
 
+**Note: Never use `sudo pip install` to install `duckietown-shell`.**
 
 ### Installation in other operating systems
 
@@ -69,10 +72,11 @@ You will need to find the instructions for git, git-lfs, docker.
 
 To install the shell, use:
 
-    $ sudo pip install --no-cache-dir -U duckietown-shell
+    $ pip install --no-cache-dir -U duckietown-shell
 
 The shell itself does not require any other dependency beside standard cross-platform Python libraries.
 
+**Note: Never use `sudo pip install` to install `duckietown-shell`.**
  
 -----------------------
         
