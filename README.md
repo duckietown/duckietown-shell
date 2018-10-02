@@ -42,7 +42,7 @@ Installs pip, git, git-lfs, docker, duckietown-shell:
     $ sudo apt install -y docker.io
     $ sudo adduser `whoami` docker
     
-    $ pip install --no-cache-dir -U duckietown-shell
+    $ pip2 install --no-cache-dir -U duckietown-shell
     
 Note: you need to *log in and out* to have the group change take effect.
 
@@ -60,7 +60,7 @@ Installs pip, git, git-lfs, docker, duckietown-shell:
     $ curl -fsSL https://get.docker.com | sudo bash
     $ sudo usermod -aG docker `whoami` 
     
-    $ pip install --no-cache-dir -U duckietown-shell
+    $ pip2 install --no-cache-dir -U duckietown-shell
     
 Note: you need to *log in and out* to have the group change take effect.
 
@@ -72,7 +72,7 @@ You will need to find the instructions for git, git-lfs, docker.
 
 To install the shell, use:
 
-    $ pip install --no-cache-dir -U duckietown-shell
+    $ pip2 install --no-cache-dir -U duckietown-shell
 
 The shell itself does not require any other dependency beside standard cross-platform Python libraries.
 
