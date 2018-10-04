@@ -86,8 +86,6 @@ class DTShell(Cmd, object):
             if not self._init_commands():
                 exit()
             cmds_just_initialized = True
-        # discover commands
-        self.reload_commands()
         # call super constructor
         super(DTShell, self).__init__()
         # remove the char `-` from the list of word separators, this allows us to suggest flags
@@ -98,6 +96,8 @@ class DTShell(Cmd, object):
         # Do not check it if we are using custom commands_path_leave_alone
         if not is_shell_outdated and not cmds_just_initialized and not self.commands_path_leave_alone:
             self.check_commands_outdated()
+        # discover commands
+        self.reload_commands()
 
     def postcmd(self, stop, line):
         if len(line.strip()) > 0:
