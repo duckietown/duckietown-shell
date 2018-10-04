@@ -12,7 +12,7 @@ if sys.version_info >= (3,):
 logging.basicConfig()
 
 dtslogger = logging.getLogger('dts')
-dtslogger.setLevel(logging.INFO)
+dtslogger.setLevel(logging.DEBUG)
 
 
 __version__ = '3.0.6'
