@@ -6,6 +6,7 @@ import json
 import os
 import sys
 import time
+import traceback
 import urllib2
 from cmd import Cmd
 from os import makedirs, remove, utime
@@ -43,6 +44,7 @@ Type "help" or "?" to list commands.
 
 
 class DTShell(Cmd, object):
+    errors_loading = []
     prompt = 'dt> '
     config = {}
     commands = {}
@@ -96,8 +98,9 @@ class DTShell(Cmd, object):
         # Do not check it if we are using custom commands_path_leave_alone
         if not is_shell_outdated and not cmds_just_initialized and not self.commands_path_leave_alone:
             self.check_commands_outdated()
-        # discover commands
+
         self.reload_commands()
+
 
     def postcmd(self, stop, line):
         if len(line.strip()) > 0:
@@ -193,6 +196,26 @@ class DTShell(Cmd, object):
         # print('commands: %s' % self.commands)
         for cmd, subcmds in self.commands.items():
             self._load_commands('', cmd, subcmds, 0)
+
+        if DTShell.errors_loading:
+            msg = """
+
+
+            !   Could not load commands.
+
+                %s
+
+            !   To recover, you might want to delete the directory
+            !
+            !      ~/.dt-shell/commands
+            !
+            !    
+
+            """ % "\n\n".join(DTShell.errors_loading)
+
+            time.sleep(1)
+            dtslogger.error(msg)
+            time.sleep(5)
 
     def enable_command(self, command_name):
         if command_name in self.core_commands:
@@ -319,14 +342,16 @@ class DTShell(Cmd, object):
         klass = None
         error_loading = False
         if not sub_commands:
+            spec = package + command + '.command.DTCommand'
             try:
-                spec = package + command + '.command.DTCommand'
                 klass = self._load_class(spec)
-            except AttributeError as e:
+            except BaseException as e:
                 # error_loading = True
-                msg = 'Cannot load command class %r (package=%r, command=%r): %s' % (spec, package, command, e)
+                msg = 'Cannot load command class %r (package=%r, command=%r): %s' % (spec, package, command, traceback.format_exc(e))
                 # msg += ' sys.path: %s' % sys.path
-                raise InvalidConfig(msg)
+                DTShell.errors_loading.append(msg)
+                return
+
         # handle loading error and wrong class
         if error_loading:
             klass = DTCommandPlaceholder()
