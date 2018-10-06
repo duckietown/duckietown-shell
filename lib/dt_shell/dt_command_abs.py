@@ -39,7 +39,7 @@ class DTCommandAbs(object):
                     cls.commands[word].do_command(cls.commands[word], shell, ' '.join(parts[1:]))
                 else:
                     print('Command `%s` not recognized.\nAvailable sub-commands are:\n\n\t%s' % (
-                    word.strip(), '\n\t'.join(cls.commands.keys())))
+                        word.strip(), '\n\t'.join(cls.commands.keys())))
             else:
                 cls.command(shell, args)
         else:

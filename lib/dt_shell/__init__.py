@@ -19,34 +19,6 @@ __version__ = '3.0.6'
 
 dtslogger.info('duckietown-shell %s' % __version__)
 
-msg = """
-
-    Problems with a step in the Duckiebot operation manual?
-    
-        Report here: https://github.com/duckietown/docs-opmanual_duckiebot/issues
-    
-    
-    Other problems?  
-    
-        Report here: https://github.com/duckietown/duckietown-shell-commands/issues
-        
-        Tips:
-        
-        - NEVER install duckietown-shell using "sudo". Instead use:
-            
-            pip install --user -U duckietown-shell
-            
-          Note the switch "--user" to install in ~/.local
-        
-        - Delete ~/.dt-shell to reset the shell to "factory settings".
-          This is useful if some update fails.
-          
-          (Note: you will have to re-configure)
-          
-        - Last resort is deleting ~/.local and re-install from scratch.
-
-"""
-dtslogger.info(msg)
 
 
 import termcolor
@@ -59,6 +31,34 @@ from .dt_command_placeholder import DTCommandPlaceholder
 
 def cli_main():
     # TODO: register handler for Ctrl-C
+    msg = """
+
+        Problems with a step in the Duckiebot operation manual?
+
+            Report here: https://github.com/duckietown/docs-opmanual_duckiebot/issues
+
+
+        Other problems?  
+
+            Report here: https://github.com/duckietown/duckietown-shell-commands/issues
+
+            Tips:
+
+            - NEVER install duckietown-shell using "sudo". Instead use:
+
+                pip install --user -U duckietown-shell
+
+              Note the switch "--user" to install in ~/.local
+
+            - Delete ~/.dt-shell to reset the shell to "factory settings".
+              This is useful if some update fails.
+
+              (Note: you will have to re-configure)
+
+            - Last resort is deleting ~/.local and re-install from scratch.
+
+    """
+    dtslogger.info(msg)
 
     from dt_shell.env_checks import InvalidEnvironment
 

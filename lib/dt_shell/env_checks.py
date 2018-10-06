@@ -1,10 +1,9 @@
 import getpass
 import sys
 
+from dt_shell.constants import DTShellConstants
 from system_cmd import system_cmd_result, CmdException
 from whichcraft import which
-
-from dt_shell.constants import DTShellConstants
 
 
 class InvalidEnvironment(Exception):
@@ -23,11 +22,10 @@ def check_docker_environment():
     else:
         print('skipping env check')
 
-
     try:
         import docker
     except Exception as e:
-        msg ='Could not import package docker:\n%s' % e
+        msg = 'Could not import package docker:\n%s' % e
         msg += '\n\nTry    pip install --user -U docker'
         raise InvalidEnvironment(msg)
 
@@ -38,7 +36,6 @@ def check_docker_environment():
         msg = 'I cannot communicate with Docker:\n%s' % e
         msg += '\n\nMake sure the docker service is running.'
         raise InvalidEnvironment(msg)
-
 
 
 def on_linux():
