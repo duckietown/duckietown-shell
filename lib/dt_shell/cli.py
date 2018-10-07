@@ -115,9 +115,6 @@ class DTShell(Cmd, object):
             res += ' '
         return res
 
-    def get_version(self):
-        return self.VERSION
-
     def load_config(self):
         with open(self.config_file, 'r') as fp:
             self.config = json.load(fp)

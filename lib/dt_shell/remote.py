@@ -63,6 +63,10 @@ def make_server_request(token, endpoint, data=None, method='GET', timeout=3):
     try:
         res = urllib2.urlopen(req, timeout=timeout)
         data = res.read()
+    except urllib2.HTTPError as e:
+        msg = 'Operation failed for %s' % url
+        msg += '\n\n' + e.read()
+        raise ConnectionError(msg)
     except urllib2.URLError as e:
         msg = 'Cannot connect to server %s' % url
         raise_wrapped(ConnectionError, e, msg)
@@ -139,6 +143,7 @@ def dtserver_get_user_submissions(token):
         for k in ['date_submitted', 'last_status_change']:
             v[k] = dateutil.parser.parse(v[k])
     return submissions
+
 
 # TODO: you can delete the following around Oct 15
 
