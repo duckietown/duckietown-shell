@@ -51,6 +51,7 @@ class DTShell(Cmd, object):
     core_commands = ['commands', 'install', 'uninstall', 'update', 'version', 'exit', 'help']
 
     def __init__(self):
+
         self.intro = INTRO
 
         is_shell_outdated = check_if_outdated()
