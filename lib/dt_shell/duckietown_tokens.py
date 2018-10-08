@@ -102,6 +102,7 @@ SAMPLE_TOKEN = 'dt1-9Hfd69b5ythetkCiNG12pKDrL987sLJT6KejWP2Eo5QQ-43dzqWFnWd8KBa1
 SAMPLE_TOKEN_UID = -1
 SAMPLE_TOKEN_EXP = '2018-10-20'
 
+
 def tests_private():
     payload = json.dumps({'uid': SAMPLE_TOKEN_UID, 'exp': SAMPLE_TOKEN_EXP})
     # generate a token

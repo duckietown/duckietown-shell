@@ -4,12 +4,14 @@ from __future__ import print_function
 import datetime
 import json
 import os
+import subprocess
+import time
 import urllib2
-
-import ruamel
-import ruamel.yaml as yaml
+#
+# import ruamel
+# import ruamel.yaml as yaml
 import termcolor
-from system_cmd import system_cmd_result
+import yaml
 from whichcraft import which
 
 from . import __version__, dtslogger
@@ -27,23 +29,29 @@ def get_last_version_fresh():
         req = urllib2.Request(url)
         try:
             res = urllib2.urlopen(req, timeout=2)
-            if res.getcode() != 200: return None
+            if res.getcode() != 200:
+                return None
             data = res.read()
-        except urllib2.URLError as e:
+        except urllib2.URLError:
             # msg = 'Cannot connect to server %s: %s' % (url, (e))
             # raise Exception(msg)
             if which('curl') is not None:
-                res = system_cmd_result('.', ['curl', url, '-m', '2'])
-                if res.ret != 0: return None
-                data = res.stdout
+                cmd = ['curl', url, '-m', '2']
+                try:
+                    data = subprocess.check_output(cmd)
+                except subprocess.CalledProcessError as e:
+                    msg = 'Could not call %s: %s' % (cmd, e)
+                    raise CouldNotGetVersion(msg)
             else:
-                raise CouldNotGetVersion()
+                msg = 'curl not available'
+                raise CouldNotGetVersion(msg)
 
         info = json.loads(data)
         last_version = info['info']['version']
         return last_version
     except Exception as e:
         raise CouldNotGetVersion(str(e))
+
 
 def get_cache_filename():
     d0 = os.path.expanduser(DTShellConstants.ROOT)
@@ -59,7 +67,8 @@ def read_cache():
         fn = get_cache_filename()
         if os.path.exists(fn):
             data = open(fn).read()
-            interpreted = yaml.load(data, Loader=ruamel.yaml.Loader)
+            # interpreted = yaml.load(data, Loader=ruamel.yaml.Loader)
+            interpreted = yaml.load(data)
             version = interpreted['version']
             dt = interpreted['timestamp']
             return version, dt
@@ -104,6 +113,7 @@ def get_last_version():
         if version:
             write_cache(version, now)
 
+    # XXX: this might not be set
     return version
 
 
@@ -117,5 +127,8 @@ def check_if_outdated():
         msg += '\n\nPlease run:\n\npip install --user -U --no-cache-dir duckietown-shell==%s' % (latest_version)
         msg += '\n\n'
         print(termcolor.colored(msg, 'yellow'))
+        wait = 5
+        print('Waiting %d seconds to give you time to read the message.' % wait)
+        time.sleep(wait)
         return True
     return False

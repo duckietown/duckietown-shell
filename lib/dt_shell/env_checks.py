@@ -1,9 +1,10 @@
 import getpass
+import subprocess
 import sys
 
-from dt_shell.constants import DTShellConstants
-from system_cmd import system_cmd_result, CmdException
 from whichcraft import which
+
+from .constants import DTShellConstants
 
 
 class InvalidEnvironment(Exception):
@@ -61,12 +62,14 @@ def check_user_in_group(name):
 
 
 def check_git_supports_superproject():
-    res = system_cmd_result('.', ['git', '--version'],
-                            display_stdout=False,
-                            display_stderr=False,
-                            raise_on_error=True,
-                            capture_keyboard_interrupt=False,
-                            env=None)
+    pass
+    #
+    # res = system_cmd_result('.', ['git', '--version'],
+    #                         display_stdout=False,
+    #                         display_stderr=False,
+    #                         raise_on_error=True,
+    #                         capture_keyboard_interrupt=False,
+    #                         env=None)
 
 
 def get_active_groups(username=None):
@@ -76,15 +79,16 @@ def get_active_groups(username=None):
         cmd.append(username)
 
     try:
-        res = system_cmd_result('.', cmd,
-                                display_stdout=False,
-                                display_stderr=False,
-                                raise_on_error=True,
-                                capture_keyboard_interrupt=False,
-                                env=None)
-    except CmdException as e:
+        stdout = subprocess.check_output(['groups'])
+        # res = system_cmd_result('.', cmd,
+        #                         display_stdout=False,
+        #                         display_stderr=False,
+        #                         raise_on_error=True,
+        #                         capture_keyboard_interrupt=False,
+        #                         env=None)
+    except subprocess.CalledProcessError as e:
         raise Exception(str(e))
-    active_groups = res.stdout.split()  # XXX
+    active_groups = stdout.split()
     return active_groups
 
 

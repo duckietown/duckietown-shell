@@ -3,7 +3,7 @@ import json
 import sys
 
 import dateutil.parser
-from dt_shell.duckietown_tokens import DuckietownToken, get_verify_key
+from .duckietown_tokens import DuckietownToken, get_verify_key
 
 
 def verify_a_token_main(args=None):

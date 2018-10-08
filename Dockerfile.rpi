@@ -1,0 +1,29 @@
+FROM duckietown/rpi-duckiebot-raspberrypi3-python:master18
+#FROM resin/raspberry-pi-alpine-python:2
+
+RUN [ "cross-build-start" ]
+#
+#RUN apt-get install git
+#RUN apk add --no-cache git
+#
+#RUN cd duckietown-shell && \
+#    pip install python-dateutil && \
+#    pip install --no-cache-dir -U duckietown-shell && \
+#    cd .. && \
+#    rm -rf duckietown-shell
+
+
+COPY requirements.txt /duckietown-shell/requirements.txt
+RUN pip install -r /duckietown-shell/requirements.txt
+
+COPY lib /duckietown-shell/lib
+COPY setup.py /duckietown-shell/setup.py
+
+WORKDIR /duckietown-shell
+RUN python setup.py install
+
+
+
+RUN [ "cross-build-end" ]
+
+ENTRYPOINT ["dts"]

@@ -101,7 +101,6 @@ class DTShell(Cmd, object):
 
         self.reload_commands()
 
-
     def postcmd(self, stop, line):
         if len(line.strip()) > 0:
             print('')
@@ -193,6 +192,26 @@ class DTShell(Cmd, object):
         # print('commands: %s' % self.commands)
         for cmd, subcmds in self.commands.items():
             self._load_commands('', cmd, subcmds, 0)
+
+        # For Andrea D. : how about this?
+        # Commands come in their packages, which allows dependencies.
+        # This also allows to give people permission to update only
+        # part of the commands.
+        try:
+            import duckietown_challenges_commands
+        except BaseException as e:
+            msg = 'Could not import duckietown_challenges_commands: %s' % e
+            print(msg)
+        else:
+            dirname = os.path.dirname(duckietown_challenges_commands.__file__)
+            msg = 'Challenges installed in %s' % dirname
+            #print(msg)
+            commands = os.path.join(dirname, 'commands')
+            if os.path.exists(commands):
+                msg = 'Available commands at %s' % commands
+                #print(msg)
+
+            # TODO: load commands with prefix "challenges"
 
         if DTShell.errors_loading:
             msg = """
@@ -344,7 +363,8 @@ class DTShell(Cmd, object):
                 klass = self._load_class(spec)
             except BaseException as e:
                 # error_loading = True
-                msg = 'Cannot load command class %r (package=%r, command=%r): %s' % (spec, package, command, traceback.format_exc(e))
+                msg = 'Cannot load command class %r (package=%r, command=%r): %s' % (
+                    spec, package, command, traceback.format_exc(e))
                 # msg += ' sys.path: %s' % sys.path
                 DTShell.errors_loading.append(msg)
                 return

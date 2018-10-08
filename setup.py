@@ -35,16 +35,15 @@ setup(name='duckietown-shell',
       install_requires=[
           'GitPython',
           'texttable',
-          'docker',
           'base58',
           'ecdsa',
           'python-dateutil',
-          'SystemCmd>=2.0.9',
-          'PyContracts',  # XXX: should be a dep for SystemCmd
           'whichcraft',
           'termcolor',
           'PyYAML',
           'docker',
+          # needed for duckietown-challenges
+          # eventually have to be removed
           'ruamel.yaml',
           'ruamel.ordereddict',
           'psutil',
@@ -62,7 +61,6 @@ setup(name='duckietown-shell',
 
       entry_points={
           'console_scripts': [
-              'dt = dt_shell:cli_main',
               'dts = dt_shell:cli_main',
           ]
       }
