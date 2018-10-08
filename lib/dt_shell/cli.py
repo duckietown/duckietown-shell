@@ -201,15 +201,15 @@ class DTShell(Cmd, object):
             import duckietown_challenges_commands
         except BaseException as e:
             msg = 'Could not import duckietown_challenges_commands: %s' % e
-            print(msg)
+            # print(msg)
         else:
             dirname = os.path.dirname(duckietown_challenges_commands.__file__)
             msg = 'Challenges installed in %s' % dirname
-            #print(msg)
+            # print(msg)
             commands = os.path.join(dirname, 'commands')
             if os.path.exists(commands):
                 msg = 'Available commands at %s' % commands
-                #print(msg)
+                # print(msg)
 
             # TODO: load commands with prefix "challenges"
 
@@ -349,7 +349,7 @@ class DTShell(Cmd, object):
                 mod = getattr(mod, comp)
             except AttributeError as e:
                 msg = 'Could not get field %r of module %r: %s' % (comp, mod.__name__, e)
-                msg += '\n module file %s' % mod.__file__
+                msg += '\n module file %s' % getattr(mod, '__file__', '?')
                 raise AttributeError(msg)
         return mod
 

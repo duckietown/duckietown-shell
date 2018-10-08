@@ -32,13 +32,14 @@ def get_last_version_fresh():
             if res.getcode() != 200:
                 return None
             data = res.read()
-        except urllib2.URLError:
+        except urllib2.URLError as e:
+            # print(str(e))
             # msg = 'Cannot connect to server %s: %s' % (url, (e))
             # raise Exception(msg)
             if which('curl') is not None:
                 cmd = ['curl', url, '-m', '2']
                 try:
-                    data = subprocess.check_output(cmd)
+                    data = subprocess.check_output(cmd, stderr=subprocess.PIPE)
                 except subprocess.CalledProcessError as e:
                     msg = 'Could not call %s: %s' % (cmd, e)
                     raise CouldNotGetVersion(msg)
@@ -46,10 +47,17 @@ def get_last_version_fresh():
                 msg = 'curl not available'
                 raise CouldNotGetVersion(msg)
 
-        info = json.loads(data)
+        try:
+            info = json.loads(data)
+        except BaseException as e:
+            msg = 'Could not read json %r' % data
+            raise CouldNotGetVersion(msg)
+
         last_version = info['info']['version']
         return last_version
-    except Exception as e:
+    except CouldNotGetVersion:
+        raise
+    except BaseException as e:
         raise CouldNotGetVersion(str(e))
 
 
