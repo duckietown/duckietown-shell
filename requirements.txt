@@ -3,10 +3,12 @@ texttable
 base58
 ecdsa
 python-dateutil
-SystemCmd==2.0.9
-PyContracts
 whichcraft
 termcolor
 PyYAML
 docker
+# needed for duckietown-challenges
+# eventually have to be removed
+ruamel.yaml
+ruamel.ordereddict
 psutil

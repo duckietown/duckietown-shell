@@ -13,26 +13,25 @@ jobs:
                 #apt install python-pip
                 pip install --user --upgrade -r requirements.txt
 
-
         - run:
             name: build
             command: |
               python setup.py install --user
 
         - run:
-            name: dt help
+            name: dts help
             command: |
                export PATH=/home/circleci/.local/bin:$PATH
-               dt help
+               dts help
 
         - run:
-            name: dt version
+            name: dts version
             command: |
                export PATH=/home/circleci/.local/bin:$PATH
-               dt version
-
-        - run:
-            name: dt aido token
-            command: |
-               export PATH=/home/circleci/.local/bin:$PATH
-               dt aido18 token dt1-XXzMstGtdJhJeXv-43dzqWFnWd8KBa1yev1g3UKnzVxZkkTbfQj2vduBXhfPjK6FSSCHQZPr986b8tXASH || true
+               dts version
+#
+#        - run:
+#            name: dts aido token
+#            command: |
+#               export PATH=/home/circleci/.local/bin:$PATH
+#               dts aido18 token dt1-XXzMstGtdJhJeXv-43dzqWFnWd8KBa1yev1g3UKnzVxZkkTbfQj2vduBXhfPjK6FSSCHQZPr986b8tXASH || true

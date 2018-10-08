@@ -3,9 +3,9 @@ import os
 import urllib2
 
 import dateutil.parser
-from contracts import raise_wrapped, indent
 
 from . import dtslogger
+from .utils import raise_wrapped, indent
 
 
 class Storage(object):

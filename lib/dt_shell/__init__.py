@@ -1,33 +1,28 @@
 # -*- coding: utf-8 -*-
 import logging
-import traceback
-
 import sys
+import traceback
 
 if sys.version_info >= (3,):
     msg = "duckietown-shell only works on Python 2.7. Python 3 is not supported yet."
     raise ImportError(msg)
-
 
 logging.basicConfig()
 
 dtslogger = logging.getLogger('dts')
 dtslogger.setLevel(logging.DEBUG)
 
-
 __version__ = '3.0.8'
 
 dtslogger.info('duckietown-shell %s' % __version__)
 
-
-
 import termcolor
-
 
 from .cli import DTShell
 
 from .dt_command_abs import DTCommandAbs
 from .dt_command_placeholder import DTCommandPlaceholder
+
 
 def cli_main():
     # TODO: register handler for Ctrl-C
@@ -60,7 +55,7 @@ def cli_main():
     """
     dtslogger.info(msg)
 
-    from dt_shell.env_checks import InvalidEnvironment
+    from .env_checks import InvalidEnvironment
 
     shell = DTShell()
     arguments = sys.argv[1:]
