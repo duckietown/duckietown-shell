@@ -54,7 +54,7 @@ class DTShell(Cmd, object):
 
         self.intro = INTRO
 
-        dtslogger.debug('sys.argv: %s' % sys.argv)
+        # dtslogger.debug('sys.argv: %s' % sys.argv)
         is_shell_outdated = check_if_outdated()
 
         self.config_path = os.path.expanduser(DTShellConstants.ROOT)
@@ -317,7 +317,6 @@ to retrieve the newest version.
         except Exception as e:
             msg = 'Could not update libraries: %s' % e
             dtslogger.error(msg)
-
 
         # TODO: make sure this is not necessary
         # for submodule in commands_repo.submodules:
