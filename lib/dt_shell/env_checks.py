@@ -12,16 +12,18 @@ class InvalidEnvironment(Exception):
 
 
 def check_docker_environment():
-    print('checking docker environment')
+    from . import dtslogger
+    dtslogger.debug('checking docker environment')
     check_executable_exists('docker')
 
     if on_linux():
         username = getpass.getuser()
         if username != 'root':
             check_user_in_group('docker')
-        print('checked groups')
+        # print('checked groups')
     else:
-        print('skipping env check')
+        pass
+        dtslogger.debug('skipping env check because not on Linux')
 
     try:
         import docker

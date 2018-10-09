@@ -51,6 +51,7 @@ class DTShell(Cmd, object):
     core_commands = ['commands', 'install', 'uninstall', 'update', 'version', 'exit', 'help']
 
     def __init__(self):
+
         self.intro = INTRO
 
         is_shell_outdated = check_if_outdated()
@@ -163,12 +164,18 @@ class DTShell(Cmd, object):
         # check if we need to update
         need_update = local_sha != remote_sha
         if need_update:
-            print("\n" +
-                  " *** UPDATE ***\n" +
-                  " An updated version of the commands is available.\n" +
-                  " Run the command {cmd} to retrieve the newest version.\n".format(
-                          cmd=termcolor.colored('update', "red", attrs=['bold'])
-                  ))
+            msg = """ 
+                  
+An updated version of the commands is available
+
+Run the command  
+
+    dts update
+
+to retrieve the newest version.
+
+            """
+            print(termcolor.colored(msg, "yellow", attrs=['bold']))
         # cache remote SHA
         if not use_cached_sha:
             with open(self.commands_update_check_flag, 'w') as fp:
@@ -304,7 +311,12 @@ class DTShell(Cmd, object):
         print('OK')
         # update all submodules
         print('Updating libraries...', end='')
-        commands_repo.submodule_update(recursive=True, to_latest_revision=False)
+        try:
+            commands_repo.submodule_update(recursive=True, to_latest_revision=False)
+        except Exception as e:
+            msg = 'Could not update libraries: %s' % e
+            dtslogger.error(msg)
+
 
         # TODO: make sure this is not necessary
         # for submodule in commands_repo.submodules:

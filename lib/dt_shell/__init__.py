@@ -25,6 +25,8 @@ from .dt_command_placeholder import DTCommandPlaceholder
 
 
 def cli_main():
+    from .col_logging import setup_logging_color
+    setup_logging_color()
     # TODO: register handler for Ctrl-C
     msg = """
 

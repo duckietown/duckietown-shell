@@ -7,9 +7,7 @@ import os
 import subprocess
 import time
 import urllib2
-#
-# import ruamel
-# import ruamel.yaml as yaml
+
 import termcolor
 import yaml
 from whichcraft import which
@@ -33,9 +31,8 @@ def get_last_version_fresh():
                 return None
             data = res.read()
         except urllib2.URLError as e:
-            # print(str(e))
-            # msg = 'Cannot connect to server %s: %s' % (url, (e))
-            # raise Exception(msg)
+            # print('falling back to curl')
+
             if which('curl') is not None:
                 cmd = ['curl', url, '-m', '2']
                 try:
@@ -103,6 +100,8 @@ def write_cache(version, dt):
 def get_last_version():
     now = datetime.datetime.now()
     update = False
+
+    version = None
     try:
         version, timestamp = read_cache()
     except NoCacheAvailable:
@@ -117,9 +116,12 @@ def get_last_version():
 
     if update:
         dtslogger.debug('Getting last version from PyPI.')
-        version = get_last_version_fresh()
-        if version:
+        try:
+            version = get_last_version_fresh()
             write_cache(version, now)
+            return version
+        except CouldNotGetVersion:
+            return None
 
     # XXX: this might not be set
     return version
