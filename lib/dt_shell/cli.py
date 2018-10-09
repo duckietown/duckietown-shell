@@ -54,6 +54,7 @@ class DTShell(Cmd, object):
 
         self.intro = INTRO
 
+        dtslogger.debug('sys.argv: %s' % sys.argv)
         is_shell_outdated = check_if_outdated()
 
         self.config_path = os.path.expanduser(DTShellConstants.ROOT)

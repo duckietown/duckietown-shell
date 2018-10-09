@@ -1,4 +1,3 @@
-
 import traceback
 
 
@@ -75,3 +74,14 @@ def raise_type_mismatch(ob, expected, **kwargs):
     e += '\n  obtained: %s' % str(type(ob))
     # e += '\n' + indent(format_obs(kwargs), ' ')
     raise ValueError(e)
+
+
+SPACE_TAG = 'SPACE_TAG'
+
+
+def replace_spaces(x):
+    return x.replace(' ', SPACE_TAG)
+
+
+def undo_replace_spaces(x):
+    return x.replace(SPACE_TAG, ' ')

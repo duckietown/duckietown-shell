@@ -27,10 +27,12 @@ class DTCommandAbs(object):
 
     @staticmethod
     def do_command(cls, shell, line):
-        # print '>[%s]@(%s, %s)' % (line, cls.name, cls.__class__)
+        print '>[%s]@(%s, %s)' % (line, cls.name, cls.__class__)
         line = line.strip()
         parts = [p.strip() for p in line.split(' ')]
         args = [p for p in parts if len(p) > 0]
+        from dt_shell.utils import undo_replace_spaces
+        args = map(undo_replace_spaces, args)
         word = parts[0]
         # print '[%s, %r]@(%s, %s)' % (word, parts, cls.name, cls.__class__)
         if len(word) > 0:

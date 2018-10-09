@@ -21,8 +21,9 @@ def get_duckietown_server_url():
     if V in os.environ:
         use = os.environ[V]
         if not Storage.done:
-            msg = 'Using server %s instead of default %s' % (use, DEFAULT_DTSERVER)
-            dtslogger.info(msg)
+            if use != DEFAULT_DTSERVER:
+                msg = 'Using server %s instead of default %s' % (use, DEFAULT_DTSERVER)
+                dtslogger.info(msg)
             Storage.done = True
         return use
     else:

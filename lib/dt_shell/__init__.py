@@ -18,6 +18,7 @@ dtslogger.info('duckietown-shell %s' % __version__)
 
 import termcolor
 
+
 from .cli import DTShell
 
 from .dt_command_abs import DTCommandAbs
@@ -66,6 +67,8 @@ def cli_main():
 
     try:
         if arguments:
+            from dt_shell.utils import replace_spaces
+            arguments = map(replace_spaces, arguments)
             cmdline = " ".join(arguments)
             shell.onecmd(cmdline)
         else:
@@ -78,3 +81,4 @@ def cli_main():
         msg = traceback.format_exc(e)
         termcolor.cprint(msg, 'red')
         sys.exit(2)
+
