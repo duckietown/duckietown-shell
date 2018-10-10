@@ -45,7 +45,7 @@ setup(name='duckietown-shell',
           # needed for duckietown-challenges
           # eventually have to be removed
           'ruamel.yaml',
-          'ruamel.ordereddict',
+          #'ruamel.ordereddict',
           'psutil',
       ],
 

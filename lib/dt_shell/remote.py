@@ -93,7 +93,8 @@ def make_server_request(token, endpoint, data=None, method='GET', timeout=3):
             raise ConnectionError(msg)
         return result['result']
     else:
-        msg = 'Failed request for %s:\n%s' % (url, result.get('error', result))
+        msg = result.get('msg', 'no error message in %s '% result)
+        msg = 'Failed request for %s:\n%s' % (url, msg)
         raise RequestFailed(msg)
 
 
@@ -123,13 +124,6 @@ def dtserver_retire(token, submission_id):
     endpoint = '/submissions'
     method = 'DELETE'
     data = {'submission_id': submission_id}
-    return make_server_request(token, endpoint, data=data, method=method)
-
-
-def dtserver_challenge_define(token, yaml):
-    endpoint = '/challenge-define'
-    method = 'POST'
-    data = {'yaml': yaml}
     return make_server_request(token, endpoint, data=data, method=method)
 
 
