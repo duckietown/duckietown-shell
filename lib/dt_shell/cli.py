@@ -63,6 +63,11 @@ class DTShell(Cmd, object):
         V = DTShellConstants.ENV_COMMANDS
         if V in os.environ:
             self.commands_path = os.environ[V]
+
+            if not os.path.exists(self.commands_path):
+                msg = 'The path %s that you gave with the env. variable %s does not exist.' % (self.commands_path, V)
+                raise Exception(msg)
+
             self.commands_path_leave_alone = True
             msg = 'Using path %r as prescribed by env variable %s.' % (self.commands_path, V)
             dtslogger.info(msg)
@@ -87,8 +92,11 @@ class DTShell(Cmd, object):
         if exists(self.commands_path) and isfile(self.commands_path):
             remove(self.commands_path)
         if not exists(self.commands_path):
+            msg = 'I cannot find the command path %s' % self.commands_path
+            dtslogger.warning(msg)
             if not self._init_commands():
-                exit()
+                msg = 'I could not initialize the commands.'
+                raise Exception(msg)
             cmds_just_initialized = True
         # call super constructor
         super(DTShell, self).__init__()
@@ -269,7 +277,7 @@ to retrieve the newest version.
         if self.commands_path_leave_alone:
             msg = 'Will not try to update the commands path.'
             print(msg)
-            return
+            return True
         print('Downloading commands in %s ...' % self.commands_path)
         # create commands repo
         commands_repo = Repo.init(self.commands_path)
