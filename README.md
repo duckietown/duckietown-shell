@@ -86,7 +86,23 @@ To install the shell, use:
 The shell itself does not require any other dependency beside standard cross-platform Python libraries.
 
 **Note: Never use `sudo pip install` to install `duckietown-shell`.**
- 
+
+-----------------------
+
+## Testing Duckietown shell
+
+At this point, try to enter the Duckietown shell by typing the command
+
+    $ dts
+
+If you get an error, delete the subfolder `commands` in the folder `~/.dt-shell` 
+
+    ~/.dt-shell$ rm -rf commands/
+
+Then, try again
+
+    $ dts
+
 -----------------------
         
 
