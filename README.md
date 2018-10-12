@@ -51,7 +51,7 @@ Installs pip, git, git-lfs, docker, duckietown-shell:
     $ sudo apt install -y docker.io
     $ sudo adduser `whoami` docker
     
-    $ sudo pip2 install --no-cache-dir -U duckietown-shell
+    $ pip2 install --no-cache-dir -U duckietown-shell
     
 Note: you need to *log in and out* to have the group change take effect.
 
