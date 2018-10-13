@@ -3,6 +3,7 @@ import os
 
 import dateutil.parser
 import six
+import termcolor
 
 from . import dtslogger
 from .utils import raise_wrapped, indent
@@ -60,7 +61,10 @@ def make_server_request(token, endpoint, data=None, method='GET', timeout=3):
     server = get_duckietown_server_url()
     url = server + endpoint
 
-    headers = {'X-Messaging-Token': token}
+    headers = {}
+    if token is not None:
+        headers['X-Messaging-Token'] = token
+
     if data is not None:
         data = json.dumps(data)
     if six.PY3:
@@ -91,6 +95,15 @@ def make_server_request(token, endpoint, data=None, method='GET', timeout=3):
         msg = 'Server provided invalid JSON response. Expected a dict with "ok" in it.'
         msg += '\n\n' + indent(data, '  > ')
         raise ConnectionError(msg)
+
+    if 'user_msg' in result:
+        user_msg = result['user_msg']
+        if user_msg:
+            lines = user_msg.strip().split('\n')
+            print('')
+            for l in lines:
+                print(termcolor.colored('message from server: ', attrs=['dark']) + termcolor.colored(l, 'blue'))
+            print('')
 
     if result['ok']:
         if 'result' not in result:
