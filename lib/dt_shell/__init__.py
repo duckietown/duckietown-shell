@@ -9,7 +9,7 @@ logging.basicConfig()
 dtslogger = logging.getLogger('dts')
 dtslogger.setLevel(logging.DEBUG)
 
-__version__ = '3.0.12'
+__version__ = '3.0.13'
 
 dtslogger.info('duckietown-shell %s' % __version__)
 
