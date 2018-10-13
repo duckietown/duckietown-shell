@@ -14,7 +14,7 @@ WORKDIR /duckietown-shell
 COPY requirements.txt .
 # install requirements
 RUN pip install -r requirements.txt
-# copy the rest (also see
+# copy the rest  
 COPY . .
 #   Note the contents of .dockerignore:
 #
