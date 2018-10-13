@@ -13,14 +13,11 @@ RUN [ "cross-build-start" ]
 #    rm -rf duckietown-shell
 
 
-COPY requirements.txt /duckietown-shell/requirements.txt
-RUN pip install -r /duckietown-shell/requirements.txt
-
-COPY lib /duckietown-shell/lib
-COPY setup.py /duckietown-shell/setup.py
-
 WORKDIR /duckietown-shell
-RUN python setup.py install
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY . .
+RUN python setup.py install --no-deps
 
 
 

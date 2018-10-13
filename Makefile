@@ -19,7 +19,7 @@ upload:
 branch=$(shell git rev-parse --abbrev-ref HEAD)
 
 tag_rpi=duckietown/rpi-duckietown-shell:$(branch)
-tag_x86=duckietown/laptop-duckietown-shell:$(branch)
+tag_x86=duckietown/duckietown-shell:$(branch)
 
 build: build-rpi build-x86
 
