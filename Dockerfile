@@ -30,6 +30,9 @@ COPY . .
 # Install the package using '--no-deps': you want to pin everything
 # using requirements.txt
 # So, we want this to fail if we forgot anything.
-RUN pip install --no-deps .
+#RUN pip install --prefix /usr --no-deps .
+RUN pip install .
 
-CMD dts
+ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+#ENTRYPOINT ["dts"]

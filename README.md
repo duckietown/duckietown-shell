@@ -5,42 +5,7 @@
 The idea is that most of the functionality is implemented as Docker containers, and `dt-shell` provides a nice interface for that, so that user should not type a very long `docker run` command line.
 
 **Note**: we recently ported to Python 3, but it is not stable yet.
-
-<!--
-
-## Prerequisites
-
-You must be using `pip` with Python 2.x to use Duckietown Shell.
-
-Check the output of this command:
-
-    $ pip --version # Should return something like: pip 18.0 from ...python2.7/site-packages/pip (python 2.7)
-
-If it says "2.7", you are golden and can skip down to "installation".
-
-Otherwise make a virtual environment as suggested below.
-
-
-### Python 2 virtual environment (necessary if Python 3 is the default)
-
-**Note**: If you are running in a virtualenv then you should **not** add the `--user` command line flag when you install the duckietown shell
-
-Install `virtualenv`:
-
-    $ pip install virtualenv
-    
-Then create a new virtual environment, `dts`:
-
-    $ virtualenv -p `which python2` dts
-    
-Then activate the `dts` environment:
-
-    $ source dts/bin/activate
-    (dts) $ 
-
-Now, you now should be ready to install `duckietown-shell`. To deactivate `dts` later, run `deactivate`.
--->
-
+ 
 ## Installation
 
 These installation steps make sure that you have a minimal "sane" environment, which includes:
@@ -48,6 +13,7 @@ These installation steps make sure that you have a minimal "sane" environment, w
 1. Git and Git LFS;
 2. Docker;
 3. The Duckietown Shell.
+
 
 ### Installation on Ubuntu 18.xx
 
@@ -101,6 +67,16 @@ This can be done with
     $ echo "export PATH=$PATH:/Users/liam/Library/Python/2.7/bin" >> ~/.bash_profile
 
 and then reopen your terminal for the changes to take effect.
+
+
+### Installation on Docker (experimental)
+
+Assuming that Docker is already installed, place the following
+in your `~/.bashrc` or other initialization file for a shell:
+
+    alias dts-docker='docker run -it --rm -v /var/run/docker.sock:/var/run/docker.sock  -w $PWD -v $PWD:$PWD -v ~/.dt-shell:/root/.dt-shell duckietown/duckietown-shell:v3 dts'
+
+Some functionality might not be available.
 
 -----------------------
 
