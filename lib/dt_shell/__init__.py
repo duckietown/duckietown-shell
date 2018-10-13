@@ -41,25 +41,17 @@ def cli_main():
 
             Report here: https://github.com/duckietown/docs-opmanual_duckiebot/issues
 
-
         Other problems?  
 
             Report here: https://github.com/duckietown/duckietown-shell-commands/issues
 
-            Tips:
+            Troubleshooting:
 
-            - NEVER install duckietown-shell using "sudo". Instead use:
+            - If some commands update fail, delete ~/.dt-shell/commands
 
-                pip install --user -U duckietown-shell
+            - To reset the shell to "factory settings", delete ~/.dt-shell
 
-              Note the switch "--user" to install in ~/.local
-
-            - Delete ~/.dt-shell to reset the shell to "factory settings".
-              This is useful if some update fails.
-
-              (Note: you will have to re-configure)
-
-            - Last resort is deleting ~/.local and re-install from scratch.
+              (Note: you will have to re-configure.)
 
     """
     dtslogger.info(msg)

@@ -107,7 +107,10 @@ class DTShell(Cmd, object):
             readline.set_completer_delims(readline.get_completer_delims().replace('-', '', 1))
         # check for updates (if needed)
         # Do not check it if we are using custom commands_path_leave_alone
-        if not is_shell_outdated and not cmds_just_initialized and not self.commands_path_leave_alone:
+        if not is_shell_outdated \
+                and not cmds_just_initialized \
+                and not self.commands_path_leave_alone\
+                and not 'update' in sys.argv:
             self.check_commands_outdated()
 
         self.reload_commands()
@@ -320,13 +323,13 @@ to retrieve the newest version.
         # pull data from remote.master to local.master
         commands_repo.heads.master.checkout()
         print('OK')
-        # update all submodules
-        print('Updating libraries...', end='')
-        try:
-            commands_repo.submodule_update(recursive=True, to_latest_revision=False)
-        except Exception as e:
-            msg = 'Could not update libraries: %s' % e
-            dtslogger.error(msg)
+        # # update all submodules
+        # print('Updating libraries...', end='')
+        # try:
+        #     commands_repo.submodule_update(recursive=True, to_latest_revision=False)
+        # except Exception as e:
+        #     msg = 'Could not update libraries: %s' % e
+        #     dtslogger.error(msg)
 
         # TODO: make sure this is not necessary
         # for submodule in commands_repo.submodules:

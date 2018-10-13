@@ -29,7 +29,10 @@ build-rpi:
 	docker build -t $(tag_rpi) -f Dockerfile.rpi .
 
 build-x86:
-	docker build -t $(tag_x86) -f Dockerfile.x86 .
+	docker build -t $(tag_x86) -f Dockerfile .
+
+build-x86-no-cache:
+	docker build -t $(tag_x86) -f Dockerfile --no-cache .
 
 push-rpi:
 	docker push $(tag_rpi)

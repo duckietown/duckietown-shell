@@ -111,11 +111,11 @@ def get_last_version():
     if not update:
         delta = now - timestamp
         if delta > datetime.timedelta(minutes=10):
-            dtslogger.debug('Version cache is outdated (%s).' % delta)
+            # dtslogger.debug('Version cache is outdated (%s).' % delta)
             update = True
 
     if update:
-        dtslogger.debug('Getting last version from PyPI.')
+        # dtslogger.debug('Getting last version from PyPI.')
         try:
             version = get_last_version_fresh()
             write_cache(version, now)
@@ -132,12 +132,20 @@ def check_if_outdated():
     # print('last version: %r' % latest_version)
     # print('installed: %r' % __version__)
     if latest_version and __version__ != latest_version:
-        msg = 'There is an updated duckietown-shell available, version %s (you have %s).' % (
-            latest_version, __version__)
-        msg += '\n\nPlease run:\n\npip install --user -U --no-cache-dir duckietown-shell==%s' % (latest_version)
-        msg += '\n\n'
+        msg = '''
+
+There is an updated duckietown-shell available.
+
+  You have: {current}
+
+ available: {available} 
+
+You should update the shell using `pip`.        
+        
+        '''.format(current=__version__, available=latest_version)
         print(termcolor.colored(msg, 'yellow'))
-        wait = 5
+        wait = 3
+        time.sleep(1)
         print('Waiting %d seconds to give you time to read the message.' % wait)
         time.sleep(wait)
         return True
