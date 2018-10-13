@@ -4,8 +4,9 @@ from setuptools import find_packages, setup
 import sys
 
 if sys.version_info >= (3,):
-    msg = "duckietown-shell only works on Python 2.7. Python 3 is not supported yet."
-    raise Exception(msg)
+    msg = "duckietown-shell is only tested on Python 2.7. Python 3 is not supported yet."
+    print('\n\n%s\n\n' % msg)
+
 
 
 def get_version(filename):
@@ -26,8 +27,7 @@ def get_version(filename):
 shell_version = get_version(filename='lib/dt_shell/__init__.py')
 
 setup(name='duckietown-shell',
-      # only for Python 2
-      # python_requires="<3.0",
+      
       version=shell_version,
       download_url='http://github.com/duckietown/duckietown-shell/tarball/%s' % shell_version,
       package_dir={'': 'lib'},
