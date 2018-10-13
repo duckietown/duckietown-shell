@@ -82,7 +82,7 @@ Note: you need to *log in and out* to have the group change take effect.
 
 ### Installation in other operating systems
 
-You will need to find the instructions for git, git-lfs, docker.
+You will need to find the instructions for pip, git, git-lfs, docker for your specific operating system on your own.
 
 To install the shell, use:
 
