@@ -23,6 +23,8 @@ Otherwise make a virtual environment as suggested below.
 
 ### Python 2 virtual environment (necessary if Python 3 is the default)
 
+**Note**: If you are running in a virtualenv then you should **not** add the `--user` command line flag when you install the duckietown shell
+
 Install `virtualenv`:
 
     $ pip install virtualenv
@@ -56,7 +58,7 @@ Installs pip, git, git-lfs, docker, duckietown-shell:
     $ sudo apt install -y docker.io
     $ sudo adduser `whoami` docker
     
-    $ pip2 install --no-cache-dir -U duckietown-shell
+    $ pip2 install --no-cache-dir --user -U duckietown-shell
     
 Note: you need to *log in and out* to have the group change take effect.
 
@@ -74,7 +76,7 @@ Installs pip, git, git-lfs, docker, duckietown-shell:
     $ curl -fsSL https://get.docker.com | sudo bash
     $ sudo usermod -aG docker `whoami` 
     
-    $ pip2 install --no-cache-dir -U duckietown-shell
+    $ pip2 install --no-cache-dir --user -U duckietown-shell
     
 Note: you need to *log in and out* to have the group change take effect.
 
@@ -86,11 +88,19 @@ You will need to find the instructions for installing pip, git, git-lfs, docker 
 
 To install the shell, use:
 
-    $ pip2 install --no-cache-dir -U duckietown-shell
+    $ pip2 install --no-cache-dir --user -U duckietown-shell
 
 The shell itself does not require any other dependency beside standard cross-platform Python libraries.
 
 **Note: Never use `sudo pip install` to install `duckietown-shell`.**
+
+
+On Mac OSX you will have to add the path to the binary to your PATH variable. 
+This can be done with 
+
+    $ echo "export PATH=$PATH:/Users/liam/Library/Python/2.7/bin" >> ~/.bash_profile
+
+and then reopen your terminal for the changes to take effect.
 
 -----------------------
 
