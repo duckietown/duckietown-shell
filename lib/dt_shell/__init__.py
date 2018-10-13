@@ -3,6 +3,9 @@ import logging
 import sys
 import traceback
 
+import six
+
+from .exceptions import *
 
 logging.basicConfig()
 
@@ -61,7 +64,7 @@ def cli_main():
     """
     dtslogger.info(msg)
 
-    from .env_checks import InvalidEnvironment
+    from .exceptions import InvalidEnvironment, UserError
 
     shell = DTShell()
     arguments = sys.argv[1:]
@@ -76,12 +79,19 @@ def cli_main():
             shell.onecmd(cmdline)
         else:
             shell.cmdloop()
+    except UserError as e:
+        msg = str(e)
+        termcolor.cprint(msg, 'red')
+        sys.exit(1)
     except known_exceptions as e:
         msg = str(e)
         termcolor.cprint(msg, 'yellow')
         sys.exit(1)
     except Exception as e:
-        msg = traceback.format_exc(e)
+        if six.PY2:
+            msg = traceback.format_exc(e)
+        else:
+            msg = traceback.format_exc(None, e)
         termcolor.cprint(msg, 'red')
         sys.exit(2)
 

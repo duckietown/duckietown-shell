@@ -1,12 +1,11 @@
 import json
 import os
-import urllib2
 
 import dateutil.parser
+import six
 
 from . import dtslogger
 from .utils import raise_wrapped, indent
-
 
 class Storage(object):
     done = False
@@ -53,22 +52,29 @@ def make_server_request(token, endpoint, data=None, method='GET', timeout=3):
 
         Returns the result in 'result'.
     """
+
+    from six.moves import urllib
+    # import urllib.request
+
+
     server = get_duckietown_server_url()
     url = server + endpoint
 
     headers = {'X-Messaging-Token': token}
     if data is not None:
         data = json.dumps(data)
-    req = urllib2.Request(url, headers=headers, data=data)
+    if six.PY3:
+        data = data.encode('utf-8')
+    req = urllib.request.Request(url, headers=headers, data=data)
     req.get_method = lambda: method
     try:
-        res = urllib2.urlopen(req, timeout=timeout)
+        res = urllib.request.urlopen(req, timeout=timeout)
         data = res.read()
-    except urllib2.HTTPError as e:
+    except urllib.error.HTTPError as e:
         msg = 'Operation failed for %s' % url
         msg += '\n\n' + e.read()
         raise ConnectionError(msg)
-    except urllib2.URLError as e:
+    except urllib.error.URLError as e:
         msg = 'Cannot connect to server %s' % url
         raise_wrapped(ConnectionError, e, msg)
         raise
@@ -93,7 +99,7 @@ def make_server_request(token, endpoint, data=None, method='GET', timeout=3):
             raise ConnectionError(msg)
         return result['result']
     else:
-        msg = result.get('msg', 'no error message in %s '% result)
+        msg = result.get('msg', 'no error message in %s ' % result)
         msg = 'Failed request for %s:\n%s' % (url, msg)
         raise RequestFailed(msg)
 

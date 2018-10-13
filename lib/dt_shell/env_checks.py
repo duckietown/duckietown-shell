@@ -2,13 +2,11 @@ import getpass
 import subprocess
 import sys
 
+from .exceptions import InvalidEnvironment
 from whichcraft import which
 
 from .constants import DTShellConstants
 
-
-class InvalidEnvironment(Exception):
-    pass
 
 
 def check_docker_environment():
@@ -101,7 +99,7 @@ def get_dockerhub_username(shell=None):
     k = DTShellConstants.CONFIG_DOCKER_USERNAME
     if k not in shell.config:
         msg = 'Please set docker username using\n\n dts challenges config --docker-username <USERNAME>'
-        raise Exception(msg)
+        raise InvalidEnvironment(msg)
 
     username = shell.config[k]
     return username

@@ -7,11 +7,12 @@ import os
 import sys
 import time
 import traceback
-import urllib2
+
 from cmd import Cmd
 from os import makedirs, remove, utime
 from os.path import basename, isfile, isdir, exists, join, getmtime
 
+import six
 import termcolor
 from git import Repo
 from git.exc import NoSuchPathError, InvalidGitRepositoryError
@@ -82,7 +83,7 @@ class DTShell(Cmd, object):
 
         # create config if it does not exist
         if not exists(self.config_path):
-            makedirs(self.config_path, mode=0755)
+            makedirs(self.config_path)
         if not exists(self.config_file):
             self.save_config()
         # load config
@@ -163,8 +164,9 @@ class DTShell(Cmd, object):
                 DTShellConstants.COMMANDS_REPO_BRANCH
             )
             try:
-                req = urllib2.Request(url)
-                res = urllib2.urlopen(req, timeout=3)
+                from six.moves import urllib
+                req = urllib.Request(url)
+                res = urllib.urlopen(req, timeout=3)
                 content = res.read()
                 data = json.loads(content)
                 remote_sha = data['commit']['sha']
@@ -383,8 +385,14 @@ to retrieve the newest version.
                 klass = self._load_class(spec)
             except BaseException as e:
                 # error_loading = True
+
+                if six.PY2:
+                    se = traceback.format_exc(e)
+                else:
+                    se = traceback.format_exc(None, e)
+
                 msg = 'Cannot load command class %r (package=%r, command=%r): %s' % (
-                    spec, package, command, traceback.format_exc(e))
+                    spec, package, command, se)
                 # msg += ' sys.path: %s' % sys.path
                 DTShell.errors_loading.append(msg)
                 return

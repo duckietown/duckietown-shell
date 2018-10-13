@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+from __future__ import print_function
 from abc import ABCMeta, abstractmethod
 
 
@@ -32,7 +32,7 @@ class DTCommandAbs(object):
         parts = [p.strip() for p in line.split(' ')]
         args = [p for p in parts if len(p) > 0]
         from .utils import undo_replace_spaces
-        args = map(undo_replace_spaces, args)
+        args = list(map(undo_replace_spaces, args))
         word = parts[0]
         # print '[%s, %r]@(%s, %s)' % (word, parts, cls.name, cls.__class__)
         if len(word) > 0:
@@ -76,4 +76,5 @@ class DTCommandAbs(object):
 
     @staticmethod
     def help_command(cls, shell):
-        print cls.help if (cls.level == 0 and cls.help is not None) else str(shell.nohelp % cls.name)
+        msg = cls.help if (cls.level == 0 and cls.help is not None) else str(shell.nohelp % cls.name)
+        print(msg)

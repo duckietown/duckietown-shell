@@ -27,7 +27,7 @@ def get_version(filename):
 shell_version = get_version(filename='lib/dt_shell/__init__.py')
 
 setup(name='duckietown-shell',
-      
+
       version=shell_version,
       download_url='http://github.com/duckietown/duckietown-shell/tarball/%s' % shell_version,
       package_dir={'': 'lib'},
@@ -42,6 +42,7 @@ setup(name='duckietown-shell',
           'termcolor',
           'PyYAML',
           'docker',
+          'six',
           # needed for duckietown-challenges
           # eventually have to be removed
           'ruamel.yaml',

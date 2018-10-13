@@ -6,7 +6,7 @@ import json
 import os
 import subprocess
 import time
-import urllib2
+from six.moves import urllib
 
 import termcolor
 import yaml
@@ -24,13 +24,13 @@ def get_last_version_fresh():
     url = 'https://pypi.org/pypi/duckietown-shell/json'
 
     try:
-        req = urllib2.Request(url)
+        req = urllib.Request(url)
         try:
-            res = urllib2.urlopen(req, timeout=2)
+            res = urllib.urlopen(req, timeout=2)
             if res.getcode() != 200:
                 return None
             data = res.read()
-        except urllib2.URLError as e:
+        except urllib.URLError as e:
             # print('falling back to curl')
 
             if which('curl') is not None:
