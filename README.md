@@ -74,11 +74,28 @@ and then reopen your terminal for the changes to take effect.
 Assuming that Docker is already installed, place the following
 in your `~/.bashrc` or other initialization file for a shell:
 
-    alias dts-docker='docker run -it --rm -v /var/run/docker.sock:/var/run/docker.sock  -w $PWD -v $PWD:$PWD -v ~/.dt-shell:/root/.dt-shell duckietown/duckietown-shell:v3 dts'
+    alias dts-docker='docker run -it --rm -v /var/run/docker.sock:/var/run/docker.sock  -w $PWD -v $PWD:$PWD -v ~/.dt-shell:/root/.dt-shell -v ~/.docker:/root/.docker duckietown/duckietown-shell:v3 dts'
 
 Some functionality might not be available.
 
------------------------
+
+#### OS X
+
+By default Docker uses the OS X keychain to store credentials but this is not good.
+
+Edit `~/.docker/config.json` and remove all references to a "osxkeychain".
+
+Then run `docker login` again.
+
+Then you should see an `auth` entry of the type:
+
+    {
+        "auths": {
+            "https://index.docker.io/v1/": {
+                "auth": "mXXXXXXXXXXXXXXXXXXXXXXXXXX"
+            }
+        },
+    }
 
 ## Testing Duckietown shell
 
