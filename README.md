@@ -119,11 +119,12 @@ Then, try again
     $ dts
 
 -----------------------
-        
 
-## Commands for compiling the Duckumentation
+**You now have successfully installed the Duckietown Shell. If you know what you want to do with it go ahead. Below are some examples of things you can do with the Duckietown Shell** 
 
-To compile one of the books:
+## Compile one of the "Duckumentation"
+
+To compile one of the books (e.g. docs-duckumentation but there are many others):
 
     $ git clone https://github.com/duckietown/docs-duckumentation.git
     $ cd docs-duckumentation
@@ -143,7 +144,7 @@ TODO: link to docs
 -----------------------
         
 
-## Duckietown Authentication Token setup
+## Authenticate a Duckietown Token
 
 Run the command `dts tok set` to set the Duckietown authentication token:
 
@@ -170,7 +171,7 @@ which means that the user is identified as uid 3 until the given expiration date
 
 -----------------------
 
-## Commands for Duckiebot setup
+## Duckiebot setup
 
 ### Command for flashing SD card
 
