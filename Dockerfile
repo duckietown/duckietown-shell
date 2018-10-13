@@ -1,21 +1,23 @@
-FROM billyteves/ubuntu-dind:16.04
-
-COPY . duckietown-shell
-
-RUN apt-get update && apt-get install -y \
-	python-pip \
-	git \
-	&& rm -rf /var/lib/apt/lists/*
+FROM docker:18-dind
 
 WORKDIR /duckietown-shell
 
-# copy the requirements.txt only, first
-# changes to the code don't require re-running this
 COPY requirements.txt .
-# install requirements
-RUN pip install -r requirements.txt
+
+RUN apk --update --no-cache add \
+	python2 \
+	python2-dev \
+	py-pip \
+	git \
+	gcc \
+	musl-dev \
+	linux-headers \
+    && pip install -r requirements.txt \
+    && apk del python2-dev git gcc musl-dev linux-headers
+
 # copy the rest  
 COPY . .
+
 #   Note the contents of .dockerignore:
 #
 #     **
@@ -31,6 +33,9 @@ COPY . .
 # using requirements.txt
 # So, we want this to fail if we forgot anything.
 #RUN pip install --prefix /usr --no-deps .
+
+COPY . .
+
 RUN pip install .
 
 ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
