@@ -13,7 +13,7 @@ RUN apk --update --no-cache add \
 	musl-dev \
 	linux-headers \
     && pip install -r requirements.txt \
-    && apk del python2-dev git gcc musl-dev linux-headers
+    && apk del python2-dev gcc musl-dev linux-headers
 
 # copy the rest  
 COPY . .
