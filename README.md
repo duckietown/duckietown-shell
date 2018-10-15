@@ -74,7 +74,7 @@ and then reopen your terminal for the changes to take effect.
 Assuming that Docker is already installed, place the following
 in your `~/.bashrc` or other initialization file for a shell:
 
-    alias dts-docker='docker run -it --rm -v /var/run/docker.sock:/var/run/docker.sock  -w $PWD -v $PWD:$PWD -v ~/.dt-shell:/root/.dt-shell -v ~/.docker:/root/.docker duckietown/duckietown-shell:v3 dts'
+    alias dts='docker run -it --rm -v /var/run/docker.sock:/var/run/docker.sock  -w $PWD -v $PWD:$PWD -v ~/.dt-shell:/root/.dt-shell -v ~/.docker:/root/.docker duckietown/duckietown-shell:v3 dts'
 
 Some functionality might not be available.
 
