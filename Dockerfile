@@ -8,6 +8,7 @@ RUN apk --update --no-cache add \
 	python2 \
 	python2-dev \
 	py-pip \
+	bash \
 	git \
 	gcc \
 	musl-dev \
