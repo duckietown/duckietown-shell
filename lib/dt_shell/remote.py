@@ -1,3 +1,4 @@
+# coding=utf-8
 import json
 import os
 
@@ -7,6 +8,7 @@ import termcolor
 
 from . import dtslogger
 from .utils import raise_wrapped, indent
+
 
 class Storage(object):
     done = False
@@ -46,8 +48,9 @@ class RequestFailed(RequestException):
         Answered  {'ok': False, 'error': msg}
     """
 
+DEFAULT_TIMEOUT = 5
 
-def make_server_request(token, endpoint, data=None, method='GET', timeout=3):
+def make_server_request(token, endpoint, data=None, method='GET', timeout=DEFAULT_TIMEOUT):
     """
         Raise RequestFailed or ConnectionError.
 
@@ -56,7 +59,6 @@ def make_server_request(token, endpoint, data=None, method='GET', timeout=3):
 
     from six.moves import urllib
     # import urllib.request
-
 
     server = get_duckietown_server_url()
     url = server + endpoint
@@ -99,11 +101,18 @@ def make_server_request(token, endpoint, data=None, method='GET', timeout=3):
     if 'user_msg' in result:
         user_msg = result['user_msg']
         if user_msg:
+            s = []
             lines = user_msg.strip().split('\n')
+            prefix = u'message from server: '
+            p2 = u': '.rjust(len(prefix))
             print('')
-            for l in lines:
-                print(termcolor.colored('message from server: ', attrs=['dark']) + termcolor.colored(l, 'blue'))
-            print('')
+
+            for i, l in enumerate(lines):
+                p = prefix if i == 0 else p2
+                # l = termcolor.colored(l, 'blue')
+                s.append(termcolor.colored(p, attrs=['dark']) + l)
+            from dt_shell.cli import dts_print
+            dts_print(u'\n'.join(s))
 
     if result['ok']:
         if 'result' not in result:
