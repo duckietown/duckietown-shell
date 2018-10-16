@@ -19,7 +19,7 @@ dtslogger.info('duckietown-shell %s' % __version__)
 import termcolor
 
 
-from .cli import DTShell
+from .cli import DTShell, dts_print
 
 from .dt_command_abs import DTCommandAbs
 from .dt_command_placeholder import DTCommandPlaceholder
@@ -34,27 +34,28 @@ if sys.version_info >= (3,):
 def cli_main():
     from .col_logging import setup_logging_color
     setup_logging_color()
+# Problems with a step in the Duckiebot operation manual?
+    #
+    #     Report here: https://github.com/duckietown/docs-opmanual_duckiebot/issues
+
     # TODO: register handler for Ctrl-C
+    url = href("https://github.com/duckietown/duckietown-shell-commands/issues")
     msg = """
 
-        Problems with a step in the Duckiebot operation manual?
+Problems with a command?
 
-            Report here: https://github.com/duckietown/docs-opmanual_duckiebot/issues
+Report here: {url}
 
-        Other problems?  
+Troubleshooting:
 
-            Report here: https://github.com/duckietown/duckietown-shell-commands/issues
+- If some commands update fail, delete ~/.dt-shell/commands
 
-            Troubleshooting:
+- To reset the shell to "factory settings", delete ~/.dt-shell
 
-            - If some commands update fail, delete ~/.dt-shell/commands
+  (Note: you will have to re-configure.)
 
-            - To reset the shell to "factory settings", delete ~/.dt-shell
-
-              (Note: you will have to re-configure.)
-
-    """
-    dtslogger.info(msg)
+    """.format(url=url)
+    dts_print(msg)
 
     from .exceptions import InvalidEnvironment, UserError
 
@@ -87,3 +88,6 @@ def cli_main():
         termcolor.cprint(msg, 'red')
         sys.exit(2)
 
+
+def href(x):
+    return termcolor.colored(x, 'blue', attrs=['underline'])

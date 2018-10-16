@@ -1,17 +1,17 @@
 import getpass
+import os
 import subprocess
 import sys
 
-from .exceptions import InvalidEnvironment
 from whichcraft import which
 
 from .constants import DTShellConstants
-
+from .exceptions import InvalidEnvironment
 
 
 def check_docker_environment():
     from . import dtslogger
-    dtslogger.debug('checking docker environment')
+    dtslogger.debug('Checking docker environment')
     check_executable_exists('docker')
 
     if on_linux():
@@ -20,23 +20,32 @@ def check_docker_environment():
             check_user_in_group('docker')
         # print('checked groups')
     else:
-        pass
         dtslogger.debug('skipping env check because not on Linux')
 
     try:
         import docker
     except Exception as e:
         msg = 'Could not import package docker:\n%s' % e
-        msg += '\n\nTry    pip install --user -U docker'
+        msg += '\n\nYou need to install the package'
         raise InvalidEnvironment(msg)
+
+    if 'DOCKER_HOST' in os.environ:
+        msg = 'Note that the variable DOCKER_HOST is set to "%s"' % os.environ['DOCKER_HOST']
+        dtslogger.warning(msg)
 
     try:
         client = docker.from_env()
+
         containers = client.containers.list(filters=dict(status='running'))
+
+        # dtslogger.debug(json.dumps(client.info(), indent=4))
+
     except Exception as e:
         msg = 'I cannot communicate with Docker:\n%s' % e
         msg += '\n\nMake sure the docker service is running.'
         raise InvalidEnvironment(msg)
+
+    return client
 
 
 def on_linux():
