@@ -48,7 +48,9 @@ class RequestFailed(RequestException):
         Answered  {'ok': False, 'error': msg}
     """
 
+
 DEFAULT_TIMEOUT = 5
+
 
 def make_server_request(token, endpoint, data=None, method='GET', timeout=DEFAULT_TIMEOUT):
     """
@@ -134,13 +136,6 @@ def get_dtserver_user_info(token):
     return make_server_request(token, endpoint, data=data, method=method)
 
 
-def dtserver_update_challenge(token, queue, challenge_parameters):
-    endpoint = '/challenge-update'
-    method = 'POST'
-    data = {'queue': queue, 'challenge_parameters': challenge_parameters}
-    return make_server_request(token, endpoint, data=data, method=method)
-
-
 def dtserver_submit(token, queue, data):
     endpoint = '/submissions'
     method = 'POST'
@@ -166,31 +161,3 @@ def dtserver_get_user_submissions(token):
         for k in ['date_submitted', 'last_status_change']:
             v[k] = dateutil.parser.parse(v[k])
     return submissions
-
-
-# TODO: you can delete the following around Oct 15
-
-def dtserver_work_submission(token, submission_id, machine_id, process_id, evaluator_version, features):
-    endpoint = '/take-submission'
-    method = 'GET'
-    data = {'submission_id': submission_id,
-            'machine_id': machine_id,
-            'process_id': process_id,
-            'evaluator_version': evaluator_version,
-            'features': features}
-    return make_server_request(token, endpoint, data=data, method=method)
-
-
-def dtserver_report_job(token, job_id, result, stats, machine_id,
-                        process_id, evaluation_container, evaluator_version):
-    endpoint = '/take-submission'
-    method = 'POST'
-    data = {'job_id': job_id,
-            'result': result,
-            'stats': stats,
-            'machine_id': machine_id,
-            'process_id': process_id,
-            'evaluation_container': evaluation_container,
-            'evaluator_version': evaluator_version,
-            }
-    return make_server_request(token, endpoint, data=data, method=method)

@@ -24,11 +24,11 @@ from .cli import DTShell, dts_print
 from .dt_command_abs import DTCommandAbs
 from .dt_command_placeholder import DTCommandPlaceholder
 
-
-if sys.version_info >= (3,):
-    msg = "duckietown-shell only works on Python 2.7. Python 3 is not supported yet."
-    dtslogger.warning(msg)
-    # raise ImportError(msg)
+#
+# if sys.version_info >= (3,):
+#     msg = "duckietown-shell only works on Python 2.7. Python 3 is not supported yet."
+#     dtslogger.warning(msg)
+#     # raise ImportError(msg)
 
 
 def cli_main():
