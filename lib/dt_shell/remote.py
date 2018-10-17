@@ -69,8 +69,8 @@ def make_server_request(token, endpoint, data=None, method='GET', timeout=DEFAUL
 
     if data is not None:
         data = json.dumps(data)
-    if six.PY3:
-        data = data.encode('utf-8')
+        if six.PY3:
+            data = data.encode('utf-8')
     req = urllib.request.Request(url, headers=headers, data=data)
     req.get_method = lambda: method
     try:
