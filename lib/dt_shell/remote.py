@@ -69,8 +69,8 @@ def make_server_request(token, endpoint, data=None, method='GET', timeout=DEFAUL
 
     if data is not None:
         data = json.dumps(data)
-    if six.PY3:
-        data = data.encode('utf-8')
+        if six.PY3:
+            data = data.encode('utf-8')
     req = urllib.request.Request(url, headers=headers, data=data)
     req.get_method = lambda: method
     try:
@@ -109,7 +109,7 @@ def make_server_request(token, endpoint, data=None, method='GET', timeout=DEFAUL
 
             for i, l in enumerate(lines):
                 p = prefix if i == 0 else p2
-                # l = termcolor.colored(l, 'blue')
+                l = termcolor.colored(l, 'blue')
                 s.append(termcolor.colored(p, attrs=['dark']) + l)
             from dt_shell.cli import dts_print
             dts_print(u'\n'.join(s))
