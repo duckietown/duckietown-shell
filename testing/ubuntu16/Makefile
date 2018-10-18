@@ -16,14 +16,19 @@ run:
 		$(tag)
 
 remove:
-	docker rm $(tag) || true
+	docker rm $(name) || true
 
 shell:
 
-	docker run -it --name $(name) $(tag)
+	docker run -it --name $(name) $(tag) bash
 
 develop:
 
-	docker run -it -v $(PWD)/../..:/duckietown-shell -v $(DTSHELL_COMMANDS):/commands:ro \
-	-e DTSHELL_COMMANDS=/commands\
-	 -w /duckietown-shell --name $(name) $(tag)
+
+	docker run -it \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-v $(PWD)/../..:$(PWD)/../.. \
+		-v $(DTSHELL_COMMANDS):/commands:ro \
+		-v $(HOME)/.docker:/root/.docker:ro \
+		-e DTSHELL_COMMANDS=/commands\
+	 	-w $(PWD)/../.. --name $(name) $(tag) bash

@@ -6,7 +6,23 @@ import sys
 from whichcraft import which
 
 from .constants import DTShellConstants
-from .exceptions import InvalidEnvironment
+from .exceptions import InvalidEnvironment, UserError
+
+
+def running_with_sudo():
+    if 'SUDO_USER' in os.environ:
+        return True
+    return False
+
+
+def abort_if_running_with_sudo():
+    if running_with_sudo():
+        msg = '''\
+Do not run dts using "sudo".'
+
+As a matter of fact, do not run anything with "sudo" unless instructed to do so.\
+'''
+        raise UserError(msg)
 
 
 def check_docker_environment():
@@ -64,21 +80,10 @@ def check_user_in_group(name):
 
     if name not in active_groups:
         msg = 'The user is not in group "%s".' % name
-        msg += '\n\nIt belongs to groups: %s.' % ", ".join(sorted(active_groups))
+        msg += '\n\nIt belongs to groups: %s.' % u", ".join(sorted(active_groups))
 
         msg += '\n\nNote that when you add a user to a group, you need to login in and out.'
         raise InvalidEnvironment(msg)
-
-
-def check_git_supports_superproject():
-    pass
-    #
-    # res = system_cmd_result('.', ['git', '--version'],
-    #                         display_stdout=False,
-    #                         display_stderr=False,
-    #                         raise_on_error=True,
-    #                         capture_keyboard_interrupt=False,
-    #                         env=None)
 
 
 def get_active_groups(username=None):
@@ -97,8 +102,12 @@ def get_active_groups(username=None):
         #                         env=None)
     except subprocess.CalledProcessError as e:
         raise Exception(str(e))
-    active_groups = stdout.split()
+    active_groups = stdout.decode().split()
+
     return active_groups
+
+
+import six
 
 
 def get_dockerhub_username(shell=None):

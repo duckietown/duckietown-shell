@@ -52,7 +52,8 @@ class RequestFailed(RequestException):
 DEFAULT_TIMEOUT = 5
 
 
-def make_server_request(token, endpoint, data=None, method='GET', timeout=DEFAULT_TIMEOUT):
+def make_server_request(token, endpoint, data=None, method='GET', timeout=DEFAULT_TIMEOUT,
+                        suppress_user_msg=False):
     """
         Raise RequestFailed or ConnectionError.
 
@@ -100,7 +101,7 @@ def make_server_request(token, endpoint, data=None, method='GET', timeout=DEFAUL
         msg += '\n\n' + indent(data, '  > ')
         raise ConnectionError(msg)
 
-    if 'user_msg' in result:
+    if 'user_msg' in result and not suppress_user_msg:
         user_msg = result['user_msg']
         if user_msg:
             s = []
@@ -114,7 +115,8 @@ def make_server_request(token, endpoint, data=None, method='GET', timeout=DEFAUL
                 # l = termcolor.colored(l, 'blue')
                 s.append(termcolor.colored(p, attrs=['dark']) + l)
             from dt_shell.cli import dts_print
-            dts_print(u'\n'.join(s))
+            print(s.__repr__())
+            dts_print('\n'.join(s))
 
     if result['ok']:
         if 'result' not in result:

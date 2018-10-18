@@ -10,4 +10,6 @@ class DTShellConstants(object):
     ENV_COMMANDS = 'DTSHELL_COMMANDS'
 
     DT1_TOKEN_CONFIG_KEY = 'token_dt1'
+    # DT1_TOKEN_ENV_VARIABLE = 'DUCKIETOWN_TOKEN'
+
     CONFIG_DOCKER_USERNAME = 'docker_username'

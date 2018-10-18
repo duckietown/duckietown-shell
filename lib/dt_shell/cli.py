@@ -6,12 +6,10 @@ import json
 import os
 import sys
 import time
-import traceback
 from cmd import Cmd
 from os import makedirs, remove, utime
 from os.path import basename, isfile, isdir, exists, join, getmtime
 
-import six
 import termcolor
 from git import Repo
 from git.exc import NoSuchPathError, InvalidGitRepositoryError
@@ -179,20 +177,25 @@ class DTShell(Cmd, object):
         if need_update:
             msg = """ 
                   
-An updated version of the commands is available
+An updated version of the commands is available.
 
-Run the command  
-
-    dts update
-
-to retrieve the newest version.
+Attempting auto-update.
 
             """
             self.sprint(msg, color="yellow", attrs=['bold'])
-        # cache remote SHA
-        if not use_cached_sha:
-            with open(self.commands_update_check_flag, 'w') as fp:
-                json.dump({'remote': remote_sha}, fp)
+
+            try:
+                self.update_commands()
+
+                # cache remote SHA
+                if not use_cached_sha:
+                    with open(self.commands_update_check_flag, 'w') as fp:
+                        json.dump({'remote': remote_sha}, fp)
+
+            except BaseException as e:
+                from .utils import format_exception
+                dtslogger.error(format_exception(e))
+
         # return success
         return True
 
@@ -371,11 +374,8 @@ to retrieve the newest version.
                 klass = _load_class(spec)
             except BaseException as e:
                 # error_loading = True
-
-                if six.PY2:
-                    se = traceback.format_exc(e)
-                else:
-                    se = traceback.format_exc(None, e)
+                from .utils import format_exception
+                se = format_exception(e)
 
                 msg = 'Cannot load command class %r (package=%r, command=%r): %s' % (
                     spec, package, command, se)
