@@ -6,13 +6,12 @@ import json
 import os
 import subprocess
 import time
-from six.moves import urllib
 
 import termcolor
 import yaml
 from whichcraft import which
 
-from . import __version__, dtslogger
+from . import __version__
 from .constants import DTShellConstants
 
 
@@ -20,30 +19,42 @@ class CouldNotGetVersion(Exception):
     pass
 
 
+class URLException(Exception):
+    pass
+
+
+def get_url(url, timeout=2):
+    from six.moves import urllib
+    try:
+        req = urllib.request.Request(url)
+        res = urllib.request.urlopen(req, timeout=3)
+        content = res.read()
+        if res.getcode() != 200:
+            raise URLException(str(res))
+        return content
+    except urllib.error.URLError as e:
+        print('falling back to curl')
+        if which('curl') is not None:
+            cmd = ['curl', url, '-m', '2']
+            try:
+                data = subprocess.check_output(cmd, stderr=subprocess.PIPE)
+                return data
+            except subprocess.CalledProcessError as e:
+                msg = 'Could not call %s: %s' % (cmd, e)
+                raise URLException(msg)
+        else:
+            msg = 'curl not available'
+            raise URLException(msg)
+
+
 def get_last_version_fresh():
     url = 'https://pypi.org/pypi/duckietown-shell/json'
 
     try:
-        req = urllib.Request(url)
         try:
-            res = urllib.urlopen(req, timeout=2)
-            if res.getcode() != 200:
-                return None
-            data = res.read()
-        except urllib.URLError as e:
-            # print('falling back to curl')
-
-            if which('curl') is not None:
-                cmd = ['curl', url, '-m', '2']
-                try:
-                    data = subprocess.check_output(cmd, stderr=subprocess.PIPE)
-                except subprocess.CalledProcessError as e:
-                    msg = 'Could not call %s: %s' % (cmd, e)
-                    raise CouldNotGetVersion(msg)
-            else:
-                msg = 'curl not available'
-                raise CouldNotGetVersion(msg)
-
+            data = get_url(url)
+        except URLException as e:
+            raise CouldNotGetVersion(str(e))
         try:
             info = json.loads(data)
         except BaseException as e:

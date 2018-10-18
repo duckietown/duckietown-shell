@@ -109,7 +109,7 @@ def make_server_request(token, endpoint, data=None, method='GET', timeout=DEFAUL
             prefix = u'message from server: '
             p2 = u': '.rjust(len(prefix))
             print('')
-             
+
             for i, l in enumerate(lines):
                 p = prefix if i == 0 else p2
                 # l = termcolor.colored(l, 'blue')

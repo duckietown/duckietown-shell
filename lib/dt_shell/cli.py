@@ -72,7 +72,9 @@ class DTShell(Cmd, object):
         else:
             self.commands_path = join(self.config_path, 'commands')
             self.commands_path_leave_alone = False
+
         self.commands_update_check_flag = join(self.commands_path, '.updates-check')
+        print(self.commands_update_check_flag)
         # add commands_path to the path of this session
         sys.path.insert(0, self.commands_path)
         # add third-party libraries dir to the path of this session
@@ -135,6 +137,7 @@ class DTShell(Cmd, object):
 
     def check_commands_outdated(self):
         # get local SHA
+        global format_exception
         try:
             commands_repo = Repo(self.commands_path)
         except (NoSuchPathError, InvalidGitRepositoryError) as e:
@@ -164,13 +167,13 @@ class DTShell(Cmd, object):
                 DTShellConstants.COMMANDS_REPO_BRANCH
             )
             try:
-                from six.moves import urllib
-                req = urllib.Request(url)
-                res = urllib.urlopen(req, timeout=3)
-                content = res.read()
+                from .version_check import get_url
+                content = get_url(url)
                 data = json.loads(content)
                 remote_sha = data['commit']['sha']
-            except Exception as e:
+            except BaseException as e:
+                from .utils import format_exception
+                dtslogger.error(format_exception(e))
                 return False
         # check if we need to update
         need_update = local_sha != remote_sha
