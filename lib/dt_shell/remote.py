@@ -109,13 +109,13 @@ def make_server_request(token, endpoint, data=None, method='GET', timeout=DEFAUL
             prefix = u'message from server: '
             p2 = u': '.rjust(len(prefix))
             print('')
-
+             
             for i, l in enumerate(lines):
                 p = prefix if i == 0 else p2
                 # l = termcolor.colored(l, 'blue')
                 s.append(termcolor.colored(p, attrs=['dark']) + l)
             from dt_shell.cli import dts_print
-            print(s.__repr__())
+
             dts_print('\n'.join(s))
 
     if result['ok']:
