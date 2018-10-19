@@ -88,8 +88,9 @@ def replace_spaces(x):
 def undo_replace_spaces(x):
     return x.replace(SPACE_TAG, ' ')
 
+
 def format_exception(e):
     if six.PY2:
         return traceback.format_exc(e)
     else:
-        return traceback.format_exception(None, e)
+        return traceback.format_exc()  # None, e)

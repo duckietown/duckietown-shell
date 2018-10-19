@@ -37,6 +37,8 @@ def cli_main():
         msg = str(e)
         dts_print(msg, 'red')
         sys.exit(1)
+    except SystemExit:
+        raise
     except BaseException as e:
         msg = format_exception(e)
         dts_print(msg, 'red', attrs=['bold'])
