@@ -83,7 +83,6 @@ def read_cache():
         fn = get_cache_filename()
         if os.path.exists(fn):
             data = open(fn).read()
-            # interpreted = yaml.load(data, Loader=ruamel.yaml.Loader)
             interpreted = yaml.load(data)
             version = interpreted['version']
             dt = interpreted['timestamp']

@@ -9,5 +9,3 @@ PyYAML
 docker
 psutil
 six
-ruamel.ordereddict
-ruamel.yaml
