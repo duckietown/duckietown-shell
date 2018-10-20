@@ -136,8 +136,7 @@ class DTShell(Cmd, object):
             json.dump(self.config, fp)
 
     def check_commands_outdated(self):
-        # get local SHA
-        global format_exception
+
         try:
             commands_repo = Repo(self.commands_path)
         except (NoSuchPathError, InvalidGitRepositoryError) as e:
@@ -223,19 +222,19 @@ Attempting auto-update.
         # Commands come in their packages, which allows dependencies.
         # This also allows to give people permission to update only
         # part of the commands.
-        try:
-            import duckietown_challenges_commands
-        except BaseException as e:
-            msg = 'Could not import duckietown_challenges_commands: %s' % e
-            # print(msg)
-        else:
-            dirname = os.path.dirname(duckietown_challenges_commands.__file__)
-            msg = 'Challenges installed in %s' % dirname
-            # print(msg)
-            commands = os.path.join(dirname, 'commands')
-            if os.path.exists(commands):
-                msg = 'Available commands at %s' % commands
-                # print(msg)
+        # try:
+        #     import duckietown_challenges_commands
+        # except BaseException as e:
+        #     msg = 'Could not import duckietown_challenges_commands: %s' % e
+        #     # print(msg)
+        # else:
+        #     dirname = os.path.dirname(duckietown_challenges_commands.__file__)
+        #     msg = 'Challenges installed in %s' % dirname
+        #     # print(msg)
+        #     commands = os.path.join(dirname, 'commands')
+        #     if os.path.exists(commands):
+        #         msg = 'Available commands at %s' % commands
+        #         # print(msg)
 
             # TODO: load commands with prefix "challenges"
 
@@ -434,6 +433,7 @@ Attempting auto-update.
         token = self.config[k]
         return token
 
+    # noinspection PyMethodMayBeStatic
     def sprint(self, msg, color=None, attrs=None):
         return dts_print(msg=msg, color=color, attrs=attrs)
 

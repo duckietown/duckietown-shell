@@ -9,3 +9,4 @@ PyYAML
 docker
 psutil
 six
+future

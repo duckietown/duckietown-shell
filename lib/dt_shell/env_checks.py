@@ -107,8 +107,6 @@ def get_active_groups(username=None):
     return active_groups
 
 
-import six
-
 
 def get_dockerhub_username(shell=None):
     if shell is None:

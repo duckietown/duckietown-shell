@@ -44,6 +44,7 @@ setup(name='duckietown-shell',
           'docker',
           'six',
           'psutil',
+          'future',
       ],
 
       tests_require=[
