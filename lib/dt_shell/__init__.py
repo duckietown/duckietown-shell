@@ -2,6 +2,8 @@
 import logging
 import sys
 
+import yaml
+
 from dt_shell.utils import format_exception
 from .exceptions import *
 
@@ -10,7 +12,10 @@ logging.basicConfig()
 dtslogger = logging.getLogger('dts')
 dtslogger.setLevel(logging.DEBUG)
 
-__version__ = '3.0.25'
+__version__ = '3.0.24'
+
+class OtherVersions(object):
+    name2versions = {}
 
 dtslogger.info('duckietown-shell %s' % __version__)
 
@@ -26,24 +31,39 @@ def cli_main():
     from .col_logging import setup_logging_color
     setup_logging_color()
 
-    known_exceptions = (InvalidEnvironment,)
+    known_exceptions = (InvalidEnvironment, CommandsLoadingException)
     try:
         cli_main_()
     except UserError as e:
         msg = str(e)
         dts_print(msg, 'red')
+        print_version_info()
         sys.exit(1)
     except known_exceptions as e:
         msg = str(e)
         dts_print(msg, 'red')
+        print_version_info()
         sys.exit(1)
     except SystemExit:
         raise
     except BaseException as e:
         msg = format_exception(e)
         dts_print(msg, 'red', attrs=['bold'])
+        print_version_info()
         sys.exit(2)
 
+
+def print_version_info():
+    v = OtherVersions.name2versions
+    v['python'] = sys.version
+    v['duckietown-shell'] = __version__
+
+    msg = '''\
+Please report that you are using:
+
+%s
+'''% yaml.dump(v, default_flow_style=False)
+    dts_print(msg, 'red', attrs=['dark'])
 
 def cli_main_():
     from .env_checks import abort_if_running_with_sudo

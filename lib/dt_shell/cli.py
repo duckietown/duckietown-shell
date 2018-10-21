@@ -14,7 +14,7 @@ import termcolor
 from git import Repo
 from git.exc import NoSuchPathError, InvalidGitRepositoryError
 
-from . import __version__, dtslogger
+from . import __version__, dtslogger, CommandsLoadingException, UserError
 from .constants import DTShellConstants
 from .dt_command_abs import DTCommandAbs
 from .dt_command_placeholder import DTCommandPlaceholder
@@ -74,7 +74,7 @@ class DTShell(Cmd, object):
             self.commands_path_leave_alone = False
 
         self.commands_update_check_flag = join(self.commands_path, '.updates-check')
-        print(self.commands_update_check_flag)
+
         # add commands_path to the path of this session
         sys.path.insert(0, self.commands_path)
         # add third-party libraries dir to the path of this session
@@ -96,7 +96,7 @@ class DTShell(Cmd, object):
             dtslogger.warning(msg)
             if not self._init_commands():
                 msg = 'I could not initialize the commands.'
-                raise Exception(msg)
+                raise CommandsLoadingException(msg)
             cmds_just_initialized = True
         # call super constructor
         super(DTShell, self).__init__()
@@ -374,6 +374,8 @@ Attempting auto-update.
             spec = package + command + '.command.DTCommand'
             try:
                 klass = _load_class(spec)
+            except UserError as e:
+                raise
             except BaseException as e:
                 # error_loading = True
                 from .utils import format_exception

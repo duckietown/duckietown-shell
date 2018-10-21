@@ -11,7 +11,7 @@ import termcolor
 import yaml
 from whichcraft import which
 
-from . import __version__
+from . import __version__, dtslogger
 from .constants import DTShellConstants
 
 
@@ -33,7 +33,7 @@ def get_url(url, timeout=2):
             raise URLException(str(res))
         return content
     except urllib.error.URLError as e:
-        print('falling back to curl')
+        dtslogger.debug('Falling back to using curl because urllib failed.')
         if which('curl') is not None:
             cmd = ['curl', url, '-m', '2']
             try:
