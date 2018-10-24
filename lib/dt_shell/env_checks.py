@@ -89,7 +89,7 @@ def check_user_in_docker_group():
         msg = 'No group %s defined.' % G
         dtslogger.warning(msg)
     else:
-        group_id = grp.getgrnam(G).gr_id
+        group_id = grp.getgrnam(G).gr_gid
         my_groups = os.getgroups()
         if group_id not in my_groups:
             msg = 'My groups are %s and "%s" group is %s ' % (my_groups, G, group_id)
