@@ -1,10 +1,12 @@
 import getpass
+import grp
 import os
 import subprocess
 import sys
 
 from whichcraft import which
 
+from dt_shell import dtslogger
 from .constants import DTShellConstants
 from .exceptions import InvalidEnvironment, UserError
 
@@ -26,17 +28,21 @@ As a matter of fact, do not run anything with "sudo" unless instructed to do so.
 
 
 def check_docker_environment():
+    username = getpass.getuser()
     from . import dtslogger
-    dtslogger.debug('Checking docker environment')
+    dtslogger.debug('Checking docker environment for user %s' % username)
+
     check_executable_exists('docker')
 
-    if on_linux():
-        username = getpass.getuser()
-        if username != 'root':
-            check_user_in_group('docker')
-        # print('checked groups')
-    else:
-        dtslogger.debug('skipping env check because not on Linux')
+    check_user_in_docker_group()
+    #
+    # if on_linux():
+    #
+    #     if username != 'root':
+    #         check_user_in_docker_group()
+    #     # print('checked groups')
+    # else:
+    #     dtslogger.debug('skipping env check because not on Linux')
 
     try:
         import docker
@@ -75,15 +81,33 @@ def check_executable_exists(cmdname):
         raise InvalidEnvironment(msg)
 
 
-def check_user_in_group(name):
-    active_groups = get_active_groups(username=None)
-
-    if name not in active_groups:
-        msg = 'The user is not in group "%s".' % name
-        msg += '\n\nIt belongs to groups: %s.' % u", ".join(sorted(active_groups))
-
-        msg += '\n\nNote that when you add a user to a group, you need to login in and out.'
-        raise InvalidEnvironment(msg)
+def check_user_in_docker_group():
+    # first, let's see if there exists a group "docker"
+    group_names = [g.gr_name for g in grp.getgrall()]
+    G = 'docker'
+    if G not in group_names:
+        msg = 'No group %s defined.' % G
+        dtslogger.warning(msg)
+    else:
+        group_id = grp.getgrnam(G).gr_id
+        my_groups = os.getgroups()
+        if group_id not in my_groups:
+            msg = 'My groups are %s and "%s" group is %s ' % (my_groups, G, group_id)
+            msg += '\n\nNote that when you add a user to a group, you need to login in and out.'
+            dtslogger.warning(msg)
+    #
+    #     active_groups = get_active_groups(username=None)
+    #
+    # if name not in active_groups:
+    #     msg = 'The user is not in group "%s".' % name
+    #     msg += '\n\nIt belongs to groups: %s.' % u", ".join(sorted(active_groups))
+    #
+    #     msg += '\n\nNote that when you add a user to a group, you need to login in and out.'
+    #
+    #     if True:
+    #         dtslogger.warning(msg)
+    #     else:
+    #         raise InvalidEnvironment(msg)
 
 
 def get_active_groups(username=None):
@@ -105,7 +129,6 @@ def get_active_groups(username=None):
     active_groups = stdout.decode().split()
 
     return active_groups
-
 
 
 def get_dockerhub_username(shell=None):

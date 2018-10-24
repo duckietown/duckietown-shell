@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/duckietown/duckietown-shell.svg?style=shield)](https://circleci.com/gh/duckietown/duckietown-shell)
+
 # Duckietown Shell
 
 *Duckietown Shell* is a pure Python, easily distributable (few dependencies) utility for Duckietown.

@@ -1,14 +1,6 @@
 from setuptools import find_packages, setup
 
 
-import sys
-
-if sys.version_info >= (3,):
-    msg = "duckietown-shell is only tested on Python 2.7. Python 3 is not supported yet."
-    print('\n\n%s\n\n' % msg)
-
-
-
 def get_version(filename):
     import ast
     version = None

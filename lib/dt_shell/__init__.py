@@ -14,8 +14,10 @@ dtslogger.setLevel(logging.DEBUG)
 
 __version__ = '3.0.26'
 
+
 class OtherVersions(object):
     name2versions = {}
+
 
 dtslogger.info('duckietown-shell %s' % __version__)
 
@@ -62,8 +64,9 @@ def print_version_info():
 Please report that you are using:
 
 %s
-'''% yaml.dump(v, default_flow_style=False)
+''' % yaml.dump(v, default_flow_style=False)
     dts_print(msg, 'red', attrs=['dark'])
+
 
 def cli_main_():
     from .env_checks import abort_if_running_with_sudo
