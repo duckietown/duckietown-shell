@@ -11,3 +11,4 @@ psutil
 six
 ruamel.ordereddict
 ruamel.yaml
+future
