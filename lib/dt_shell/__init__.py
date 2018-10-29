@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import logging
 import sys
-import traceback
 
-import six
+import yaml
 
+from dt_shell.utils import format_exception
 from .exceptions import *
 
 logging.basicConfig()
@@ -12,78 +12,101 @@ logging.basicConfig()
 dtslogger = logging.getLogger('dts')
 dtslogger.setLevel(logging.DEBUG)
 
-__version__ = '3.0.16'
+__version__ = '3.0.30'
+
+
+class OtherVersions(object):
+    name2versions = {}
+
 
 dtslogger.info('duckietown-shell %s' % __version__)
 
 import termcolor
 
-
-from .cli import DTShell
+from .cli import DTShell, dts_print
 
 from .dt_command_abs import DTCommandAbs
 from .dt_command_placeholder import DTCommandPlaceholder
 
 
-if sys.version_info >= (3,):
-    msg = "duckietown-shell only works on Python 2.7. Python 3 is not supported yet."
-    dtslogger.warning(msg)
-    # raise ImportError(msg)
-
-
 def cli_main():
     from .col_logging import setup_logging_color
     setup_logging_color()
+
+    known_exceptions = (InvalidEnvironment, CommandsLoadingException)
+    try:
+        cli_main_()
+    except UserError as e:
+        msg = str(e)
+        dts_print(msg, 'red')
+        print_version_info()
+        sys.exit(1)
+    except known_exceptions as e:
+        msg = str(e)
+        dts_print(msg, 'red')
+        print_version_info()
+        sys.exit(1)
+    except SystemExit:
+        raise
+    except BaseException as e:
+        msg = format_exception(e)
+        dts_print(msg, 'red', attrs=['bold'])
+        print_version_info()
+        sys.exit(2)
+
+
+def print_version_info():
+    v = OtherVersions.name2versions
+    v['python'] = sys.version
+    v['duckietown-shell'] = __version__
+
+    msg = '''\
+Please report that you are using:
+
+%s
+''' % yaml.dump(v, default_flow_style=False)
+    dts_print(msg, 'red', attrs=['dark'])
+
+
+def cli_main_():
+    from .env_checks import abort_if_running_with_sudo
+    abort_if_running_with_sudo()
+    # Problems with a step in the Duckiebot operation manual?
+    #
+    #     Report here: https://github.com/duckietown/docs-opmanual_duckiebot/issues
+
     # TODO: register handler for Ctrl-C
+    url = href("https://github.com/duckietown/duckietown-shell-commands/issues")
     msg = """
 
-        Problems with a step in the Duckiebot operation manual?
+Problems with a command?
 
-            Report here: https://github.com/duckietown/docs-opmanual_duckiebot/issues
+Report here: {url}
 
-        Other problems?  
+Troubleshooting:
 
-            Report here: https://github.com/duckietown/duckietown-shell-commands/issues
+- If some commands update fail, delete ~/.dt-shell/commands
 
-            Troubleshooting:
+- To reset the shell to "factory settings", delete ~/.dt-shell
 
-            - If some commands update fail, delete ~/.dt-shell/commands
+  (Note: you will have to re-configure.)
 
-            - To reset the shell to "factory settings", delete ~/.dt-shell
-
-              (Note: you will have to re-configure.)
-
-    """
-    dtslogger.info(msg)
+    """.format(url=url)
+    dts_print(msg)
 
     from .exceptions import InvalidEnvironment, UserError
 
     shell = DTShell()
     arguments = sys.argv[1:]
 
-    known_exceptions = (InvalidEnvironment,)
+    if arguments:
+        from dt_shell.utils import replace_spaces
+        arguments = map(replace_spaces, arguments)
+        cmdline = " ".join(arguments)
+        shell.onecmd(cmdline)
+    else:
+        shell.cmdloop()
 
-    try:
-        if arguments:
-            from dt_shell.utils import replace_spaces
-            arguments = map(replace_spaces, arguments)
-            cmdline = " ".join(arguments)
-            shell.onecmd(cmdline)
-        else:
-            shell.cmdloop()
-    except UserError as e:
-        msg = str(e)
-        termcolor.cprint(msg, 'red')
-        sys.exit(1)
-    except known_exceptions as e:
-        msg = str(e)
-        termcolor.cprint(msg, 'yellow')
-        sys.exit(1)
-    except Exception as e:
-        if six.PY2:
-            msg = traceback.format_exc(e)
-        else:
-            msg = traceback.format_exc(None, e)
-        termcolor.cprint(msg, 'red')
-        sys.exit(2)
 
+def href(x):
+    return termcolor.colored(x, 'blue', attrs=['underline'])

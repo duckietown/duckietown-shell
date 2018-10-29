@@ -6,18 +6,15 @@ import json
 import os
 import sys
 import time
-import traceback
-
 from cmd import Cmd
 from os import makedirs, remove, utime
 from os.path import basename, isfile, isdir, exists, join, getmtime
 
-import six
 import termcolor
 from git import Repo
 from git.exc import NoSuchPathError, InvalidGitRepositoryError
 
-from . import __version__, dtslogger
+from . import __version__, dtslogger, CommandsLoadingException, UserError
 from .constants import DTShellConstants
 from .dt_command_abs import DTCommandAbs
 from .dt_command_placeholder import DTCommandPlaceholder
@@ -75,7 +72,9 @@ class DTShell(Cmd, object):
         else:
             self.commands_path = join(self.config_path, 'commands')
             self.commands_path_leave_alone = False
+
         self.commands_update_check_flag = join(self.commands_path, '.updates-check')
+
         # add commands_path to the path of this session
         sys.path.insert(0, self.commands_path)
         # add third-party libraries dir to the path of this session
@@ -97,7 +96,7 @@ class DTShell(Cmd, object):
             dtslogger.warning(msg)
             if not self._init_commands():
                 msg = 'I could not initialize the commands.'
-                raise Exception(msg)
+                raise CommandsLoadingException(msg)
             cmds_just_initialized = True
         # call super constructor
         super(DTShell, self).__init__()
@@ -109,7 +108,7 @@ class DTShell(Cmd, object):
         # Do not check it if we are using custom commands_path_leave_alone
         if not is_shell_outdated \
                 and not cmds_just_initialized \
-                and not self.commands_path_leave_alone\
+                and not self.commands_path_leave_alone \
                 and not 'update' in sys.argv:
             self.check_commands_outdated()
 
@@ -137,7 +136,7 @@ class DTShell(Cmd, object):
             json.dump(self.config, fp)
 
     def check_commands_outdated(self):
-        # get local SHA
+
         try:
             commands_repo = Repo(self.commands_path)
         except (NoSuchPathError, InvalidGitRepositoryError) as e:
@@ -167,33 +166,38 @@ class DTShell(Cmd, object):
                 DTShellConstants.COMMANDS_REPO_BRANCH
             )
             try:
-                from six.moves import urllib
-                req = urllib.Request(url)
-                res = urllib.urlopen(req, timeout=3)
-                content = res.read()
+                from .version_check import get_url
+                content = get_url(url)
                 data = json.loads(content)
                 remote_sha = data['commit']['sha']
-            except Exception as e:
+            except BaseException as e:
+                from .utils import format_exception
+                dtslogger.error(format_exception(e))
                 return False
         # check if we need to update
         need_update = local_sha != remote_sha
         if need_update:
             msg = """ 
                   
-An updated version of the commands is available
+An updated version of the commands is available.
 
-Run the command  
-
-    dts update
-
-to retrieve the newest version.
+Attempting auto-update.
 
             """
-            print(termcolor.colored(msg, "yellow", attrs=['bold']))
-        # cache remote SHA
-        if not use_cached_sha:
-            with open(self.commands_update_check_flag, 'w') as fp:
-                json.dump({'remote': remote_sha}, fp)
+            self.sprint(msg, color="yellow", attrs=['bold'])
+
+            try:
+                self.update_commands()
+
+                # cache remote SHA
+                if not use_cached_sha:
+                    with open(self.commands_update_check_flag, 'w') as fp:
+                        json.dump({'remote': remote_sha}, fp)
+
+            except BaseException as e:
+                from .utils import format_exception
+                dtslogger.error(format_exception(e))
+
         # return success
         return True
 
@@ -207,7 +211,7 @@ to retrieve the newest version.
         # re-install commands
         self.commands = self._get_commands(self.commands_path)
         if self.commands is None:
-            print('No commands found.')
+            dtslogger.error('No commands found.')
             self.commands = {}
         # load commands
         # print('commands: %s' % self.commands)
@@ -218,19 +222,19 @@ to retrieve the newest version.
         # Commands come in their packages, which allows dependencies.
         # This also allows to give people permission to update only
         # part of the commands.
-        try:
-            import duckietown_challenges_commands
-        except BaseException as e:
-            msg = 'Could not import duckietown_challenges_commands: %s' % e
-            # print(msg)
-        else:
-            dirname = os.path.dirname(duckietown_challenges_commands.__file__)
-            msg = 'Challenges installed in %s' % dirname
-            # print(msg)
-            commands = os.path.join(dirname, 'commands')
-            if os.path.exists(commands):
-                msg = 'Available commands at %s' % commands
-                # print(msg)
+        # try:
+        #     import duckietown_challenges_commands
+        # except BaseException as e:
+        #     msg = 'Could not import duckietown_challenges_commands: %s' % e
+        #     # print(msg)
+        # else:
+        #     dirname = os.path.dirname(duckietown_challenges_commands.__file__)
+        #     msg = 'Challenges installed in %s' % dirname
+        #     # print(msg)
+        #     commands = os.path.join(dirname, 'commands')
+        #     if os.path.exists(commands):
+        #         msg = 'Available commands at %s' % commands
+        #         # print(msg)
 
             # TODO: load commands with prefix "challenges"
 
@@ -263,7 +267,7 @@ to retrieve the newest version.
         # enable if possible
         if command_name in present:
             flag_file = join(self.commands_path, command_name, 'installed.user.flag')
-            self._touch(flag_file)
+            _touch(flag_file)
         return True
 
     def disable_command(self, command_name):
@@ -283,14 +287,14 @@ to retrieve the newest version.
             msg = 'Will not try to update the commands path.'
             print(msg)
             return True
-        print('Downloading commands in %s ...' % self.commands_path)
+        self.sprint('Downloading commands in %s ...' % self.commands_path)
         # create commands repo
         commands_repo = Repo.init(self.commands_path)
         # the repo now exists
         origin = commands_repo.create_remote('origin', DTShellConstants.COMMANDS_REMOTE_URL)
         # check existence of `origin`
         if not origin.exists():
-            print('The commands repository %r cannot be found. Exiting.' % origin.urls)
+            dtslogger.error('The commands repository %r cannot be found. Exiting.' % origin.urls)
             return False
         # pull data
         origin.fetch()
@@ -313,16 +317,16 @@ to retrieve the newest version.
             if not self._init_commands():
                 return False
         # the repo exists
-        print('Updating commands...', end='')
+        self.sprint('Updating commands...')
         origin = commands_repo.remote('origin')
         # check existence of `origin`
         if not origin.exists():
-            print('The commands repository %r cannot be found. Exiting.' % origin.urls)
+            dtslogger.error('The commands repository %r cannot be found. Exiting.' % origin.urls)
             return False
         _res = origin.pull()
         # pull data from remote.master to local.master
         commands_repo.heads.master.checkout()
-        print('OK')
+
         # # update all submodules
         # print('Updating libraries...', end='')
         # try:
@@ -336,7 +340,7 @@ to retrieve the newest version.
         #     submodule.update(recursive=True, to_latest_revision=False)
 
         # everything should be fine
-        print('OK')
+        self.sprint('OK')
         # cache current (local=remote) SHA
         current_sha = commands_repo.heads.master.commit.hexsha
         with open(self.commands_update_check_flag, 'w') as fp:
@@ -362,22 +366,6 @@ to retrieve the newest version.
         # return
         return subcmds
 
-    def _load_class(self, name):
-        if DEBUG:
-            print('DEBUG:: Loading %s' % name)
-        components = name.split('.')
-
-        mod = __import__(components[0])
-
-        for comp in components[1:]:
-            try:
-                mod = getattr(mod, comp)
-            except AttributeError as e:
-                msg = 'Could not get field %r of module %r: %s' % (comp, mod.__name__, e)
-                msg += '\n module file %s' % getattr(mod, '__file__', '?')
-                raise AttributeError(msg)
-        return mod
-
     def _load_commands(self, package, command, sub_commands, lvl):
         # load command
         klass = None
@@ -385,14 +373,13 @@ to retrieve the newest version.
         if not sub_commands:
             spec = package + command + '.command.DTCommand'
             try:
-                klass = self._load_class(spec)
+                klass = _load_class(spec)
+            except UserError as e:
+                raise
             except BaseException as e:
                 # error_loading = True
-
-                if six.PY2:
-                    se = traceback.format_exc(e)
-                else:
-                    se = traceback.format_exc(None, e)
+                from .utils import format_exception
+                se = format_exception(e)
 
                 msg = 'Cannot load command class %r (package=%r, command=%r): %s' % (
                     spec, package, command, se)
@@ -404,11 +391,11 @@ to retrieve the newest version.
         if error_loading:
             klass = DTCommandPlaceholder()
             if DEBUG:
-                print('ERROR while loading the command `%s`' % (package + command + '.command.DTCommand',))
+                dtslogger.debug('ERROR while loading the command `%s`' % (package + command + '.command.DTCommand',))
         if not issubclass(klass.__class__, DTCommandAbs.__class__):
             klass = DTCommandPlaceholder()
             if DEBUG:
-                print('Command `%s` not found' % (package + command + '.command.DTCommand',))
+                dtslogger.debug('Command `%s` not found' % (package + command + '.command.DTCommand',))
         # initialize list of subcommands
         klass.name = command
         klass.level = lvl
@@ -432,16 +419,12 @@ to retrieve the newest version.
         # load sub-commands
         for cmd, subcmds in sub_commands.items():
             if DEBUG:
-                print('DEBUG:: Loading %s' % package + command + '.*')
+                dtslogger.debug('DEBUG:: Loading %s' % package + command + '.*')
             kl = self._load_commands(package + command + '.', cmd, subcmds, lvl + 1)
             if kl is not None:
                 klass.commands[cmd] = kl
         # return class for this command
         return klass
-
-    def _touch(self, path):
-        with open(path, 'a'):
-            utime(path, None)
 
     def get_dt1_token(self):
         k = DTShellConstants.DT1_TOKEN_CONFIG_KEY
@@ -451,3 +434,55 @@ to retrieve the newest version.
 
         token = self.config[k]
         return token
+
+    # noinspection PyMethodMayBeStatic
+    def sprint(self, msg, color=None, attrs=None):
+        return dts_print(msg=msg, color=color, attrs=attrs)
+
+
+def dts_print(msg, color=None, attrs=None):
+    '''
+        Prints a message to the user.
+    '''
+    msg = msg.strip()  # remove space
+    print('')  # always separate
+    lines = msg.split('\n')
+    prefix = 'dts : '
+    filler = '    : '
+    # filler = ' ' * len(prefix)
+
+    for i, line in enumerate(lines):
+        f = prefix if i == 0 else filler
+        line = termcolor.colored(line, color=color, attrs=attrs)
+        s = '%s %s' % (dark_yellow(f), line)
+        print(s)
+
+
+def dark_yellow(x):
+    return termcolor.colored(x, 'yellow', attrs=[])
+
+
+def dark(x):
+    return termcolor.colored(x, attrs=['dark'])
+
+
+def _touch(path):
+    with open(path, 'a'):
+        utime(path, None)
+
+
+def _load_class(name):
+    if DEBUG:
+        print('DEBUG:: Loading %s' % name)
+    components = name.split('.')
+
+    mod = __import__(components[0])
+
+    for comp in components[1:]:
+        try:
+            mod = getattr(mod, comp)
+        except AttributeError as e:
+            msg = 'Could not get field %r of module %r: %s' % (comp, mod.__name__, e)
+            msg += '\n module file %s' % getattr(mod, '__file__', '?')
+            raise AttributeError(msg)
+    return mod

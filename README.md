@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/duckietown/duckietown-shell.svg?style=shield)](https://circleci.com/gh/duckietown/duckietown-shell)
+
 # Duckietown Shell
 
 *Duckietown Shell* is a pure Python, easily distributable (few dependencies) utility for Duckietown.
@@ -64,7 +66,7 @@ The shell itself does not require any other dependency beside standard cross-pla
 On Mac OSX you will have to add the path to the binary to your PATH variable. 
 This can be done with 
 
-    $ echo "export PATH=$PATH:/Users/liam/Library/Python/2.7/bin" >> ~/.bash_profile
+    $ echo "export PATH=$PATH:$HOME/Library/Python/2.7/bin" >> ~/.bash_profile
 
 and then reopen your terminal for the changes to take effect.
 

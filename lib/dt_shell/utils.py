@@ -1,5 +1,7 @@
 import traceback
 
+import six
+
 
 def indent(s, prefix, first=None):
     s = str(s)
@@ -54,7 +56,7 @@ def raise_wrapped_make(etype, e, msg, compact=False, **kwargs):
         if compact:
             es = str(e)
         else:
-            es = traceback.format_exc(e)
+            es = format_exception(e)
 
     s += '\n' + indent(es.strip(), '| ')
 
@@ -85,3 +87,10 @@ def replace_spaces(x):
 
 def undo_replace_spaces(x):
     return x.replace(SPACE_TAG, ' ')
+
+
+def format_exception(e):
+    if six.PY2:
+        return traceback.format_exc(e)
+    else:
+        return traceback.format_exc()  # None, e)

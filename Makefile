@@ -40,3 +40,5 @@ push-rpi:
 push-x86:
 	docker push $(tag_x86)
 
+test:
+	make -C testing

@@ -1,3 +1,4 @@
+# coding=utf-8
 import json
 import os
 
@@ -7,6 +8,7 @@ import termcolor
 
 from . import dtslogger
 from .utils import raise_wrapped, indent
+
 
 class Storage(object):
     done = False
@@ -47,7 +49,11 @@ class RequestFailed(RequestException):
     """
 
 
-def make_server_request(token, endpoint, data=None, method='GET', timeout=3):
+DEFAULT_TIMEOUT = 5
+
+
+def make_server_request(token, endpoint, data=None, method='GET', timeout=DEFAULT_TIMEOUT,
+                        suppress_user_msg=False):
     """
         Raise RequestFailed or ConnectionError.
 
@@ -56,7 +62,6 @@ def make_server_request(token, endpoint, data=None, method='GET', timeout=3):
 
     from six.moves import urllib
     # import urllib.request
-
 
     server = get_duckietown_server_url()
     url = server + endpoint
@@ -67,8 +72,8 @@ def make_server_request(token, endpoint, data=None, method='GET', timeout=3):
 
     if data is not None:
         data = json.dumps(data)
-    if six.PY3:
-        data = data.encode('utf-8')
+        if six.PY3:
+            data = data.encode('utf-8')
     req = urllib.request.Request(url, headers=headers, data=data)
     req.get_method = lambda: method
     try:
@@ -96,14 +101,22 @@ def make_server_request(token, endpoint, data=None, method='GET', timeout=3):
         msg += '\n\n' + indent(data, '  > ')
         raise ConnectionError(msg)
 
-    if 'user_msg' in result:
+    if 'user_msg' in result and not suppress_user_msg:
         user_msg = result['user_msg']
         if user_msg:
+            s = []
             lines = user_msg.strip().split('\n')
+            prefix = u'message from server: '
+            p2 = u': '.rjust(len(prefix))
             print('')
-            for l in lines:
-                print(termcolor.colored('message from server: ', attrs=['dark']) + termcolor.colored(l, 'blue'))
-            print('')
+
+            for i, l in enumerate(lines):
+                p = prefix if i == 0 else p2
+                # l = termcolor.colored(l, 'blue')
+                s.append(termcolor.colored(p, attrs=['dark']) + l)
+            from dt_shell.cli import dts_print
+
+            dts_print('\n'.join(s))
 
     if result['ok']:
         if 'result' not in result:
@@ -122,13 +135,6 @@ def get_dtserver_user_info(token):
     endpoint = '/info'
     method = 'GET'
     data = None
-    return make_server_request(token, endpoint, data=data, method=method)
-
-
-def dtserver_update_challenge(token, queue, challenge_parameters):
-    endpoint = '/challenge-update'
-    method = 'POST'
-    data = {'queue': queue, 'challenge_parameters': challenge_parameters}
     return make_server_request(token, endpoint, data=data, method=method)
 
 
@@ -157,31 +163,3 @@ def dtserver_get_user_submissions(token):
         for k in ['date_submitted', 'last_status_change']:
             v[k] = dateutil.parser.parse(v[k])
     return submissions
-
-
-# TODO: you can delete the following around Oct 15
-
-def dtserver_work_submission(token, submission_id, machine_id, process_id, evaluator_version, features):
-    endpoint = '/take-submission'
-    method = 'GET'
-    data = {'submission_id': submission_id,
-            'machine_id': machine_id,
-            'process_id': process_id,
-            'evaluator_version': evaluator_version,
-            'features': features}
-    return make_server_request(token, endpoint, data=data, method=method)
-
-
-def dtserver_report_job(token, job_id, result, stats, machine_id,
-                        process_id, evaluation_container, evaluator_version):
-    endpoint = '/take-submission'
-    method = 'POST'
-    data = {'job_id': job_id,
-            'result': result,
-            'stats': stats,
-            'machine_id': machine_id,
-            'process_id': process_id,
-            'evaluation_container': evaluation_container,
-            'evaluator_version': evaluator_version,
-            }
-    return make_server_request(token, endpoint, data=data, method=method)

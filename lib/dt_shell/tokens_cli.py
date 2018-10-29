@@ -4,7 +4,7 @@ import sys
 
 import dateutil.parser
 from .duckietown_tokens import DuckietownToken, get_verify_key
-
+from future import builtins
 
 def verify_a_token_main(args=None):
     try:
@@ -15,7 +15,7 @@ def verify_a_token_main(args=None):
             token_s = args[0]
         else:
             msg = 'Please enter token:\n> '
-            token_s = raw_input(msg)
+            token_s = builtins.input(msg)
 
         sys.stderr.write('Verifying token %r\n' % token_s)
 
