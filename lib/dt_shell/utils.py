@@ -18,7 +18,7 @@ def indent(s, prefix, first=None):
     prefix = ' ' * (m - len(prefix)) + prefix
     first = ' ' * (m - len(first)) + first
 
-    # differnet first prefix
+    # different first prefix
     res = ['%s%s' % (prefix, line.rstrip()) for line in lines]
     res[0] = '%s%s' % (first, lines[0].rstrip())
     return '\n'.join(res)

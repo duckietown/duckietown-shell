@@ -3,8 +3,10 @@ import json
 import sys
 
 import dateutil.parser
-from .duckietown_tokens import DuckietownToken, get_verify_key
 from future import builtins
+
+from .duckietown_tokens import DuckietownToken, get_verify_key
+
 
 def verify_a_token_main(args=None):
     try:
