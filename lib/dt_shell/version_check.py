@@ -31,7 +31,7 @@ def get_url(url, timeout=2):
         content = res.read()
         if res.getcode() != 200:
             raise URLException(str(res))
-        return content
+        return content.decode("utf-8")
     except urllib.error.URLError as e:
         dtslogger.debug('Falling back to using curl because urllib failed.')
         if which('curl') is not None:
