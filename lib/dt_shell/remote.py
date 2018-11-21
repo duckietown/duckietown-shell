@@ -1,6 +1,7 @@
 # coding=utf-8
 import json
 import os
+import time
 
 import dateutil.parser
 import six
@@ -74,10 +75,16 @@ def make_server_request(token, endpoint, data=None, method='GET', timeout=DEFAUL
         data = json.dumps(data)
         if six.PY3:
             data = data.encode('utf-8')
+    t0 = time.time()
+    # dtslogger.info('server request with timeout %s' % timeout)
     req = urllib.request.Request(url, headers=headers, data=data)
     req.get_method = lambda: method
+
+
     try:
+        # dtslogger.info('urlopen')
         res = urllib.request.urlopen(req, timeout=timeout)
+        # dtslogger.info('read')
         data = res.read()
     except urllib.error.HTTPError as e:
         msg = 'Operation failed for %s' % url
@@ -87,6 +94,9 @@ def make_server_request(token, endpoint, data=None, method='GET', timeout=DEFAUL
         msg = 'Cannot connect to server %s' % url
         raise_wrapped(ConnectionError, e, msg)
         raise
+
+    delta = time.time() - t0
+    # dtslogger.info('server request took %.1f seconds' % delta)
 
     try:
         result = json.loads(data)
