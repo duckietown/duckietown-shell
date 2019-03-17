@@ -12,7 +12,7 @@ logging.basicConfig()
 dtslogger = logging.getLogger('dts')
 dtslogger.setLevel(logging.DEBUG)
 
-__version__ = '4.0.0'
+__version__ = '4.0.1'
 
 
 class OtherVersions(object):
