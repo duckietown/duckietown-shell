@@ -48,6 +48,9 @@ def cli_main():
         sys.exit(1)
     except SystemExit:
         raise
+    except KeyboardInterrupt:
+        dts_print('User aborted operation.')
+        pass
     except BaseException as e:
         msg = format_exception(e)
         dts_print(msg, 'red', attrs=['bold'])
