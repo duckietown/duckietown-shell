@@ -8,7 +8,7 @@ import six
 import termcolor
 
 from . import dtslogger
-from .utils import raise_wrapped, indent
+from .utils import indent
 
 
 class Storage(object):
@@ -80,31 +80,30 @@ def make_server_request(token, endpoint, data=None, method='GET', timeout=DEFAUL
     req = urllib.request.Request(url, headers=headers, data=data)
     req.get_method = lambda: method
 
-
     try:
         # dtslogger.info('urlopen')
         res = urllib.request.urlopen(req, timeout=timeout)
         # dtslogger.info('read')
-        data = res.read()
+        data_read: bytes = res.read()
     except urllib.error.HTTPError as e:
         msg = 'Operation failed for %s' % url
-        msg += '\n\n' + e.read()
+        err_msg = e.read().decode("utf-8")
+        msg += f'\n\n{err_msg}'
         raise ConnectionError(msg)
     except urllib.error.URLError as e:
         msg = 'Cannot connect to server %s' % url
-        raise_wrapped(ConnectionError, e, msg)
-        raise
+        raise ConnectionError(msg) from e
 
     delta = time.time() - t0
     # dtslogger.info('server request took %.1f seconds' % delta)
 
+    data_s = data_read.decode('utf-8')
     try:
-        result = json.loads(data)
+        result = json.loads(data_s)
     except ValueError as e:
         msg = 'Cannot read answer from server.'
-        msg += '\n\n' + indent(data, '  > ')
-        raise_wrapped(ConnectionError, e, msg)
-        raise
+        msg += '\n\n' + indent(data_s, '  > ')
+        raise ConnectionError(msg) from e
 
     if not isinstance(result, dict) or 'ok' not in result:
         msg = 'Server provided invalid JSON response. Expected a dict with "ok" in it.'
