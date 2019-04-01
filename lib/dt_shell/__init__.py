@@ -20,7 +20,7 @@ dtslogger.info('duckietown-shell %s' % __version__)
 import sys
 
 if sys.version_info < (3, 6):
-    msg = 'duckietown-shell works with Python 3.6 and later. Detected %s.' % str(sys.version_info)
+    msg = 'duckietown-shell works with Python 3.6 and later.\nDetected %s.' % str(sys.version)
     sys.exit(msg)
 
 class OtherVersions(object):
