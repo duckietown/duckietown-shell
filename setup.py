@@ -24,6 +24,7 @@ setup(name='duckietown-shell',
       download_url='http://github.com/duckietown/duckietown-shell/tarball/%s' % shell_version,
       package_dir={'': 'lib'},
       packages=find_packages('lib'),
+      python_requires='>=3.5',
       install_requires=[
           'GitPython',
           'texttable',

@@ -84,7 +84,7 @@ def make_server_request(token, endpoint, data=None, method='GET', timeout=DEFAUL
         # dtslogger.info('urlopen')
         res = urllib.request.urlopen(req, timeout=timeout)
         # dtslogger.info('read')
-        data_read: bytes = res.read()
+        data_read = res.read()
     except urllib.error.HTTPError as e:
         msg = 'Operation failed for %s' % url
         err_msg = e.read().decode("utf-8")

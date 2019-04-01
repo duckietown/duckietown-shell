@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 import logging
 import sys
 
@@ -15,11 +16,20 @@ dtslogger.setLevel(logging.DEBUG)
 __version__ = '4.0.2'
 
 
+dtslogger.info('duckietown-shell %s' % __version__)
+
+import six
+
+if six.PY2:
+    msg = 'duckietown-shell works with Python 3 only.'
+    dtslogger.error(msg)
+    raise Exception(msg)
+
+
 class OtherVersions(object):
     name2versions = {}
 
 
-dtslogger.info('duckietown-shell %s' % __version__)
 
 import termcolor
 
