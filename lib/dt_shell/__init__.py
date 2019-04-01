@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import logging
-import sys
 
 import yaml
 
@@ -18,13 +17,11 @@ __version__ = '4.0.3'
 
 dtslogger.info('duckietown-shell %s' % __version__)
 
-import six
+import sys
 
-if six.PY2:
-    msg = 'duckietown-shell works with Python 3 only.'
-    dtslogger.error(msg)
-    raise Exception(msg)
-
+if sys.version_info < (3, 6):
+    msg = 'duckietown-shell works with Python 3.6 and later. Detected %s.' % str(sys.version_info)
+    sys.exit(msg)
 
 class OtherVersions(object):
     name2versions = {}
