@@ -7,7 +7,7 @@
 
 The idea is that most of the functionality is implemented as Docker containers, and `dt-shell` provides a nice interface for that, so that user should not type a very long `docker run` command line.
 
-**Note**: we recently ported to Python 3, but it is not stable yet.
+**Note: Duckietown Shell required Python 3.6 or higher.**
  
 ## Installation
 
@@ -20,32 +20,14 @@ These installation steps make sure that you have a minimal "sane" environment, w
 
 ### Installation on Ubuntu 18.xx
 
-Installs pip, git, git-lfs, docker, duckietown-shell:
+Installs `pip3`, `git`, `git-lfs`, `docker`, `duckietown-shell`:
 
-    $ sudo apt install -y python-pip git git-lfs
+    $ sudo apt install -y python3-pip git git-lfs
     
     $ sudo apt install -y docker.io
     $ sudo adduser `whoami` docker
     
-    $ pip2 install --no-cache-dir --user -U duckietown-shell
-    
-Note: you need to *log in and out* to have the group change take effect.
-
-**Note: Never use `sudo pip install` to install `duckietown-shell`.**
-
-### Installation on Ubuntu 16.xx
-
-Installs pip, git, git-lfs, docker, duckietown-shell:
-
-    $ sudo apt-get install software-properties-common  curl
-    $ sudo add-apt-repository ppa:git-core/ppa
-    $ curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
-    $ sudo apt-get install  -y python-pip git git-lfs 
-    
-    $ curl -fsSL https://get.docker.com | sudo bash
-    $ sudo usermod -aG docker `whoami` 
-    
-    $ pip2 install --no-cache-dir --user -U duckietown-shell
+    $ pip3 install --no-cache-dir --user -U duckietown-shell
     
 Note: you need to *log in and out* to have the group change take effect.
 
@@ -57,11 +39,11 @@ You will need to find the instructions for installing pip, git, git-lfs, docker 
 
 To install the shell, use:
 
-    $ pip2 install --no-cache-dir --user -U duckietown-shell
+    $ pip3 install --no-cache-dir --user -U duckietown-shell
 
 The shell itself does not require any other dependency beside standard cross-platform Python libraries.
 
-**Note: Never use `sudo pip install` to install `duckietown-shell`.**
+**Note: Never use `sudo pip3 install` to install `duckietown-shell`.**
 
 
 On Mac OSX you will have to add the path to the binary to your PATH variable. 
@@ -132,13 +114,7 @@ There is an incremental build system. To clean and run from scratch:
 
     $ dts docs clean
     $ dts docs build
-
-TODO: link to docs
-
-    
-
------------------------
-        
+  
 
 ## Authenticate a Duckietown Token
 
