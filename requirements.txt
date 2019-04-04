@@ -12,4 +12,4 @@ six
 ruamel.ordereddict
 ruamel.yaml
 future
-duckietown-challenges==4.0.5
+duckietown-challenges==4.0.6
