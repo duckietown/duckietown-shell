@@ -139,7 +139,7 @@ def get_last_version():
 def is_older(a, b):
     na = tuple(map(int, a.split('.')))
     nb = tuple(map(int, b.split('.')))
-    
+
     return na < nb
 
 def check_if_outdated():
