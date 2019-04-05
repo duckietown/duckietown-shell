@@ -11,7 +11,7 @@ import termcolor
 import yaml
 from whichcraft import which
 
-from . import __version__, dtslogger
+from . import __version__, dtslogger, UserError
 from .constants import DTShellConstants
 
 
@@ -136,12 +136,17 @@ def get_last_version():
     # XXX: this might not be set
     return version
 
+def is_older(a, b):
+    na = tuple(map(int, a.split('.')))
+    nb = tuple(map(int, b.split('.')))
+    
+    return na < nb
 
 def check_if_outdated():
     latest_version = get_last_version()
     # print('last version: %r' % latest_version)
     # print('installed: %r' % __version__)
-    if latest_version and __version__ != latest_version:
+    if latest_version and is_older(__version__, latest_version):
         msg = '''
 
 There is an updated duckietown-shell available.
@@ -150,13 +155,14 @@ There is an updated duckietown-shell available.
 
  available: {available} 
 
-You should update the shell using `pip`.        
+You must update the shell using `pip`.        
         
         '''.format(current=__version__, available=latest_version)
         print(termcolor.colored(msg, 'yellow'))
-        wait = 3
-        time.sleep(1)
-        print('Waiting %d seconds to give you time to read the message.' % wait)
-        time.sleep(wait)
+        raise UserError(msg)
+        # wait = 3
+        # time.sleep(1)
+        # print('Waiting %d seconds to give you time to read the message.' % wait)
+        # time.sleep(wait)
         return True
     return False
