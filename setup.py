@@ -39,7 +39,7 @@ setup(name='duckietown-shell',
           'six',
           'psutil',
           'future',
-          'duckietown-challenges==4.0.6',
+          'duckietown-challenges>=4.0.7',
       ],
 
       tests_require=[
