@@ -157,7 +157,7 @@ $ dts tok verify dt1-TOKEN-TO-VERIFY
 This exits with 0 if the token is valid, and writes on standard output the following json:
 
 ```json
-    {"uid": 3, "expiration": "2018-09-23"}
+{"uid": 3, "expiration": "2018-09-23"}
 ```
 
 which means that the user is identified as uid 3 until the given expiration date.
