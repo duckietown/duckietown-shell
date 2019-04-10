@@ -22,12 +22,12 @@ These installation steps make sure that you have a minimal "sane" environment, w
 Installs `pip3`, `git`, `git-lfs`, `docker`, `duckietown-shell`:
 
 ```bash
-$ sudo apt install -y python3-pip git git-lfs
+sudo apt install -y python3-pip git git-lfs
 
-$ sudo apt install -y docker.io
-$ sudo adduser `whoami` docker
+sudo apt install -y docker.io
+sudo adduser `whoami` docker
 
-$ pip3 install --no-cache-dir --user -U duckietown-shell
+pip3 install --no-cache-dir --user -U duckietown-shell
 ```
 
 Note: you need to *log in and out* to have the group change take effect.
@@ -41,7 +41,7 @@ You will need to find the instructions for installing pip, git, git-lfs, docker 
 To install the shell, use:
 
 ```bash
-$ pip3 install --no-cache-dir --user -U duckietown-shell
+pip3 install --no-cache-dir --user -U duckietown-shell
 ```
 
 The shell itself does not require any other dependency beside standard cross-platform Python libraries.
@@ -52,7 +52,7 @@ On Mac OSX you will have to add the path to the binary to your PATH variable.
 This can be done with
 
 ```bash
-$ echo "export PATH=$PATH:$HOME/Library/Python/2.7/bin" >> ~/.bash_profile
+echo "export PATH=$PATH:$HOME/Library/Python/2.7/bin" >> ~/.bash_profile
 ```
 
 and then reopen your terminal for the changes to take effect.
@@ -92,19 +92,19 @@ Then you should see an `auth` entry of the type:
 At this point, try to enter the Duckietown shell by typing the command
 
 ```bash
-$ dts
+dts
 ```
 
 If you get an error, delete the subfolder `commands` in the folder `~/.dt-shell`
 
 ```bash
-$ rm -rf ~/.dt-shell/commands
+rm -rf ~/.dt-shell/commands
 ```
 
 Then, try again
 
 ```bash
-$ dts
+dts
 ```
 
 -----------------------
@@ -116,18 +116,18 @@ $ dts
 To compile one of the books (e.g. docs-duckumentation but there are many others):
 
 ```bash
-$ git clone https://github.com/duckietown/docs-duckumentation.git
-$ cd docs-duckumentation
-$ git submodule init
-$ git submodule update
-$ dts docs build
+git clone https://github.com/duckietown/docs-duckumentation.git
+cd docs-duckumentation
+git submodule init
+git submodule update
+dts docs build
 ```
 
 There is an incremental build system. To clean and run from scratch:
 
 ```bash
-$ dts docs clean
-$ dts docs build
+dts docs clean
+dts docs build
 ```
 
 ### Authenticate a Duckietown Token
@@ -135,7 +135,7 @@ $ dts docs build
 Run the command `dts tok set` to set the Duckietown authentication token:
 
 ```bash
-$ dts tok set  
+dts tok set  
 ```
 
 Instructions will guide you and you will be prompted for the token.
@@ -143,7 +143,7 @@ Instructions will guide you and you will be prompted for the token.
 If you already know the token, then you can use:
 
 ```bash
-$ dts tok set dt1-YOUR-TOKEN
+dts tok set dt1-YOUR-TOKEN
 ```
 
 ### Verifying that a token is valid
@@ -151,7 +151,7 @@ $ dts tok set dt1-YOUR-TOKEN
 To verify that a token is valid, you can use:
 
 ```bash
-$ dts tok verify dt1-TOKEN-TO-VERIFY
+dts tok verify dt1-TOKEN-TO-VERIFY
 ```
 
 This exits with 0 if the token is valid, and writes on standard output the following json:
@@ -171,7 +171,7 @@ which means that the user is identified as uid 3 until the given expiration date
 This command will install DuckieOS on the SD-card:
 
 ```bash
-$ dts init_sd_card
+dts init_sd_card
 ```
 
 -----------------------
@@ -181,7 +181,7 @@ $ dts init_sd_card
 This command will start the ROS GUI container:
 
 ```bash
-$ dts start_gui_tools <DUCKIEBOT_NAME_GOES_HERE>
+dts start_gui_tools <DUCKIEBOT_NAME_GOES_HERE>
 ```
 
 -----------------------
@@ -191,5 +191,5 @@ $ dts start_gui_tools <DUCKIEBOT_NAME_GOES_HERE>
 This command will run the Duckiebot calibration procedure:
 
 ```bash
-$ dts calibrate_duckiebot <DUCKIEBOT_NAME_GOES_HERE>
+dts calibrate_duckiebot <DUCKIEBOT_NAME_GOES_HERE>
 ```
