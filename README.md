@@ -78,13 +78,13 @@ Then run `docker login` again.
 Then you should see an `auth` entry of the type:
 
 ```json
-    {
-        "auths": {
-            "https://index.docker.io/v1/": {
-                "auth": "mXXXXXXXXXXXXXXXXXXXXXXXXXX"
-            }
-        },
-    }
+{
+    "auths": {
+        "https://index.docker.io/v1/": {
+            "auth": "mXXXXXXXXXXXXXXXXXXXXXXXXXX"
+        }
+    },
+}
 ```
 
 ## Testing Duckietown shell
