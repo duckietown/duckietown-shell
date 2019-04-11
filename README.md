@@ -43,7 +43,7 @@ As for ubuntu 18, run:
     $ sudo adduser `whoami` docker
 
 Then, the duckietown shell require python3.6 or python3.7, which is not standard on ubuntu16.
-A currently working workaround is to install homebrew, by following instructions here : https://brew.sh/
+A currently working workaround is to install homebrew, by following instructions here : https://docs.brew.sh/Homebrew-on-Linux
 Then, run :
 
     $ brew install python3
