@@ -33,6 +33,29 @@ Note: you need to *log in and out* to have the group change take effect.
 
 **Note: Never use `sudo pip install` to install `duckietown-shell`.**
 
+### Installation on Ubuntu 16.xx
+
+As for ubuntu 18, run:
+
+    $ sudo apt install -y git git-lfs
+    
+    $ sudo apt install -y docker.io
+    $ sudo adduser `whoami` docker
+
+Then, the duckietown shell require python3.6 or python3.7, which is not standard on ubuntu16.
+A currently working workaround is to install homebrew, by following instructions here : https://brew.sh/
+Then, run :
+
+    $ brew install python3
+    $ python3.7 -m pip install --no-cache-dir --user -U duckietown-shell
+
+Then, typing 
+
+    $ which dts
+
+should output : /home/linuxbrew/.linuxbrew/bin/dts
+
+
 ### Installation in other operating systems
 
 You will need to find the instructions for installing pip, git, git-lfs, docker for your specific operating system on your own.
