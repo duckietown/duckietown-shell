@@ -94,7 +94,7 @@ def check_user_in_docker_group():
         if group_id not in my_groups:
             msg = 'My groups are %s and "%s" group is %s ' % (my_groups, G, group_id)
             msg += '\n\nNote that when you add a user to a group, you need to login in and out.'
-            dtslogger.warning(msg)
+            dtslogger.debug(msg)
     #
     #     active_groups = get_active_groups(username=None)
     #
