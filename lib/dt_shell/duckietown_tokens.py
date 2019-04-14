@@ -14,8 +14,8 @@ class DuckietownToken(object):
         self.signature = signature
 
     def as_string(self):
-        payload_58 = base58.b58encode(self.payload)
-        signature_58 = base58.b58encode(self.signature)
+        payload_58 = base58.b58encode(self.payload).decode('utf-8')
+        signature_58 = base58.b58encode(self.signature).decode('utf-8')
         return '%s-%s-%s' % (DuckietownToken.VERSION, payload_58, signature_58)
 
     @staticmethod
