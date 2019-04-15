@@ -1,4 +1,3 @@
-import getpass
 import grp
 import os
 import subprocess
@@ -28,9 +27,9 @@ As a matter of fact, do not run anything with "sudo" unless instructed to do so.
 
 
 def check_docker_environment():
-    username = getpass.getuser()
+    # username = getpass.getuser()
     from . import dtslogger
-    dtslogger.debug('Checking docker environment for user %s' % username)
+    # dtslogger.debug('Checking docker environment for user %s' % username)
 
     check_executable_exists('docker')
 
@@ -87,7 +86,7 @@ def check_user_in_docker_group():
     G = 'docker'
     if G not in group_names:
         msg = 'No group %s defined.' % G
-        dtslogger.warning(msg)
+        # dtslogger.warning(msg)
     else:
         group_id = grp.getgrnam(G).gr_gid
         my_groups = os.getgroups()

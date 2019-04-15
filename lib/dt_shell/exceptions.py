@@ -7,5 +7,6 @@ class UserError(Exception):
     pass
 
 
+
 class CommandsLoadingException(Exception):
     pass

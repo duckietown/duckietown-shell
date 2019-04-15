@@ -14,7 +14,6 @@ dtslogger.setLevel(logging.DEBUG)
 
 __version__ = '4.0.13'
 
-
 dtslogger.info('duckietown-shell %s' % __version__)
 
 import sys
@@ -23,9 +22,9 @@ if sys.version_info < (3, 6):
     msg = 'duckietown-shell works with Python 3.6 and later.\nDetected %s.' % str(sys.version)
     sys.exit(msg)
 
+
 class OtherVersions(object):
     name2versions = {}
-
 
 
 import termcolor
@@ -70,12 +69,14 @@ def print_version_info():
     v['python'] = sys.version
     v['duckietown-shell'] = __version__
 
-    msg = '''\
-Please report that you are using:
+    versions = yaml.dump(v, default_flow_style=False)
+    # Please = termcolor.colored('Please', 'red', attrs=['bold'])
+    msg = f'''\
+If you think this is a bug, please report that you are using:
 
-%s
-''' % yaml.dump(v, default_flow_style=False)
-    dts_print(msg, 'red', attrs=['dark'])
+{versions}
+'''
+    dts_print(msg, 'red')
 
 
 def cli_main_():
