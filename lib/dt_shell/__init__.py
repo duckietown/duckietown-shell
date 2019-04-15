@@ -43,6 +43,7 @@ def cli_main():
     try:
         cli_main_()
     except UserError as e:
+
         msg = str(e)
         dts_print(msg, 'red')
         print_version_info()

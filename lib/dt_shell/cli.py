@@ -9,6 +9,7 @@ import time
 from cmd import Cmd
 from os import makedirs, remove, utime
 from os.path import basename, isfile, isdir, exists, join, getmtime
+from typing import Optional
 
 import termcolor
 from git import Repo
@@ -236,7 +237,7 @@ Attempting auto-update.
         #         msg = 'Available commands at %s' % commands
         #         # print(msg)
 
-            # TODO: load commands with prefix "challenges"
+        # TODO: load commands with prefix "challenges"
 
         if DTShell.errors_loading:
             msg = """
@@ -436,7 +437,7 @@ Attempting auto-update.
         return token
 
     # noinspection PyMethodMayBeStatic
-    def sprint(self, msg, color=None, attrs=None):
+    def sprint(self, msg: str, color: Optional[str] = None, attrs=None):
         return dts_print(msg=msg, color=color, attrs=attrs)
 
 
