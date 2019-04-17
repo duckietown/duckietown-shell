@@ -1,3 +1,5 @@
+import sys
+
 from setuptools import find_packages, setup
 
 
@@ -14,6 +16,11 @@ def get_version(filename):
     if version is None:
         raise ValueError(filename)
     return version
+
+
+if sys.version_info < (3, 6):
+    msg = 'duckietown-shell works with Python 3.6 and later.\nDetected %s.' % str(sys.version)
+    sys.exit(msg)
 
 
 shell_version = get_version(filename='lib/dt_shell/__init__.py')
