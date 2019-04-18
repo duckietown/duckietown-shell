@@ -15,6 +15,10 @@ dtslogger.setLevel(logging.DEBUG)
 __version__ = '4.0.19'
 
 dtslogger.info('duckietown-shell %s' % __version__)
+import sys, locale
+
+dtslogger.debug(f'encoding: stdout {sys.stdout.encoding} stderr {sys.stderr.encoding} '
+                f'locale {locale.getpreferredencoding()}.')
 
 import sys
 
@@ -69,6 +73,10 @@ def print_version_info():
     v = OtherVersions.name2versions
     v['python'] = sys.version
     v['duckietown-shell'] = __version__
+
+    v['encodings'] = {'stdout': sys.stdout.encoding,
+                      'stderr': sys.stderr.encoding,
+                      'locale': locale.getpreferredencoding()}
 
     versions = yaml.dump(v, default_flow_style=False)
     # Please = termcolor.colored('Please', 'red', attrs=['bold'])
