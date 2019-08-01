@@ -20,22 +20,32 @@ These installation steps make sure that you have a minimal "sane" environment, w
 
 ### Installation on Ubuntu 18.xx
 
-Installs `pip3`, `git`, `git-lfs`, `docker`, `duckietown-shell`:
+Installs `pip3`, `git`, `git-lfs`:
 
     $ sudo apt install -y python3-pip git git-lfs
     
+Installs `docker`: (Also could refer to: https://docs.docker.com/install/linux/docker-ce/ubuntu/)
+
     $ sudo apt install -y docker.io
     $ sudo adduser `whoami` docker
-    
-    $ pip3 install --no-cache-dir --user -U duckietown-shell
-    
-Note: you need to *log in and out* to have the group change take effect.
+
+Installs `duckietown-shell`:
 
 **Note: Never use `sudo pip install` to install `duckietown-shell`.**
 
+    $ pip3 install --no-cache-dir --user -U duckietown-shell
+
+Note: you need to *log in and out* to have the group change take effect.
+
+Then, typing 
+
+    $ which dts
+    
+should output : /home/user/.local/bin/dts
+
 ### Installation on Ubuntu 16.xx
 
-As for ubuntu 18, run:
+As for ubuntu 16, run:
 
     $ sudo apt install -y git git-lfs
     
