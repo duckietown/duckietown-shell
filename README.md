@@ -41,7 +41,7 @@ Then, typing
 
     $ which dts
     
-should output : /home/user/.local/bin/dts
+should output something like: `/home/user/.local/bin/dts`
 
 ### Installation on Ubuntu 16.xx
 
@@ -63,7 +63,7 @@ Then, typing
 
     $ which dts
 
-should output : /home/linuxbrew/.linuxbrew/bin/dts
+should output : `/home/linuxbrew/.linuxbrew/bin/dts`
 
 
 ### Installation in other operating systems
