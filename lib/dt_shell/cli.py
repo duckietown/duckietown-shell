@@ -178,8 +178,8 @@ class DTShell(Cmd, object):
         # check if we need to update
         need_update = local_sha != remote_sha
         if need_update:
-            msg = """ 
-                  
+            msg = """
+
 An updated version of the commands is available.
 
 Attempting auto-update.
@@ -251,7 +251,7 @@ Attempting auto-update.
             !
             !      ~/.dt-shell/commands
             !
-            !    
+            !
 
             """ % "\n\n".join(DTShell.errors_loading)
 
@@ -365,6 +365,9 @@ Attempting auto-update.
             if f is not None:
                 subcmds[basename(d)] = f
         # return
+        if 'command.py' not in files and not subcmds:
+            return None
+        # ---
         return subcmds
 
     def _load_commands(self, package, command, sub_commands, lvl):
