@@ -6,6 +6,7 @@ import json
 import os
 import sys
 import time
+import types
 from cmd import Cmd
 from os import makedirs, remove, utime
 from os.path import basename, isfile, isdir, exists, join, getmtime
@@ -50,8 +51,8 @@ class DTShell(Cmd, object):
     core_commands = ['commands', 'install', 'uninstall', 'update', 'version', 'exit', 'help']
 
     def __init__(self):
-
         self.intro = INTRO
+        setattr(DTShell, 'include', types.SimpleNamespace())
 
         # dtslogger.debug('sys.argv: %s' % sys.argv)
         is_shell_outdated = check_if_outdated()
@@ -378,6 +379,14 @@ Attempting auto-update.
             spec = package + command + '.command.DTCommand'
             try:
                 klass = _load_class(spec)
+                # add loaded class to DTShell.include.<cmd_path>
+                klass_path = [p for p in package.split('.') if len(p)]
+                base = DTShell.include
+                for p in klass_path:
+                    if not hasattr(base, p):
+                        setattr(base, p, types.SimpleNamespace())
+                    base = getattr(base, p)
+                setattr(base, command, klass)
             except UserError as e:
                 raise
             except BaseException as e:
@@ -417,6 +426,7 @@ Attempting auto-update.
             setattr(DTShell, 'do_' + command, do_command_lam)
             setattr(DTShell, 'complete_' + command, complete_command_lam)
             setattr(DTShell, 'help_' + command, help_command_lam)
+
         # stop recursion if there is no subcommand
         if sub_commands is None:
             return
