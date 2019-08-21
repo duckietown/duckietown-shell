@@ -35,7 +35,7 @@ Note: you need to *log in and out* to have the group change take effect.
 
 ### Installation on Ubuntu 16.xx
 
-As for ubuntu 18, run:
+As for ubuntu 16, run:
 
     $ sudo apt install -y git git-lfs
     
