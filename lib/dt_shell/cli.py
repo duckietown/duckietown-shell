@@ -220,24 +220,6 @@ Attempting auto-update.
         for cmd, subcmds in self.commands.items():
             self._load_commands('', cmd, subcmds, 0)
 
-        # For Andrea D. : how about this?
-        # Commands come in their packages, which allows dependencies.
-        # This also allows to give people permission to update only
-        # part of the commands.
-        # try:
-        #     import duckietown_challenges_commands
-        # except BaseException as e:
-        #     msg = 'Could not import duckietown_challenges_commands: %s' % e
-        #     # print(msg)
-        # else:
-        #     dirname = os.path.dirname(duckietown_challenges_commands.__file__)
-        #     msg = 'Challenges installed in %s' % dirname
-        #     # print(msg)
-        #     commands = os.path.join(dirname, 'commands')
-        #     if os.path.exists(commands):
-        #         msg = 'Available commands at %s' % commands
-        #         # print(msg)
-
         # TODO: load commands with prefix "challenges"
 
         if DTShell.errors_loading:
@@ -336,10 +318,6 @@ Attempting auto-update.
         # except Exception as e:
         #     msg = 'Could not update libraries: %s' % e
         #     dtslogger.error(msg)
-
-        # TODO: make sure this is not necessary
-        # for submodule in commands_repo.submodules:
-        #     submodule.update(recursive=True, to_latest_revision=False)
 
         # everything should be fine
         self.sprint('OK')
