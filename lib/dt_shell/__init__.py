@@ -10,7 +10,7 @@ from .exceptions import *
 logging.basicConfig()
 
 dtslogger = logging.getLogger('dts')
-dtslogger.setLevel(logging.DEBUG)
+dtslogger.setLevel(logging.INFO)
 
 __version__ = '4.0.25'
 
@@ -120,6 +120,11 @@ Troubleshooting:
     arguments = sys.argv[1:]
 
     if arguments:
+        # cli flags
+        idx = min([i for i in range(len(arguments)) if not arguments[i].startswith('--')])
+        process_cli_flags(arguments[:idx])
+        arguments = arguments[idx:]
+        # ---
         from dt_shell.utils import replace_spaces
         arguments = map(replace_spaces, arguments)
         cmdline = " ".join(arguments)
@@ -127,6 +132,10 @@ Troubleshooting:
     else:
         shell.cmdloop()
 
+def process_cli_flags(flags):
+    # debug mode
+    if '--debug' in flags:
+        dtslogger.setLevel(logging.DEBUG)
 
 def href(x):
     return termcolor.colored(x, 'blue', attrs=['underline'])
