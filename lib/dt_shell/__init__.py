@@ -12,7 +12,7 @@ logging.basicConfig()
 dtslogger = logging.getLogger('dts')
 dtslogger.setLevel(logging.INFO)
 
-__version__ = '4.0.25'
+__version__ = '4.0.26'
 
 dtslogger.info('duckietown-shell %s' % __version__)
 import sys, locale
