@@ -3,24 +3,24 @@ import os
 
 import base58
 import ecdsa
-from ecdsa import SigningKey, VerifyingKey, BadSignatureError
+from ecdsa import BadSignatureError, SigningKey, VerifyingKey
 
 
-class DuckietownToken(object):
-    VERSION = 'dt1'
+class DuckietownToken:
+    VERSION = "dt1"
 
     def __init__(self, payload, signature):
         self.payload = payload
         self.signature = signature
 
     def as_string(self):
-        payload_58 = base58.b58encode(self.payload).decode('utf-8')
-        signature_58 = base58.b58encode(self.signature).decode('utf-8')
-        return '%s-%s-%s' % (DuckietownToken.VERSION, payload_58, signature_58)
+        payload_58 = base58.b58encode(self.payload).decode("utf-8")
+        signature_58 = base58.b58encode(self.signature).decode("utf-8")
+        return "%s-%s-%s" % (DuckietownToken.VERSION, payload_58, signature_58)
 
     @staticmethod
     def from_string(s):
-        p = s.split('-')
+        p = s.split("-")
         if len(p) != 3:
             raise ValueError(p)
         if p[0] != DuckietownToken.VERSION:
@@ -32,20 +32,20 @@ class DuckietownToken(object):
         return DuckietownToken(payload, signature)
 
 
-private = 'key1.pem'
-public = 'key1-pub.pem'
+private = "key1.pem"
+public = "key1-pub.pem"
 curve = ecdsa.NIST192p
 
 
 def get_signing_key():
     if not os.path.exists(private):
-        print('Creating private key %r' % private)
+        print("Creating private key %r" % private)
         sk0 = SigningKey.generate(curve=curve)
-        with open(private, 'w') as f:
+        with open(private, "w") as f:
             f.write(sk0.to_pem())
 
         vk = sk0.get_verifying_key()
-        with open(public, 'w') as f:
+        with open(public, "w") as f:
             f.write(vk.to_pem())
     pem = open(private).read()
     sk = SigningKey.from_pem(pem)
@@ -92,19 +92,22 @@ def get_id_from_token(s):
         raise InvalidToken(msg)
     try:
         data = json.loads(token.payload)
-        uid = data['uid']
+        uid = data["uid"]
         return uid
     except ValueError:
         raise InvalidToken()
 
 
-SAMPLE_TOKEN = 'dt1-9Hfd69b5ythetkCiNG12pKDrL987sLJT6KejWP2Eo5QQ-43dzqWFnWd8KBa1yev1g3UKnzVxZkkTbfWWn6of92V5Bf8qGV24rZHe6r7sueJNtWF'
+SAMPLE_TOKEN = (
+    "dt1-9Hfd69b5ythetkCiNG12pKDrL987sLJT6KejWP2Eo5QQ"
+    "-43dzqWFnWd8KBa1yev1g3UKnzVxZkkTbfWWn6of92V5Bf8qGV24rZHe6r7sueJNtWF"
+)
 SAMPLE_TOKEN_UID = -1
-SAMPLE_TOKEN_EXP = '2018-10-20'
+SAMPLE_TOKEN_EXP = "2018-10-20"
 
 
 def tests_private():
-    payload = json.dumps({'uid': SAMPLE_TOKEN_UID, 'exp': SAMPLE_TOKEN_EXP})
+    payload = json.dumps({"uid": SAMPLE_TOKEN_UID, "exp": SAMPLE_TOKEN_EXP})
     # generate a token
     token = create_signed_token(payload)
     s = token.as_string()
@@ -120,11 +123,11 @@ def test1():
     assert verify_token(token)
     data = json.loads(token.payload)
     print(data)
-    assert data['uid'] == SAMPLE_TOKEN_UID
-    assert data['exp'] == SAMPLE_TOKEN_EXP
+    assert data["uid"] == SAMPLE_TOKEN_UID
+    assert data["exp"] == SAMPLE_TOKEN_EXP
 
     seq = SAMPLE_TOKEN[6:8]
-    msg_bad = SAMPLE_TOKEN.replace(seq, 'XY')
+    msg_bad = SAMPLE_TOKEN.replace(seq, "XY")
     token = DuckietownToken.from_string(msg_bad)
     try:
         verify_token(token)
@@ -143,7 +146,7 @@ def test1():
         raise Exception()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     if os.path.exists(private):
         tests_private()
     test1()

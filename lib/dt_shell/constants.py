@@ -1,15 +1,33 @@
 # -*- coding: utf-8 -*-
+import termcolor
+
+from . import __version__
 
 
-class DTShellConstants(object):
-    COMMANDS_REPO_OWNER = 'duckietown'
-    COMMANDS_REPO_NAME = 'duckietown-shell-commands'
-    COMMANDS_REPO_BRANCH = 'master'
-    COMMANDS_REMOTE_URL = 'https://github.com/%s/%s' % (COMMANDS_REPO_OWNER, COMMANDS_REPO_NAME)
-    ROOT = '~/.dt-shell/'
-    ENV_COMMANDS = 'DTSHELL_COMMANDS'
+class DTShellConstants:
+    ROOT = "~/.dt-shell/"
+    ENV_COMMANDS = "DTSHELL_COMMANDS"
 
-    DT1_TOKEN_CONFIG_KEY = 'token_dt1'
     # DT1_TOKEN_ENV_VARIABLE = 'DUCKIETOWN_TOKEN'
+    DT1_TOKEN_CONFIG_KEY = "token_dt1"
+    CONFIG_DOCKER_USERNAME = "docker_username"
+    CONFIG_DUCKIETOWN_VERSION = "duckietown_version"
 
-    CONFIG_DOCKER_USERNAME = 'docker_username'
+
+ALLOWED_BRANCHES = ["daffy", "master19"]
+
+DEBUG = False
+
+CHECK_CMDS_UPDATE_EVERY_MINS = 5
+
+DNAME = "Duckietown Shell"
+
+INTRO = """
+
+Welcome to the {Duckietown} ({version}).
+
+Type "help" or "?" to list commands.
+
+""".format(
+    Duckietown=termcolor.colored(DNAME, "yellow", attrs=["bold"]), version=__version__
+).lstrip()

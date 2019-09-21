@@ -11,8 +11,10 @@ def setup_logging_format():
 
     logging.basicConfig(format=FORMAT)
 
-    if Logger.root.handlers:  # @UndefinedVariable
-        for handler in Logger.root.handlers:  # @UndefinedVariable
+    # noinspection PyUnresolvedReferences
+    root = Logger.root
+    if root.handlers:
+        for handler in root.handlers:
             if isinstance(handler, StreamHandler):
                 formatter = Formatter(FORMAT)
                 handler.setFormatter(formatter)
@@ -25,24 +27,24 @@ def add_coloring_to_emit_ansi(fn):
     def new(*args):
         levelno = args[1].levelno
         if levelno >= 50:
-            color = '\x1b[31m'  # red
+            color = "\x1b[31m"  # red
         elif levelno >= 40:
-            color = '\x1b[31m'  # red
+            color = "\x1b[31m"  # red
         elif levelno >= 30:
-            color = '\x1b[33m'  # yellow
+            color = "\x1b[33m"  # yellow
         elif levelno >= 20:
-            color = '\x1b[32m'  # green
+            color = "\x1b[32m"  # green
         elif levelno >= 10:
-            color = '\x1b[35m'  # pink
+            color = "\x1b[35m"  # pink
         else:
-            color = '\x1b[0m'  # normal
+            color = "\x1b[0m"  # normal
 
         msg = str(args[1].msg)
 
-        lines = msg.split('\n')
+        lines = msg.split("\n")
 
         def color_line(l):
-            return "%s%s%s" % (color, l, '\x1b[0m')  # normal
+            return "%s%s%s" % (color, l, "\x1b[0m")  # normal
 
         lines = list(map(color_line, lines))
 
@@ -55,7 +57,7 @@ def add_coloring_to_emit_ansi(fn):
 def setup_logging_color():
     import platform
 
-    if platform.system() != 'Windows':
+    if platform.system() != "Windows":
         emit2 = add_coloring_to_emit_ansi(logging.StreamHandler.emit)
         logging.StreamHandler.emit = emit2
 
