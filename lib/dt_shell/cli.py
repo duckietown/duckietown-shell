@@ -113,7 +113,7 @@ class DTShell(Cmd, object):
                 and not self.commands_path_leave_alone \
                 and not 'update' in sys.argv:
             self.check_commands_outdated()
-
+        # load commands
         self.reload_commands()
 
     def postcmd(self, stop, line):
@@ -138,7 +138,6 @@ class DTShell(Cmd, object):
             json.dump(self.config, fp)
 
     def check_commands_outdated(self):
-
         try:
             commands_repo = Repo(self.commands_path)
         except (NoSuchPathError, InvalidGitRepositoryError) as e:
