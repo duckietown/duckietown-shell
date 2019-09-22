@@ -317,7 +317,7 @@ class DTShell(Cmd):
 
     # noinspection PyMethodMayBeStatic
     def sprint(
-        self, msg: str, color: Optional[str] = None, attrs: Sequence[str] = None
+        self, msg: str, color: Optional[str] = None, attrs: Sequence[str] = []
     ) -> None:
         return dts_print(msg=msg, color=color, attrs=attrs)
 
