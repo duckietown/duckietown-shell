@@ -13,7 +13,7 @@ class DTCommandAbs(metaclass=ABCMeta):
 
     @staticmethod
     @abstractmethod
-    def command(shell, word):
+    def command(shell, args):
         pass
 
     @staticmethod
