@@ -13,3 +13,4 @@ ruamel.ordereddict
 ruamel.yaml
 future
 duckietown-challenges>=4.0.19
+zeroconf
