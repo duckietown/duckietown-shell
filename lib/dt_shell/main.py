@@ -6,11 +6,11 @@ from typing import Dict
 
 import yaml
 
-from dt_shell.cli_options import get_cli_options
-from dt_shell.constants import ALLOWED_BRANCHES
 from . import __version__, dtslogger
 from .cli import DTShell, get_local_commands_info
+from .cli_options import get_cli_options
 from .config import get_shell_config_default, read_shell_config, write_shell_config
+from .constants import ALLOWED_BRANCHES
 from .env_checks import abort_if_running_with_sudo
 from .exceptions import (
     CommandsLoadingException,

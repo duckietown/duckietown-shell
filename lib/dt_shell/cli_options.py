@@ -15,6 +15,9 @@ class CLIOptions:
 
 def get_cli_options(args: List[str]) -> Tuple[CLIOptions, List[str]]:
     """ Returns cli options plus other arguments for the commands. """
+
+    if args and not args[0].startswith("-"):
+        return CLIOptions(debug=False, set_version=None), args
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
