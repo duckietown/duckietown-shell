@@ -143,18 +143,14 @@ There is an updated duckietown-shell available.
 
   You have: {current}
 
- available: {available} 
+  Available: {available} 
+ 
+WARNING: We strongly recommend updating to the latest version. ONLY THE LATEST VERSION IS SUPPORTED!
+         If you experience issues, please make sure you're using the latest version before posting questions or issues. 
 
-You must update the shell using `pip`.        
+You can update the shell using `pip`.        
         
         """.format(
             current=__version__, available=latest_version
         )
         print(termcolor.colored(msg, "yellow"))
-        raise UserError(msg)
-        # wait = 3
-        # time.sleep(1)
-        # print('Waiting %d seconds to give you time to read the message.' % wait)
-        # time.sleep(wait)
-        # return True
-    # return False
