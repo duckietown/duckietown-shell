@@ -133,7 +133,7 @@ def is_older(a: str, b: str) -> bool:
 
 
 def check_if_outdated() -> None:
-    latest_version = '10.0.0' # get_last_version()
+    latest_version = get_last_version()
     # print('last version: %r' % latest_version)
     # print('installed: %r' % __version__)
     if latest_version and is_older(__version__, latest_version):
