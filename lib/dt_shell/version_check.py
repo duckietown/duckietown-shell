@@ -146,6 +146,7 @@ There is an updated duckietown-shell available.
   Available: {available} 
  
 WARNING: We strongly recommend updating to the latest version. ONLY THE LATEST VERSION IS SUPPORTED!
+         If you experience issues, please make sure you're using the latest version before posting questions or issues. 
 
 You can update the shell using `pip`.        
         
