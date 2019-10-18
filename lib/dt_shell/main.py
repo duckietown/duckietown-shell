@@ -128,7 +128,7 @@ def cli_main_() -> None:
     v = cli_options.set_version
 
     if v is not None:
-        if v not in ALLOWED_BRANCHES:
+        if v not in ALLOWED_BRANCHES and not v.startswith('devel-'):
             msg = f"Given version {v!r} is not one of {ALLOWED_BRANCHES}."
             raise UserError(msg)
         shell_config.duckietown_version = v
@@ -138,7 +138,7 @@ def cli_main_() -> None:
         
         dts --set-version <version>
         
-        where <version> = daffy, master19
+        where <version> = daffy, master19, devel-*
         """
         raise UserError(msg)
 

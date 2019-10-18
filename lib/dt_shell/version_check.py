@@ -133,7 +133,7 @@ def is_older(a: str, b: str) -> bool:
 
 
 def check_if_outdated() -> None:
-    latest_version = get_last_version()
+    latest_version = '10.0.0' # get_last_version()
     # print('last version: %r' % latest_version)
     # print('installed: %r' % __version__)
     if latest_version and is_older(__version__, latest_version):
@@ -143,18 +143,13 @@ There is an updated duckietown-shell available.
 
   You have: {current}
 
- available: {available} 
+  Available: {available} 
+ 
+WARNING: We strongly recommend updating to the latest version. ONLY THE LATEST VERSION IS SUPPORTED!
 
-You must update the shell using `pip`.        
+You can update the shell using `pip`.        
         
         """.format(
             current=__version__, available=latest_version
         )
         print(termcolor.colored(msg, "yellow"))
-        raise UserError(msg)
-        # wait = 3
-        # time.sleep(1)
-        # print('Waiting %d seconds to give you time to read the message.' % wait)
-        # time.sleep(wait)
-        # return True
-    # return False
