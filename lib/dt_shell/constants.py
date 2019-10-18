@@ -14,7 +14,7 @@ class DTShellConstants:
     CONFIG_DUCKIETOWN_VERSION = "duckietown_version"
 
 
-ALLOWED_BRANCHES = ["daffy", "master19"]
+ALLOWED_BRANCHES = ["daffy(-[\w]+)?", "master19(-[\w]+)?"]
 
 DEBUG = False
 
