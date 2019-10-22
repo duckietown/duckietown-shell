@@ -1,6 +1,7 @@
 import locale
 import logging
 import os
+import re
 import sys
 from typing import Dict
 
@@ -127,17 +128,27 @@ def cli_main_() -> None:
 
     v = cli_options.set_version
 
+    def is_allowed_branch(branch):
+      allowed_braches_patterns = map(re.compile, ALLOWED_BRANCHES)
+      for p in allowed_braches_patterns:
+        if p.match(branch):
+          return True
+      return False
+
     if v is not None:
-        if v not in ALLOWED_BRANCHES:
-            msg = f"Given version {v!r} is not one of {ALLOWED_BRANCHES}."
+        if not is_allowed_branch(v):
+            allowed_braches = [
+              b.split('(')[0] for b in ALLOWED_BRANCHES
+            ]
+            msg = f"Given version {v!r} is not one of {allowed_braches}."
             raise UserError(msg)
         shell_config.duckietown_version = v
         write_shell_config(shell_config)
     if shell_config.duckietown_version is None:
         msg = """You have not specified a Duckietown version. Please use:
-        
+
         dts --set-version <version>
-        
+
         where <version> = daffy, master19
         """
         raise UserError(msg)

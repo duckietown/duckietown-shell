@@ -15,6 +15,9 @@ class CLIOptions:
 
 def get_cli_options(args: List[str]) -> Tuple[CLIOptions, List[str]]:
     """ Returns cli options plus other arguments for the commands. """
+    allowed_braches = [
+      b.split('(')[0] for b in ALLOWED_BRANCHES
+    ]
 
     if args and not args[0].startswith("-"):
         return CLIOptions(debug=False, set_version=None), args
@@ -27,7 +30,8 @@ def get_cli_options(args: List[str]) -> Tuple[CLIOptions, List[str]]:
         "--set-version",
         type=str,
         default=None,
-        help=f"Set Duckietown version. Use one of {ALLOWED_BRANCHES}",
+        help=f"Set Duckietown version. Use one of {allowed_braches}. Branches from "
+             f"https://github.com/duckietown/duckietown-shell-commands of the form '[branch]-*' are also supported."
     )
 
     parsed, others = parser.parse_known_args(args)
