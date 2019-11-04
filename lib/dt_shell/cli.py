@@ -342,6 +342,7 @@ def _load_class(name):
             mod = getattr(mod, comp)
         except AttributeError as e:
             msg = "Could not get field %r of module %r: %s" % (comp, mod.__name__, e)
-            msg += "\n module file %s" % getattr(mod, "__file__", "?")
+            msg += "\t\n - Module file %s;" % getattr(mod, "__file__", "?")
+            msg += "\t\n - Module content %s;" % list(vars(mod).keys())
             raise AttributeError(msg)
     return mod
