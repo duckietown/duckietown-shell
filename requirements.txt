@@ -13,3 +13,4 @@ ruamel.ordereddict
 ruamel.yaml
 future
 duckietown-challenges-daffy>=5.0.7
+zeroconf
