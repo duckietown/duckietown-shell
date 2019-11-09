@@ -63,6 +63,12 @@ def print_version_info() -> None:
     v = OtherVersions.name2versions
     v["python"] = sys.version
     v["duckietown-shell"] = __version__
+    try:
+        shell_config = read_shell_config()
+        commands_version = shell_config.duckietown_version
+    except:
+        commands_version = 'ND'
+    v["commands-version"] = commands_version
 
     v["encodings"] = {
         "stdout": sys.stdout.encoding,
@@ -153,6 +159,7 @@ def cli_main_() -> None:
         """
         raise UserError(msg)
 
+    dtslogger.info(f'Commands version: {shell_config.duckietown_version}')
     commands_info = get_local_commands_info()
     # add subdirectory for version
     if not commands_info.leave_alone:

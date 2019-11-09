@@ -5,12 +5,11 @@ import time
 from os.path import getmtime
 from typing import Dict, Optional
 
-from git import InvalidGitRepositoryError, NoSuchPathError, Repo
-
 from . import dtslogger
 from .config import remoteurl_from_RepoInfo, RepoInfo
 from .constants import CHECK_CMDS_UPDATE_EVERY_MINS
 from .logging import dts_print
+from .utils import run_cmd
 
 
 class InvalidRemote(Exception):
@@ -21,43 +20,30 @@ def _init_commands(commands_path: str, repo_info: RepoInfo) -> None:
     """ Raises InvalidRemote if it cannot find it"""
 
     dtslogger.info("Downloading commands in %s ..." % commands_path)
-    # create commands repo
-    commands_repo = Repo.init(commands_path)
     # the repo now exists
     remote_url = remoteurl_from_RepoInfo(repo_info)
-    origin = commands_repo.create_remote("origin", remote_url)
-    # check existence of `origin`
-    if not origin.exists():
-        msg = "The commands repository %r cannot be found. Exiting." % origin.urls
-        raise InvalidRemote(msg)
-    # pull data
-    origin.fetch()
-    branch = repo_info.branch
-    commands_repo.git.checkout(branch)
-    # create local.master <-> remote.master
-    # commands_repo.create_head('master', origin.refs.master)
-    # commands_repo.heads[branch].master.set_tracking_branch(origin.refs.master)
-    # pull data
-    _res = origin.pull()
-    # the repo is there and there is a `origin` remote, merge
-    # commands_repo.heads.master.checkout()
-
+    run_cmd([
+        'git',
+            'clone',
+                '-b', repo_info.branch,
+                '--recurse-submodules',
+                remote_url,
+                commands_path
+    ])
 
 def check_commands_outdated(commands_path: str, repo_info: RepoInfo) -> bool:
     commands_update_check_flag = os.path.join(commands_path, ".updates-check")
     if not os.path.exists(commands_path):
         msg = "Repo does not exist."
         raise Exception(msg)
-    try:
-        commands_repo = Repo(commands_path)
-    except (NoSuchPathError, InvalidGitRepositoryError) as e:
-        # the repo does not exist, this should never happen
-        msg = "I cannot read the commands repo"
-        raise Exception(msg) from e
 
     dtslogger.info(f"looking at {commands_path}")
-    # print(list(commands_repo.heads))
-    local_sha = commands_repo.heads[repo_info.branch].commit.hexsha
+    local_sha = run_cmd([
+        'git',
+            '-C', commands_path,
+            'rev-parse',
+                'HEAD'
+    ])
     # get remote SHA
     use_cached_sha = False
     if os.path.exists(commands_update_check_flag) and os.path.isfile(
@@ -113,7 +99,6 @@ Attempting auto-update.
 
         except BaseException as e:
             from .utils import format_exception
-
             dtslogger.error(format_exception(e))
 
     # return success
@@ -128,40 +113,38 @@ def save_update_check_flag(commands_path: str, remote_sha: str) -> None:
 
 def update_commands(commands_path: str, repo_info: RepoInfo) -> bool:
     # create commands repo
-    try:
-        commands_repo = Repo(commands_path)
-    except (NoSuchPathError, InvalidGitRepositoryError):
+    if not os.path.exists(commands_path):
         # the repo does not exist
         if not _init_commands(commands_path, repo_info):
             return False
-        commands_repo = Repo(commands_path)
-
-    # the repo exists
+    # the repo now exists
     dts_print("Updating commands...")
-    origin = commands_repo.remote("origin")
-    # check existence of `origin`
-    if not origin.exists():
-        dtslogger.error(
-            "The commands repository %r cannot be found. Exiting." % origin.urls
-        )
-        return False
-    _res = origin.pull()
-    # pull data from remote.master to local.master
-    branch = repo_info.branch
-    commands_repo.git.checkout(branch)
-
-    # # update all submodules
-    # print('Updating libraries...', end='')
-    # try:
-    #     commands_repo.submodule_update(recursive=True, to_latest_revision=False)
-    # except Exception as e:
-    #     msg = 'Could not update libraries: %s' % e
-    #     dtslogger.error(msg)
-
+    # pull from origin
+    run_cmd([
+        'git',
+            '-C', commands_path,
+            'pull',
+                '--recurse-submodules',
+                'origin',
+                repo_info.branch
+    ])
+    # update submodules
+    run_cmd([
+        'git',
+            '-C', commands_path,
+            'submodule',
+                'update'
+    ])
+    # get HEAD sha
+    current_sha = run_cmd([
+        'git',
+            '-C', commands_path,
+            'rev-parse',
+                'HEAD'
+    ])
     # everything should be fine
     dts_print("OK")
     # cache current (local=remote) SHA
-    current_sha = commands_repo.heads[branch].commit.hexsha
     save_update_check_flag(commands_path, current_sha)
     # return success
     return True
