@@ -44,6 +44,8 @@ def check_commands_outdated(commands_path: str, repo_info: RepoInfo) -> bool:
             'rev-parse',
                 'HEAD'
     ])
+    # get the first non-empty line
+    local_sha = list(filter(len, local_sha.split('\n')))[0]
     # get remote SHA
     use_cached_sha = False
     if os.path.exists(commands_update_check_flag) and os.path.isfile(
@@ -54,6 +56,7 @@ def check_commands_outdated(commands_path: str, repo_info: RepoInfo) -> bool:
         use_cached_sha = now - last_time_checked < CHECK_CMDS_UPDATE_EVERY_MINS * 60
     # get remote SHA
     if use_cached_sha:
+        dtslogger.debug('Using cached remote SHA for command update check.')
         # no need to check now
         with open(commands_update_check_flag, "r") as fp:
             try:
@@ -62,6 +65,7 @@ def check_commands_outdated(commands_path: str, repo_info: RepoInfo) -> bool:
                 return False
             remote_sha = cached_check["remote"]
     else:
+        dtslogger.debug('Fetching remote SHA for command update check from github.com')
         url = "https://api.github.com/repos/%s/%s/branches/%s" % (
             repo_info.username,
             repo_info.project,
