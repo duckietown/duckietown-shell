@@ -315,6 +315,9 @@ class DTShell(Cmd):
         else:
             return self.shell_config.token_dt1
 
+    def get_commands_version(self) -> str:
+        return self.shell_config.duckietown_version
+
     # noinspection PyMethodMayBeStatic
     def sprint(
         self, msg: str, color: Optional[str] = None, attrs: Sequence[str] = []
