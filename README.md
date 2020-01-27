@@ -68,7 +68,7 @@ should output : `/home/linuxbrew/.linuxbrew/bin/dts`
 
 ### Installation in other operating systems
 
-You will need to find the instructions for installing pip, git, git-lfs, docker for your specific operating system on your own.
+You will need to find the instructions for installing pip, git, git-lfs, docker, and python3 (version at least 3.6) for your specific operating system on your own.
 
 To install the shell, use:
 
@@ -82,9 +82,12 @@ The shell itself does not require any other dependency beside standard cross-pla
 On Mac OSX you will have to add the path to the binary to your PATH variable. 
 This can be done with 
 
-    $ echo "export PATH=$PATH:$HOME/Library/Python/2.7/bin" >> ~/.bash_profile
+    $ echo "export PATH=$PATH:$HOME/Library/Python/3.7/bin" >> ~/.bash_profile
 
 and then reopen your terminal for the changes to take effect.
+
+
+
 
 
 ### Installation on Docker (experimental)
