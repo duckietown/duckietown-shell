@@ -66,7 +66,7 @@ Then, typing
 should output : `/home/linuxbrew/.linuxbrew/bin/dts`
 
 
-### Installation in other operating systems
+### Installation in other operating systems (including Mac OSX)
 
 You will need to find the instructions for installing pip, git, git-lfs, docker, and python3 (version at least 3.6) for your specific operating system on your own.
 
