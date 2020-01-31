@@ -5,20 +5,29 @@
 
 *Duckietown Shell* is a pure Python, easily distributable (few dependencies) utility for Duckietown.
 
-The idea is that most of the functionality is implemented as Docker containers, and `dt-shell` provides a nice interface for that, so that user should not type a very long `docker run` command line.
+The idea is that most of the functionality is implemented as Docker containers, and `dt-shell` provides a nice interface for that, so that user should not type very long `docker run` commands in the command line.
 
-**Note: Duckietown Shell required Python 3.6 or higher.**
+For a description of the commands see [the duckietown-shell-commands README](https://github.com/duckietown/duckietown-shell-commands/blob/daffy/README.md) 
+
+
  
-## Installation
+## General instructions
 
-These installation steps make sure that you have a minimal "sane" environment, which includes:
+Regardless of operating system you will need to install the following:
 
 1. Git and Git LFS;
 2. Docker;
 3. The Duckietown Shell.
 
+**Note: Duckietown Shell required Python 3.6 or higher.**
 
-### Installation on Ubuntu 18.xx
+What is below guides you through the process for specific Operating Systems.
+
+ - [Ubuntu 18.xx](#ubuntu-18.xx)
+ 
+
+
+### Ubuntu 18.xx 
 
 Installs `pip3`, `git`, `git-lfs`:
 
