@@ -36,7 +36,7 @@ setup(name=f'duckietown-shell-{line}',
       install_requires=[
           'GitPython',
           'texttable',
-          'base58',
+          'base58<2',
           'ecdsa',
           'python-dateutil',
           'whichcraft',
