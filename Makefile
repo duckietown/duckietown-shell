@@ -12,7 +12,7 @@ upload:
 	git push --tags
 	git push
 	rm -f dist/*
-	rm -f src/*.egg-info
+	rm -rf src/*.egg-info
 	python setup.py sdist
 	twine upload dist/*
 
