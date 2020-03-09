@@ -2,7 +2,7 @@ FROM docker:18-dind
 
 WORKDIR /duckietown-shell
 
-COPY requirements.txt .
+COPY requirements.* ./
 
 RUN apk --update --no-cache add \
 	python2 \
@@ -16,7 +16,7 @@ RUN apk --update --no-cache add \
     && pip install -r requirements.txt \
     && apk del python2-dev gcc musl-dev linux-headers
 
-# copy the rest  
+# copy the rest
 COPY . .
 
 #   Note the contents of .dockerignore:
