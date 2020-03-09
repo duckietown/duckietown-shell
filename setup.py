@@ -24,8 +24,8 @@ if sys.version_info < (3, 6):
 
 
 shell_version = get_version(filename='lib/dt_shell/__init__.py')
-
-setup(name='duckietown-shell',
+line = 'daffy-aido4'
+setup(name=f'duckietown-shell-{line}',
 
       version=shell_version,
       download_url='http://github.com/duckietown/duckietown-shell/tarball/%s' % shell_version,
