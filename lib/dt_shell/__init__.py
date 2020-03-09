@@ -6,7 +6,7 @@ logging.basicConfig()
 dtslogger = logging.getLogger("dts")
 dtslogger.setLevel(logging.INFO)
 
-__version__ = "5.1.4"
+__version__ = "5.2.0"
 
 dtslogger.info("duckietown-shell %s" % __version__)
 
