@@ -1,11 +1,11 @@
 import logging
+from logging import Logger, StreamHandler, Formatter
 
 __all__ = []
 
 
 def setup_logging_format():
-    from logging import Logger, StreamHandler, Formatter
-    import logging
+
 
     FORMAT = "%(name)15s|%(filename)15s:%(lineno)-4s - %(funcName)-15s| %(message)s"
 

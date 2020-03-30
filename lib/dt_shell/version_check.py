@@ -70,7 +70,9 @@ def read_cache() -> Tuple[str, datetime]:
     try:
         fn = get_cache_filename()
         if os.path.exists(fn):
-            data = open(fn).read()
+            with open(fn) as _:
+                data = _.read()
+
             interpreted = yaml.load(data, Loader=yaml.Loader)
             version = interpreted["version"]
             dt = interpreted["timestamp"]
