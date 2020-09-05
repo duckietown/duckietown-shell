@@ -26,7 +26,7 @@ class DTCommandAbs(metaclass=ABCMeta):
 
     @staticmethod
     def do_command(cls, shell, line):
-        # print '>[%s]@(%s, %s)' % (line, cls.name, cls.__class__)
+        # print('>[%s]@(%s, %s)' % (line, cls.name, cls.__class__))
         line = line.strip()
         parts = [p.strip() for p in line.split(" ")]
         args = [p for p in parts if len(p) > 0]
@@ -34,7 +34,7 @@ class DTCommandAbs(metaclass=ABCMeta):
 
         args = list(map(undo_replace_spaces, args))
         word = parts[0]
-        # print '[%s, %r]@(%s, %s)' % (word, parts, cls.name, cls.__class__)
+        # print('[%s, %r]@(%s, %s)' % (word, parts, cls.name, cls.__class__))
         if len(word) > 0:
             if len(cls.commands) > 0:
                 if word in cls.commands:
@@ -60,7 +60,7 @@ class DTCommandAbs(metaclass=ABCMeta):
 
     @staticmethod
     def complete_command(cls, shell, word, line, start_index, end_index):
-        # print '[%s](%s)@(%s, %s)' % (word, line, cls.name, cls.__class__)
+        # print('[%s](%s)@(%s, %s)' % (word, line, cls.name, cls.__class__))
         word = word.strip()
         line = line.strip()
         subcmds = cls.commands.keys()

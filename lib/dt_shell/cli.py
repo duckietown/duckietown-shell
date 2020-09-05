@@ -300,7 +300,7 @@ class DTShell(Cmd):
         # load sub-commands
         for cmd, subcmds in sub_commands.items():
             if DEBUG:
-                dtslogger.debug("DEBUG:: Loading %s" % package + command + ".*")
+                dtslogger.debug("Searching %s at level %d" % (package + command + ".*", lvl))
             # noinspection PyTypeChecker
             kl = self._load_commands(package + command + ".", cmd, subcmds, lvl + 1)
             if kl is not None:
@@ -335,7 +335,7 @@ def _touch(path: str) -> None:
 
 def _load_class(name):
     if DEBUG:
-        print("DEBUG:: Loading %s" % name)
+        dtslogger.debug("Loading class %s" % name)
     components = name.split(".")
 
     mod = __import__(components[0])
