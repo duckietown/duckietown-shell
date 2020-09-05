@@ -12,7 +12,7 @@ upload:
 	git push --tags
 	git push
 	rm -f dist/*
-	python setup.py sdist
+	python3 setup.py sdist
 	twine upload dist/*
 
 
