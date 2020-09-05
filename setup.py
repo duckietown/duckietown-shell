@@ -22,47 +22,50 @@ if sys.version_info < (3, 6):
     msg = 'duckietown-shell works with Python 3.6 and later.\nDetected %s.' % str(sys.version)
     sys.exit(msg)
 
-
 shell_version = get_version(filename='lib/dt_shell/__init__.py')
 
-setup(name='duckietown-shell',
+setup(
+    name='duckietown-shell',
+    version=shell_version,
+    download_url='http://github.com/duckietown/duckietown-shell/tarball/%s' % shell_version,
+    package_dir={'': 'lib'},
+    packages=find_packages('lib'),
+    # we want the python 2 version to download it, and then exit with an error
+    # python_requires='>=3.6',
+    install_requires=[
+        'GitPython',
+        'texttable',
+        'base58',
+        'ecdsa',
+        'python-dateutil',
+        'whichcraft',
+        'termcolor',
+        'PyYAML',
+        'docker',
+        'six',
+        'psutil',
+        'future',
+        # 'duckietown-challenges-daffy',
+        'zeroconf',
+        'requests',
 
-      version=shell_version,
-      download_url='http://github.com/duckietown/duckietown-shell/tarball/%s' % shell_version,
-      package_dir={'': 'lib'},
-      packages=find_packages('lib'),
-      # we want the python 2 version to download it, and then exit with an error
-      # python_requires='>=3.6',
-      install_requires=[
-          'GitPython',
-          'texttable',
-          'base58',
-          'ecdsa',
-          'python-dateutil',
-          'whichcraft',
-          'termcolor',
-          'PyYAML',
-          'docker',
-          'six',
-          'psutil',
-          'future',
-          # 'duckietown-challenges-daffy',
-          'zeroconf'
-      ],
+        'dt_authentication',
+        'dt_data_api'
+    ],
 
-      tests_require=[
-      ],
+    tests_require=[
+    ],
 
-      # This avoids creating the egg file, which is a zip file, which makes our data
-      # inaccessible by dir_from_package_name()
-      zip_safe=False,
+    # This avoids creating the egg file, which is a zip file, which makes our data
+    # inaccessible by dir_from_package_name()
+    zip_safe=False,
 
-      # without this, the stuff is included but not installed
-      include_package_data=True,
+    # without this, the stuff is included but not installed
+    include_package_data=True,
 
-      entry_points={
-          'console_scripts': [
-              'dts = dt_shell:cli_main',
-          ]
-      }
-      )
+    entry_points={
+        'console_scripts': [
+            'dts = dt_shell:cli_main',
+        ]
+    }
+)
