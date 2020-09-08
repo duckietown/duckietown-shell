@@ -48,6 +48,7 @@ setup(
         # 'duckietown-challenges-daffy',
         'zeroconf',
         'requests',
+        'dataclasses'
 
         'dt_authentication',
         'dt_data_api'
