@@ -45,7 +45,7 @@ setup(
         'six',
         'psutil',
         'future',
-        # 'duckietown-challenges-daffy',
+        'duckietown-challenges-daffy',
         'zeroconf',
         'requests',
         'dataclasses',
