@@ -38,9 +38,7 @@ class DTCommandAbs(metaclass=ABCMeta):
         if len(word) > 0:
             if len(cls.commands) > 0:
                 if word in cls.commands:
-                    cls.commands[word].do_command(
-                        cls.commands[word], shell, " ".join(parts[1:])
-                    )
+                    cls.commands[word].do_command(cls.commands[word], shell, " ".join(parts[1:]))
                 else:
                     print(
                         "Command `%s` not recognized.\nAvailable sub-commands are:\n\n\t%s"
@@ -50,10 +48,7 @@ class DTCommandAbs(metaclass=ABCMeta):
                 cls.command(shell, args)
         else:
             if len(cls.commands) > 0:
-                print(
-                    "Available sub-commands are:\n\n\t%s"
-                    % "\n\t".join(cls.commands.keys())
-                )
+                print("Available sub-commands are:\n\n\t%s" % "\n\t".join(cls.commands.keys()))
             else:
                 if not cls.fake:
                     cls.command(shell, args)
@@ -70,13 +65,9 @@ class DTCommandAbs(metaclass=ABCMeta):
         if parts[0] == cls.name:
             if len(parts) == 1 or (len(parts) == 2 and partial_word):
                 static_comp = [
-                    k
-                    for k in cls.complete(shell, word, line)
-                    if (not partial_word or k.startswith(word))
+                    k for k in cls.complete(shell, word, line) if (not partial_word or k.startswith(word))
                 ]
-                comp_subcmds = static_comp + [
-                    k for k in subcmds if (not partial_word or k.startswith(word))
-                ]
+                comp_subcmds = static_comp + [k for k in subcmds if (not partial_word or k.startswith(word))]
                 # print '!T'
                 return comp_subcmds
             if len(parts) > 1 and parts[1] in cls.commands.keys():
@@ -91,9 +82,5 @@ class DTCommandAbs(metaclass=ABCMeta):
 
     @staticmethod
     def help_command(cls, shell):
-        msg = (
-            cls.help
-            if (cls.level == 0 and cls.help is not None)
-            else str(shell.nohelp % cls.name)
-        )
+        msg = cls.help if (cls.level == 0 and cls.help is not None) else str(shell.nohelp % cls.name)
         print(msg)

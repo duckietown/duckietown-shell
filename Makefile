@@ -4,7 +4,7 @@ all:
 bump-upload:
 	$(MAKE) bump
 	$(MAKE) upload
-	
+
 bump:
 	bumpversion patch
 
@@ -42,3 +42,6 @@ push-x86:
 
 test:
 	make -C testing
+
+black:
+	black -l 110 lib

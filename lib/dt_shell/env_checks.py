@@ -54,10 +54,7 @@ def check_docker_environment():
         raise InvalidEnvironment(msg)
 
     if "DOCKER_HOST" in os.environ:
-        msg = (
-            'Note that the variable DOCKER_HOST is set to "%s"'
-            % os.environ["DOCKER_HOST"]
-        )
+        msg = 'Note that the variable DOCKER_HOST is set to "%s"' % os.environ["DOCKER_HOST"]
         dtslogger.warning(msg)
 
     try:
@@ -93,7 +90,8 @@ def check_user_in_docker_group() -> None:
     group_names = [g.gr_name for g in grp.getgrall()]
     G = "docker"
     if G not in group_names:
-        msg = "No group %s defined." % G
+        pass
+        # msg = "No group %s defined." % G
         # dtslogger.warning(msg)
     else:
         group_id = grp.getgrnam(G).gr_gid

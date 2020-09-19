@@ -46,10 +46,7 @@ def get_local_commands_info() -> CommandsInfo:
         commands_path = os.environ[V]
 
         if not os.path.exists(commands_path):
-            msg = (
-                "The path %s that you gave with the env. variable %s does not exist."
-                % (commands_path, V)
-            )
+            msg = "The path %s that you gave with the env. variable %s does not exist." % (commands_path, V)
             raise Exception(msg)
 
         commands_path_leave_alone = True
@@ -127,9 +124,7 @@ class DTShell(Cmd):
         if self.use_rawinput and self.completekey:
             import readline
 
-            readline.set_completer_delims(
-                readline.get_completer_delims().replace("-", "", 1)
-            )
+            readline.set_completer_delims(readline.get_completer_delims().replace("-", "", 1))
         # check for updates (if needed)
         # Do not check it if we are using custom commands_path_leave_alone
         if (
@@ -223,9 +218,7 @@ class DTShell(Cmd):
             remove(flag_file)
         return True
 
-    def _load_commands(
-        self, package, command, sub_commands: Optional[Mapping[str, object]], lvl
-    ):
+    def _load_commands(self, package, command, sub_commands: Optional[Mapping[str, object]], lvl):
         # load command
         klass = None
         error_loading = False
@@ -241,7 +234,7 @@ class DTShell(Cmd):
                         setattr(base, p, types.SimpleNamespace())
                     base = getattr(base, p)
                 setattr(base, command, klass)
-            except UserError as e:
+            except UserError:
                 raise
             except BaseException as e:
                 # error_loading = True
@@ -264,16 +257,12 @@ class DTShell(Cmd):
             klass = DTCommandPlaceholder()
             if DEBUG:
                 dtslogger.debug(
-                    "ERROR while loading the command `%s`"
-                    % (package + command + ".command.DTCommand",)
+                    "ERROR while loading the command `%s`" % (package + command + ".command.DTCommand",)
                 )
         if not issubclass(klass.__class__, DTCommandAbs.__class__):
             klass = DTCommandPlaceholder()
             if DEBUG:
-                dtslogger.debug(
-                    "Command `%s` not found"
-                    % (package + command + ".command.DTCommand",)
-                )
+                dtslogger.debug("Command `%s` not found" % (package + command + ".command.DTCommand",))
         # initialize list of subcommands
         klass.name = command
         klass.level = lvl
@@ -285,9 +274,7 @@ class DTShell(Cmd):
             help_command = getattr(klass, "help_command")
             # wrap [klass, function] around a lambda function
             do_command_lam = lambda s, w: do_command(klass, s, w)
-            complete_command_lam = lambda s, w, l, i, _: complete_command(
-                klass, s, w, l, i, _
-            )
+            complete_command_lam = lambda s, w, l, i, _: complete_command(klass, s, w, l, i, _)
             help_command_lam = lambda s: help_command(klass, s)
             # add functions do_* and complete_* to the shell
             setattr(DTShell, "do_" + command, do_command_lam)
@@ -319,9 +306,8 @@ class DTShell(Cmd):
         return self.shell_config.duckietown_version
 
     # noinspection PyMethodMayBeStatic
-    def sprint(
-        self, msg: str, color: Optional[str] = None, attrs: Sequence[str] = []
-    ) -> None:
+    def sprint(self, msg: str, color: Optional[str] = None, attrs: Sequence[str] = None) -> None:
+        attrs = attrs or []
         return dts_print(msg=msg, color=color, attrs=attrs)
 
     def update_commands(self) -> bool:
