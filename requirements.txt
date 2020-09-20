@@ -11,7 +11,10 @@ six
 ruamel.ordereddict
 ruamel.yaml
 future
-duckietown-challenges-daffy>=5.1.4
 zeroconf
-dt_authentication
-dt_data_api
+
+duckietown-challenges-daffy>=6.0.4
+dt_authentication # FIXME: add daffy
+dt_data_api # FIXME: add daffy
+pur # used for aido submissions
+aido-utils-daffy # used for aido submissions
