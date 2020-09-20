@@ -107,13 +107,9 @@ def read_shell_config_from_file(fn: str) -> ShellConfig:
     duckietown_version = d.pop(CONFIG_DUCKIETOWN_VERSION, None)
 
     if d:
-        msg = (
-            f"The config file {fn} contains other options that I do not understand: {d}"
-        )
+        msg = f"The config file {fn} contains other options that I do not understand: {d}"
         dtslogger.warning(msg)
 
     return ShellConfig(
-        token_dt1=token_dt1,
-        duckietown_version=duckietown_version,
-        docker_username=docker_username,
+        token_dt1=token_dt1, duckietown_version=duckietown_version, docker_username=docker_username,
     )

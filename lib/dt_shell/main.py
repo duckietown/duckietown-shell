@@ -3,7 +3,7 @@ import logging
 import os
 import re
 import sys
-from typing import Dict
+from typing import Dict, Union
 
 import yaml
 
@@ -25,7 +25,7 @@ from .utils import format_exception, href, replace_spaces
 
 
 class OtherVersions:
-    name2versions: Dict[str, str] = {}
+    name2versions: Dict[str, Union[str, Dict[str, str]]] = {}
 
 
 def cli_main() -> None:
@@ -67,7 +67,7 @@ def print_version_info() -> None:
         shell_config = read_shell_config()
         commands_version = shell_config.duckietown_version
     except:
-        commands_version = 'ND'
+        commands_version = "ND"
     v["commands-version"] = commands_version
 
     v["encodings"] = {
@@ -135,17 +135,15 @@ def cli_main_() -> None:
     v = cli_options.set_version
 
     def is_allowed_branch(branch):
-      allowed_braches_patterns = map(re.compile, ALLOWED_BRANCHES)
-      for p in allowed_braches_patterns:
-        if p.match(branch):
-          return True
-      return False
+        allowed_braches_patterns = map(re.compile, ALLOWED_BRANCHES)
+        for p in allowed_braches_patterns:
+            if p.match(branch):
+                return True
+        return False
 
     if v is not None:
         if not is_allowed_branch(v):
-            allowed_braches = [
-              b.split('(')[0] for b in ALLOWED_BRANCHES
-            ]
+            allowed_braches = [b.split("(")[0] for b in ALLOWED_BRANCHES]
             msg = f"Given version {v!r} is not one of {allowed_braches}."
             raise UserError(msg)
         shell_config.duckietown_version = v
@@ -159,7 +157,7 @@ def cli_main_() -> None:
         """
         raise UserError(msg)
 
-    dtslogger.info(f'Commands version: {shell_config.duckietown_version}')
+    dtslogger.info(f"Commands version: {shell_config.duckietown_version}")
     commands_info = get_local_commands_info()
     # add subdirectory for version
     if not commands_info.leave_alone:

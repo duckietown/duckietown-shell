@@ -1,4 +1,13 @@
-__all__ = ["InvalidEnvironment", "UserError", "CommandsLoadingException"]
+__all__ = [
+    "InvalidEnvironment",
+    "UserError",
+    "CommandsLoadingException",
+    "ConfigNotPresent",
+    "ConfigInvalid",
+    "CouldNotGetVersion",
+    "NoCacheAvailable",
+    "URLException",
+]
 
 
 class InvalidEnvironment(Exception):
