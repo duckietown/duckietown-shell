@@ -38,7 +38,7 @@ install_requires = [
     'six',
     'psutil',
     'future',
-    f'duckietown-challenges-{line}',
+    'duckietown-challenges-%s' % line,
     'zeroconf',
     'requests',
     'dt_authentication',
