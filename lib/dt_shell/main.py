@@ -148,6 +148,9 @@ def cli_main_() -> None:
             raise UserError(msg)
         shell_config.duckietown_version = v
         write_shell_config(shell_config)
+        # need this so we can use in non-interactive settings
+        sys.exit(0)
+
     if shell_config.duckietown_version is None:
         msg = """You have not specified a Duckietown version. Please use:
 
