@@ -5,15 +5,22 @@ bump-upload:
 	$(MAKE) bump
 	$(MAKE) upload
 
-bump:
+bump: # v2
 	bumpversion patch
-
-upload:
 	git push --tags
 	git push
+
+upload: # v3
+	aido-check-not-dirty
+	aido-check-tagged
+	aido-check-need-upload --package duckietown-shell  make upload-do
+
+upload-do:
 	rm -f dist/*
-	python3 setup.py sdist
-	twine upload dist/*
+	rm -rf src/*.egg-info
+	python setup.py sdist
+	twine upload --skip-existing --verbose dist/*
+
 
 
 branch=$(shell git rev-parse --abbrev-ref HEAD)
