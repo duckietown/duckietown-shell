@@ -8,11 +8,9 @@ class DTShellConstants:
     ROOT = "~/.dt-shell/"
     ENV_COMMANDS = "DTSHELL_COMMANDS"
 
-
-
-
     DT1_TOKEN_CONFIG_KEY = "token_dt1"
     CONFIG_DOCKER_USERNAME = "docker_username"
+    CONFIG_DOCKER_PASSWORD = "docker_password"
     CONFIG_DUCKIETOWN_VERSION = "duckietown_version"
 
 

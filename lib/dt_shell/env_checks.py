@@ -2,7 +2,7 @@ import grp
 import os
 import subprocess
 import sys
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from whichcraft import which
 
@@ -91,8 +91,6 @@ def check_user_in_docker_group() -> None:
     G = "docker"
     if G not in group_names:
         pass
-        # msg = "No group %s defined." % G
-        # dtslogger.warning(msg)
     else:
         group_id = grp.getgrnam(G).gr_gid
         my_groups = os.getgroups()
@@ -100,19 +98,6 @@ def check_user_in_docker_group() -> None:
             msg = 'My groups are %s and "%s" group is %s ' % (my_groups, G, group_id)
             msg += "\n\nNote that when you add a user to a group, you need to login in and out."
             dtslogger.debug(msg)
-    #
-    #     active_groups = get_active_groups(username=None)
-    #
-    # if name not in active_groups:
-    #     msg = 'The user is not in group "%s".' % name
-    #     msg += '\n\nIt belongs to groups: %s.' % u", ".join(sorted(active_groups))
-    #
-    #     msg += '\n\nNote that when you add a user to a group, you need to login in and out.'
-    #
-    #     if True:
-    #         dtslogger.warning(msg)
-    #     else:
-    #         raise InvalidEnvironment(msg)
 
 
 def get_active_groups(username: Optional[str] = None) -> List[str]:
@@ -123,12 +108,6 @@ def get_active_groups(username: Optional[str] = None) -> List[str]:
 
     try:
         stdout = subprocess.check_output(["groups"])
-        # res = system_cmd_result('.', cmd,
-        #                         display_stdout=False,
-        #                         display_stderr=False,
-        #                         raise_on_error=True,
-        #                         capture_keyboard_interrupt=False,
-        #                         env=None)
     except subprocess.CalledProcessError as e:
         raise Exception(str(e))
     active_groups = stdout.decode().split()
@@ -138,20 +117,47 @@ def get_active_groups(username: Optional[str] = None) -> List[str]:
 
 def get_dockerhub_username() -> str:
     """ raise InvalidEnvironment """
+
+    msg = """
+        Please set docker username using
+         
+            dts challenges config --docker-username <USERNAME>
+            
+    """
     try:
         shell_config = read_shell_config()
     except Exception:
-        msg = "Please set docker username using\n\n dts challenges config --docker-username <USERNAME>"
-        raise InvalidEnvironment(msg)
-    #
-    # if shell is None:
-    #     from .cli import DTShell
-    #     shell = DTShell()
-    # k = DTShellConstants.CONFIG_DOCKER_USERNAME
-    # if k not in shell.config:
+        raise
 
     if shell_config.docker_username is None:
-        msg = "Please set docker username using\n\n dts challenges config --docker-username <USERNAME>"
         raise InvalidEnvironment(msg)
 
     return shell_config.docker_username
+
+
+def get_dockerhub_username_and_password() -> Tuple[str, str]:
+    """ raise InvalidEnvironment """
+    try:
+        shell_config = read_shell_config()
+    except Exception:
+        raise
+
+    if shell_config.docker_username is None:
+        msg = """
+                   Please set docker username and password using:
+
+                       dts challenges config --docker-username <USERNAME> --docker-password <PASSWORD>
+           """
+
+        raise InvalidEnvironment(msg)
+
+    elif shell_config.docker_password is None:
+        msg = """
+               Please set docker   password using:
+
+                   dts challenges config --docker-password <PASSWORD>
+       """
+
+        raise InvalidEnvironment(msg)
+
+    return shell_config.docker_username, shell_config.docker_password
