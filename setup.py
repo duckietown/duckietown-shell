@@ -38,7 +38,7 @@ install_requires = [
     'six',
     'psutil',
     'future',
-    'duckietown-challenges-%s' % line,
+    'duckietown-docker-utils-%s>=6.0.9' % line,
     'zeroconf',
     'requests',
     'dt_authentication',
@@ -50,7 +50,7 @@ if system_version < (3, 7):
     install_requires.append('dataclasses')
 
 setup(
-    name='duckietown-shell',  
+    name='duckietown-shell',
     version=shell_version,
     download_url='http://github.com/duckietown/duckietown-shell/tarball/%s' % shell_version,
     package_dir={'': 'lib'},
