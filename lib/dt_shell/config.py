@@ -36,7 +36,8 @@ def remoteurl_from_RepoInfo(ri: RepoInfo) -> str:
 
 
 def get_shell_config_default() -> ShellConfig:
-    return ShellConfig(token_dt1=None, docker_username=None, duckietown_version=None)
+    return ShellConfig(token_dt1=None, docker_username=None, duckietown_version=None,
+                       docker_password=None)
 
 
 def get_config_path() -> str:
