@@ -144,18 +144,30 @@ def get_dockerhub_username_and_password() -> Tuple[str, str]:
 
     if shell_config.docker_username is None:
         msg = """
-                   Please set docker username and password using:
-
-                       dts challenges config --docker-username <USERNAME> --docker-password <PASSWORD>
-           """
+    Please set DockerHub username and password/token using:
+    
+       dts challenges config --docker-username <USERNAME> --docker-password <PASSWORD or DOCKERHUB TOKEN>
+       
+    You can use your DockerHub password or use a token that you can obtain at 
+    
+        https://hub.docker.com/settings/security              
+        
+    (note: this is not the Duckietown token)
+    """
 
         raise InvalidEnvironment(msg)
 
     elif shell_config.docker_password is None:
         msg = """
-               Please set docker   password using:
+   Please set DockerHub username and password/token using:
 
-                   dts challenges config --docker-password <PASSWORD>
+       dts challenges config --docker-password <PASSWORD or DOCKERHUB TOKEN>
+    
+    You can use your DockerHub password or use a DockerHub token that you can obtain at 
+        
+            https://hub.docker.com/settings/security 
+            
+    (note: this is not the Duckietown token)
        """
 
         raise InvalidEnvironment(msg)
