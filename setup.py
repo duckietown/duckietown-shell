@@ -22,7 +22,7 @@ if sys.version_info < (3, 6):
     msg = 'duckietown-shell works with Python 3.6 and later.\nDetected %s.' % str(sys.version)
     sys.exit(msg)
 
-line = 'daffy'
+distro = 'daffy'
 
 shell_version = get_version(filename='lib/dt_shell/__init__.py')
 install_requires = [
@@ -38,11 +38,11 @@ install_requires = [
     'six',
     'psutil',
     'future',
-    'duckietown-docker-utils-%s>=6.0.9' % line,
+    'duckietown-docker-utils-{}>=6.0.9'.format(distro),
     'zeroconf',
     'requests',
-    'dt_authentication',
-    'dt_data_api'
+    'dt-{}-authentication'.format(distro),
+    'dt-{}-data-api'.format(distro)
 ]
 
 system_version = tuple(sys.version_info)[:3]
