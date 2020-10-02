@@ -13,5 +13,5 @@ ruamel.yaml
 future
 duckietown-challenges-daffy>=5.1.4
 zeroconf
-dt-daffy-authentication
-dt-daffy-data-api
+dt-authentication-daffy
+dt-data-api-daffy

@@ -41,8 +41,8 @@ install_requires = [
     'duckietown-docker-utils-{}>=6.0.9'.format(distro),
     'zeroconf',
     'requests',
-    'dt-{}-authentication'.format(distro),
-    'dt-{}-data-api'.format(distro)
+    'dt-authentication-{}'.format(distro),
+    'dt-data-api-{}'.format(distro)
 ]
 
 system_version = tuple(sys.version_info)[:3]
