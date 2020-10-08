@@ -42,7 +42,7 @@ install_requires = [
     'zeroconf',
     'requests',
     'dt-authentication-{}'.format(distro),
-    'dt-data-api-{}'.format(distro)
+    'dt-data-api-{}>=0.1.6'.format(distro)
 ]
 
 system_version = tuple(sys.version_info)[:3]
