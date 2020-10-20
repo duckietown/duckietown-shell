@@ -62,7 +62,7 @@ def check_docker_environment():
         client = docker.from_env()
 
         # TODO: why are we doing this? It seems expensive and useless
-        _containers = client.containers.list(filters=dict(status="running"))
+        # _containers = client.containers.list(filters=dict(status="running"))
 
         # dtslogger.debug(json.dumps(client.info(), indent=4))
 
