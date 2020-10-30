@@ -124,7 +124,7 @@ def print_info_command() -> None:
 
 def cli_main_() -> None:
     abort_if_running_with_sudo()
-    print_info_command()
+
     # Problems with a step in the Duckiebot operation manual?
     #
     #     Report here: https://github.com/duckietown/docs-opmanual_duckiebot/issues
@@ -132,6 +132,9 @@ def cli_main_() -> None:
     # TODO: register handler for Ctrl-C
     cli_arguments = sys.argv[1:]
     cli_options, arguments = get_cli_options(cli_arguments)
+
+    if not cli_options.quiet:
+        print_info_command()
 
     # process options here
     if cli_options.debug:
@@ -173,8 +176,8 @@ def cli_main_() -> None:
         where <version> = daffy, master19
         """
         raise UserError(msg)
-
-    dtslogger.info(f"Commands version: {shell_config.duckietown_version}")
+    if not cli_options.quiet:
+        dtslogger.info(f"Commands version: {shell_config.duckietown_version}")
     commands_info = get_local_commands_info()
     # add subdirectory for version
     if not commands_info.leave_alone:
