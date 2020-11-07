@@ -9,51 +9,56 @@ The idea is that most of the functionality is implemented as Docker containers, 
 
 **Note: Duckietown Shell required Python 3.6 or higher.**
  
-## Installation
+## Prerequisites
 
-These installation steps make sure that you have a minimal "sane" environment, which includes:
+The duckietown shell has very minimal requirements. 
+Please use the links provided and follow the instructions for your OS
 
-1. Git and Git LFS;
-2. Docker;
-3. The Duckietown Shell.
+1. [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git/)
+2. [Git LFS](https://git-lfs.github.com/) (for building and working with the docs only)
+2. [Docker](https://docs.docker.com/get-docker/)
 
 
-### Installation on Ubuntu 18.xx
+## Installing the Duckietown Shell
 
-Installs `pip3`, `git`, `git-lfs`:
+### Installation on Ubuntu 18.xx or 20.xx
 
-    $ sudo apt install -y python3-pip git git-lfs
+**Note**: This OS is officially supported
+
+Install `pip3`
+
+    $ sudo apt install -y python3-pip
     
-Installs `docker`: (Also could refer to: https://docs.docker.com/install/linux/docker-ce/ubuntu/)
+Add yourself to the `docker` group:
 
-    $ sudo apt install -y docker.io
     $ sudo adduser `whoami` docker
 
-Installs `duckietown-shell`:
+Install the `duckietown-shell`:
 
 **Note: Never use `sudo pip install` to install `duckietown-shell`.**
 
     $ pip3 install --no-cache-dir --user -U duckietown-shell
 
-Note: you need to *log in and out* to have the group change take effect.
+Note: you may need to *log in and out* to have the group change take effect.
 
-Then, typing 
+#### Testing the Installation
+
+Typing 
 
     $ which dts
     
-should output something like: `/home/user/.local/bin/dts`
+should output something like: `/home/![user]/.local/bin/dts`
+
+If it is not found you may need to add `/home/![user]/.local/bin` to your shell path. You can do so by adding the line:
+
+    `export PATH=$PATH:/root/.local/bin`
+    
+into your `~/.bashrc` file (if you use bash, otherwise the corresponding shell initialization file).
 
 ### Installation on Ubuntu 16.xx
 
-As for ubuntu 16, run:
-
-    $ sudo apt install -y git git-lfs
-    
-    $ sudo apt install -y docker.io
-    $ sudo adduser `whoami` docker
-
-Then, the duckietown shell require python3.6 or python3.7, which is not standard on ubuntu16.
-A currently working workaround is to install homebrew, by following instructions here : https://docs.brew.sh/Homebrew-on-Linux
+The duckietown shell requires python 3.6 or higher, which is not standard on ubuntu16.
+A currently working workaround is to install homebrew, by following instructions [here](https://docs.brew.sh/Homebrew-on-Linux). 
 Then, run :
 
     $ brew install python3
@@ -65,39 +70,21 @@ Then, typing
 
 should output : `/home/linuxbrew/.linuxbrew/bin/dts`
 
+### OS X
 
-### Installation in other operating systems
+[Install `pip3`](https://evansdianga.com/install-pip-osx/).
+    
+Add yourself to the `docker` group:
 
-You will need to find the instructions for installing pip, git, git-lfs, docker for your specific operating system on your own.
+    $ sudo adduser `whoami` docker
 
-To install the shell, use:
+Install the `duckietown-shell`:
+
+**Note: Never use `sudo pip install` to install `duckietown-shell`.**
 
     $ pip3 install --no-cache-dir --user -U duckietown-shell
 
-The shell itself does not require any other dependency beside standard cross-platform Python libraries.
-
-**Note: Never use `sudo pip3 install` to install `duckietown-shell`.**
-
-
-On Mac OSX you will have to add the path to the binary to your PATH variable. 
-This can be done with 
-
-    $ echo "export PATH=$PATH:$HOME/Library/Python/2.7/bin" >> ~/.bash_profile
-
-and then reopen your terminal for the changes to take effect.
-
-
-### Installation on Docker (experimental)
-
-Assuming that Docker is already installed, place the following
-in your `~/.bashrc` or other initialization file for a shell:
-
-    alias dts='docker run -it --rm -v /var/run/docker.sock:/var/run/docker.sock  -w $PWD -v $PWD:$PWD -v ~/.dt-shell:/root/.dt-shell -v ~/.docker:/root/.docker duckietown/duckietown-shell:v3 dts'
-
-Some functionality might not be available.
-
-
-#### OS X
+Note: you may need to *log in and out* to have the group change take effect.
 
 By default Docker uses the OS X keychain to store credentials but this is not good.
 
@@ -114,6 +101,37 @@ Then you should see an `auth` entry of the type:
             }
         },
     }
+
+
+#### Testing the Installation
+
+Typing 
+
+    $ which dts
+    
+should output the path to the `dts` executable. This path can vary based on your python setup. 
+If it is not found you may need to add something to your shell path. 
+
+### Installation in other operating systems
+
+To install the shell, use:
+
+    $ pip3 install --no-cache-dir --user -U duckietown-shell
+
+The shell itself does not require any other dependency beside standard cross-platform Python libraries.
+
+**Note: Never use `sudo pip3 install` to install `duckietown-shell`.**
+
+### Installation on Docker (experimental)
+
+Assuming that Docker is already installed, place the following
+in your `~/.bashrc` or other initialization file for a shell:
+
+    alias dts='docker run -it --rm -v /var/run/docker.sock:/var/run/docker.sock  -w $PWD -v $PWD:$PWD -v ~/.dt-shell:/root/.dt-shell -v ~/.docker:/root/.docker duckietown/duckietown-shell:v3 dts'
+
+Some functionality might not be available.
+
+
 
 ## Testing Duckietown shell
 
