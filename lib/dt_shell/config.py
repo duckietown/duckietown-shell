@@ -13,6 +13,7 @@ from .exceptions import ConfigNotPresent, InvalidConfig
 class ShellConfig:
     token_dt1: Optional[str]  ## key
     docker_username: Optional[str]
+    docker_password: Optional[str]
     duckietown_version: Optional[str]  # daffy, master19, ...
 
 
@@ -35,7 +36,8 @@ def remoteurl_from_RepoInfo(ri: RepoInfo) -> str:
 
 
 def get_shell_config_default() -> ShellConfig:
-    return ShellConfig(token_dt1=None, docker_username=None, duckietown_version=None)
+    return ShellConfig(token_dt1=None, docker_username=None, duckietown_version=None,
+                       docker_password=None)
 
 
 def get_config_path() -> str:
@@ -64,6 +66,7 @@ def write_shell_config(shell_config: ShellConfig) -> None:
 
 DT1_TOKEN_CONFIG_KEY = DTShellConstants.DT1_TOKEN_CONFIG_KEY
 CONFIG_DOCKER_USERNAME = DTShellConstants.CONFIG_DOCKER_USERNAME
+CONFIG_DOCKER_PASSWORD = DTShellConstants.CONFIG_DOCKER_PASSWORD
 CONFIG_DUCKIETOWN_VERSION = DTShellConstants.CONFIG_DUCKIETOWN_VERSION
 
 
@@ -72,6 +75,7 @@ def write_shell_config_to_file(shell_config: ShellConfig, filename: str) -> None
         DT1_TOKEN_CONFIG_KEY: shell_config.token_dt1,
         CONFIG_DOCKER_USERNAME: shell_config.docker_username,
         CONFIG_DUCKIETOWN_VERSION: shell_config.duckietown_version,
+        CONFIG_DOCKER_PASSWORD: shell_config.docker_password,
     }
     dn = os.path.dirname(filename)
     if not os.path.exists(dn):
@@ -104,16 +108,14 @@ def read_shell_config_from_file(fn: str) -> ShellConfig:
 
     token_dt1 = d.pop(DT1_TOKEN_CONFIG_KEY, None)
     docker_username = d.pop(CONFIG_DOCKER_USERNAME, None)
+    docker_password = d.pop(CONFIG_DOCKER_PASSWORD, None)
     duckietown_version = d.pop(CONFIG_DUCKIETOWN_VERSION, None)
 
     if d:
-        msg = (
-            f"The config file {fn} contains other options that I do not understand: {d}"
-        )
+        msg = f"The config file {fn} contains other options that I do not understand: {d}"
         dtslogger.warning(msg)
 
     return ShellConfig(
-        token_dt1=token_dt1,
-        duckietown_version=duckietown_version,
-        docker_username=docker_username,
+        token_dt1=token_dt1, duckietown_version=duckietown_version, docker_username=docker_username,
+        docker_password=docker_password
     )

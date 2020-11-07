@@ -6,16 +6,14 @@ logging.basicConfig()
 dtslogger = logging.getLogger("dts")
 dtslogger.setLevel(logging.INFO)
 
-__version__ = "5.1.10"
+__version__ = "5.1.21"
 
 dtslogger.info("duckietown-shell %s" % __version__)
 
 import sys
 
 if sys.version_info < (3, 6):
-    msg = "! duckietown-shell works with Python 3.6 and later !.\nDetected %s." % str(
-        sys.version
-    )
+    msg = "! duckietown-shell works with Python 3.6 and later !.\nDetected %s." % str(sys.version)
     logging.error(msg)
     sys.exit(2)
 

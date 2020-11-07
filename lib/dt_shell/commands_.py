@@ -22,14 +22,8 @@ def _init_commands(commands_path: str, repo_info: RepoInfo) -> None:
     dtslogger.info("Downloading commands in %s ..." % commands_path)
     # the repo now exists
     remote_url = remoteurl_from_RepoInfo(repo_info)
-    run_cmd([
-        'git',
-            'clone',
-                '-b', repo_info.branch,
-                '--recurse-submodules',
-                remote_url,
-                commands_path
-    ])
+    run_cmd(["git", "clone", "-b", repo_info.branch, "--recurse-submodules", remote_url, commands_path])
+
 
 def check_commands_outdated(commands_path: str, repo_info: RepoInfo) -> bool:
     commands_update_check_flag = os.path.join(commands_path, ".updates-check")
@@ -38,25 +32,18 @@ def check_commands_outdated(commands_path: str, repo_info: RepoInfo) -> bool:
         raise Exception(msg)
 
     dtslogger.info(f"looking at {commands_path}")
-    local_sha = run_cmd([
-        'git',
-            '-C', commands_path,
-            'rev-parse',
-                'HEAD'
-    ])
+    local_sha = run_cmd(["git", "-C", commands_path, "rev-parse", "HEAD"])
     # get the first non-empty line
-    local_sha = list(filter(len, local_sha.split('\n')))[0]
+    local_sha = list(filter(len, local_sha.split("\n")))[0]
     # get remote SHA
     use_cached_sha = False
-    if os.path.exists(commands_update_check_flag) and os.path.isfile(
-        commands_update_check_flag
-    ):
+    if os.path.exists(commands_update_check_flag) and os.path.isfile(commands_update_check_flag):
         now = time.time()
         last_time_checked = getmtime(commands_update_check_flag)
         use_cached_sha = now - last_time_checked < CHECK_CMDS_UPDATE_EVERY_MINS * 60
     # get remote SHA
     if use_cached_sha:
-        dtslogger.debug('Using cached remote SHA for command update check.')
+        dtslogger.debug("Using cached remote SHA for command update check.")
         # no need to check now
         with open(commands_update_check_flag, "r") as fp:
             try:
@@ -65,7 +52,7 @@ def check_commands_outdated(commands_path: str, repo_info: RepoInfo) -> bool:
                 return False
             remote_sha = cached_check["remote"]
     else:
-        dtslogger.debug('Fetching remote SHA for command update check from github.com')
+        dtslogger.debug("Fetching remote SHA for command update check from github.com")
         url = "https://api.github.com/repos/%s/%s/branches/%s" % (
             repo_info.username,
             repo_info.project,
@@ -103,6 +90,7 @@ Attempting auto-update.
 
         except BaseException as e:
             from .utils import format_exception
+
             dtslogger.error(format_exception(e))
 
     # return success
@@ -123,29 +111,22 @@ def update_commands(commands_path: str, repo_info: RepoInfo) -> bool:
             return False
     # the repo now exists
     dts_print("Updating commands...")
-    # pull from origin
-    run_cmd([
-        'git',
-            '-C', commands_path,
-            'pull',
-                '--recurse-submodules',
-                'origin',
-                repo_info.branch
-    ])
+    # pull from origin (try 3 times)
+    for trial in range(3):
+        try:
+            run_cmd(["git", "-C", commands_path,
+                     "pull", "--recurse-submodules", "origin", repo_info.branch])
+            break
+        except RuntimeError:
+            wait_time = 4
+            th = {2: 'nd', 3: 'rd', 4: 'th'}
+            dtslogger.warning('An error occurred while pulling the updated commands. Retrying for '
+                              f'the {trial + 2}-{th[trial + 2]} in {wait_time} seconds.')
+            time.sleep(wait_time)
     # update submodules
-    run_cmd([
-        'git',
-            '-C', commands_path,
-            'submodule',
-                'update'
-    ])
+    run_cmd(["git", "-C", commands_path, "submodule", "update"])
     # get HEAD sha
-    current_sha = run_cmd([
-        'git',
-            '-C', commands_path,
-            'rev-parse',
-                'HEAD'
-    ])
+    current_sha = run_cmd(["git", "-C", commands_path, "rev-parse", "HEAD"])
     # everything should be fine
     dts_print("OK")
     # cache current (local=remote) SHA
@@ -157,11 +138,7 @@ def update_commands(commands_path: str, repo_info: RepoInfo) -> bool:
 def _get_commands(path: str, lvl=0, all_commands=False) -> Optional[Dict[str, object]]:
     entries = glob.glob(os.path.join(path, "*"))
     files = [os.path.basename(e) for e in entries if os.path.isfile(e)]
-    dirs = [
-        e
-        for e in entries
-        if os.path.isdir(e) and (lvl > 0 or os.path.basename(e) != "lib")
-    ]
+    dirs = [e for e in entries if os.path.isdir(e) and (lvl > 0 or os.path.basename(e) != "lib")]
     # base case: empty dir
     if "command.py" not in files and not dirs:
         return None

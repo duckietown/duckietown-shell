@@ -5,6 +5,7 @@ import subprocess
 
 from . import dtslogger
 
+
 def indent(s: str, prefix: str, first: Optional[str] = None) -> str:
     s = str(s)
     assert isinstance(prefix, str)
@@ -107,17 +108,18 @@ def dark_yellow(x):
 def dark(x):
     return termcolor.colored(x, attrs=["dark"])
 
+
 def run_cmd(cmd, print_output=False, suppress_errors=False):
-    dtslogger.debug('$ %s' % cmd)
+    dtslogger.debug("$ %s" % cmd)
     # spawn new process
     proc = subprocess.Popen(cmd, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
     stdout, stderr = proc.communicate()
-    stdout = stdout.decode('utf-8') if stdout else None
-    stderr = stderr.decode('utf-8') if stderr else None
+    stdout = stdout.decode("utf-8") if stdout else None
+    stderr = stderr.decode("utf-8") if stderr else None
     returncode = proc.returncode
     # ---
     if returncode != 0 and not suppress_errors:
-        msg = 'The command %r failed with exit code %d.\nError:\n%s' % (cmd, returncode, stderr)
+        msg = "The command %r failed with exit code %d.\nError:\n%s" % (cmd, returncode, stderr)
         raise RuntimeError(msg)
     if print_output:
         print(stdout)

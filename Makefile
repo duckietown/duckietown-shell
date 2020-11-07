@@ -4,16 +4,23 @@ all:
 bump-upload:
 	$(MAKE) bump
 	$(MAKE) upload
-	
-bump:
-	bumpversion patch
 
-upload:
+bump: # v2
+	bumpversion patch
 	git push --tags
 	git push
+
+upload: # v3
+	dts build_utils check-not-dirty
+	dts build_utils check-tagged
+	dt-check-need-upload --package duckietown-shell  make upload-do
+
+upload-do:
 	rm -f dist/*
+	rm -rf src/*.egg-info
 	python3 setup.py sdist
-	twine upload dist/*
+	twine upload --skip-existing --verbose dist/*
+
 
 
 branch=$(shell git rev-parse --abbrev-ref HEAD)
@@ -42,3 +49,6 @@ push-x86:
 
 test:
 	make -C testing
+
+black:
+	black -l 110 lib

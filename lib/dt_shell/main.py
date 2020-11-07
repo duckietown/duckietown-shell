@@ -3,7 +3,7 @@ import logging
 import os
 import re
 import sys
-from typing import Dict
+from typing import Dict, Union
 
 import yaml
 
@@ -25,7 +25,7 @@ from .utils import format_exception, href, replace_spaces
 
 
 class OtherVersions:
-    name2versions: Dict[str, str] = {}
+    name2versions: Dict[str, Union[str, Dict[str, str]]] = {}
 
 
 def cli_main() -> None:
@@ -67,7 +67,7 @@ def print_version_info() -> None:
         shell_config = read_shell_config()
         commands_version = shell_config.duckietown_version
     except:
-        commands_version = 'ND'
+        commands_version = "ND"
     v["commands-version"] = commands_version
 
     v["encodings"] = {
@@ -76,12 +76,26 @@ def print_version_info() -> None:
         "locale": locale.getpreferredencoding(),
     }
 
+    try:
+        from pip._internal.utils.misc import get_installed_distributions
+    except ImportError:
+        dtslogger.warning('Please update "pip" to have better debug info.')
+    else:
+        installed = get_installed_distributions()
+        pkgs = {_.project_name: _.version for _ in installed}
+        for pkg_name, pkg_version in pkgs.items():
+            include = ('duckietown' in pkg_name) or ('dt-' in pkg_name) or ('-z' in pkg_name) or (
+                    'aido' in pkg_name)
+            if include:
+                v[pkg_name] = pkg_version
+
     versions = yaml.dump(v, default_flow_style=False)
     # Please = termcolor.colored('Please', 'red', attrs=['bold'])
+    fn = '/tmp/shell-debug-info.txt'
+    with open(fn, 'w') as f:
+        f.write(versions)
     msg = f"""\
-If you think this is a bug, please report that you are using:
-
-{versions}
+To report a bug, please also include the contents of {fn}
 """
     dts_print(msg, "red")
 
@@ -110,7 +124,7 @@ def print_info_command() -> None:
 
 def cli_main_() -> None:
     abort_if_running_with_sudo()
-    print_info_command()
+
     # Problems with a step in the Duckiebot operation manual?
     #
     #     Report here: https://github.com/duckietown/docs-opmanual_duckiebot/issues
@@ -118,6 +132,9 @@ def cli_main_() -> None:
     # TODO: register handler for Ctrl-C
     cli_arguments = sys.argv[1:]
     cli_options, arguments = get_cli_options(cli_arguments)
+
+    if not cli_options.quiet:
+        print_info_command()
 
     # process options here
     if cli_options.debug:
@@ -135,21 +152,22 @@ def cli_main_() -> None:
     v = cli_options.set_version
 
     def is_allowed_branch(branch):
-      allowed_braches_patterns = map(re.compile, ALLOWED_BRANCHES)
-      for p in allowed_braches_patterns:
-        if p.match(branch):
-          return True
-      return False
+        allowed_braches_patterns = map(re.compile, ALLOWED_BRANCHES)
+        for p in allowed_braches_patterns:
+            if p.match(branch):
+                return True
+        return False
 
     if v is not None:
         if not is_allowed_branch(v):
-            allowed_braches = [
-              b.split('(')[0] for b in ALLOWED_BRANCHES
-            ]
+            allowed_braches = [b.split("(")[0] for b in ALLOWED_BRANCHES]
             msg = f"Given version {v!r} is not one of {allowed_braches}."
             raise UserError(msg)
         shell_config.duckietown_version = v
         write_shell_config(shell_config)
+        # need this so we can use in non-interactive settings
+        sys.exit(0)
+
     if shell_config.duckietown_version is None:
         msg = """You have not specified a Duckietown version. Please use:
 
@@ -158,8 +176,8 @@ def cli_main_() -> None:
         where <version> = daffy, master19
         """
         raise UserError(msg)
-
-    dtslogger.info(f'Commands version: {shell_config.duckietown_version}')
+    if not cli_options.quiet:
+        dtslogger.info(f"Commands version: {shell_config.duckietown_version}")
     commands_info = get_local_commands_info()
     # add subdirectory for version
     if not commands_info.leave_alone:

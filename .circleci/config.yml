@@ -2,9 +2,8 @@ version: 2
 jobs:
     build:
      docker:
-        - image: circleci/python:2.7
+        - image: python:3.8
           environment:
-
      steps:
         - checkout
         - run:
@@ -16,19 +15,19 @@ jobs:
         - run:
             name: build
             command: |
-              python setup.py install --user
+                python setup.py install --user
 
         - run:
             name: dts help
             command: |
-               export PATH=/home/circleci/.local/bin:$PATH
-               dts help
+                 export PATH=/home/circleci/.local/bin:$PATH
+                 dts help
 
         - run:
             name: dts version
             command: |
-               export PATH=/home/circleci/.local/bin:$PATH
-               dts version
+                 export PATH=/home/circleci/.local/bin:$PATH
+                 dts version
 #
 #        - run:
 #            name: dts aido token

@@ -22,7 +22,32 @@ if sys.version_info < (3, 6):
     msg = 'duckietown-shell works with Python 3.6 and later.\nDetected %s.' % str(sys.version)
     sys.exit(msg)
 
+distro = 'daffy'
+
 shell_version = get_version(filename='lib/dt_shell/__init__.py')
+install_requires = [
+    'GitPython',
+    'texttable',
+    'base58',
+    'ecdsa',
+    'python-dateutil',
+    'whichcraft',
+    'termcolor',
+    'PyYAML',
+    'docker',
+    'six',
+    'psutil',
+    'future',
+    'duckietown-docker-utils-{}>=6.0.9'.format(distro),
+    'zeroconf',
+    'requests',
+    'dt-authentication-{}'.format(distro),
+    'dt-data-api-{}>=0.1.6'.format(distro)
+]
+
+system_version = tuple(sys.version_info)[:3]
+if system_version < (3, 7):
+    install_requires.append('dataclasses')
 
 setup(
     name='duckietown-shell',
@@ -32,31 +57,9 @@ setup(
     packages=find_packages('lib'),
     # we want the python 2 version to download it, and then exit with an error
     # python_requires='>=3.6',
-    install_requires=[
-        'GitPython',
-        'texttable',
-        'base58',
-        'ecdsa',
-        'python-dateutil',
-        'whichcraft',
-        'termcolor',
-        'PyYAML',
-        'docker',
-        'six',
-        'psutil',
-        'future',
-        'duckietown-challenges-daffy',
-        'zeroconf',
-        'requests',
-        'dataclasses',
 
-        'dt_authentication',
-        'dt_data_api'
-    ],
-
-    tests_require=[
-    ],
-
+    tests_require=[],
+    install_requires=install_requires,
     # This avoids creating the egg file, which is a zip file, which makes our data
     # inaccessible by dir_from_package_name()
     zip_safe=False,
