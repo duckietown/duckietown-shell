@@ -11,36 +11,44 @@ The idea is that most of the functionality is implemented as Docker containers, 
  
 ## Installation
 
-These installation steps make sure that you have a minimal "sane" environment, which includes:
+These installation steps make sure that you have a minimal "sane" environment, which will include:
 
 1. Git and Git LFS;
 2. Docker;
 3. The Duckietown Shell.
 
 
-### Installation on Ubuntu 18.xx
+### Installation on Ubuntu 18.xx, 20.xxx
 
-Installs `pip3`, `git`, `git-lfs`:
+Install the `pip3`, `git`, `git-lfs` APT packages:
 
     $ sudo apt install -y python3-pip git git-lfs
-    
-Installs `docker`: (Also could refer to: https://docs.docker.com/install/linux/docker-ce/ubuntu/)
+
+Install Docker using these commands:
 
     $ sudo apt install -y docker.io
+    
+
+Refer to [the official instructions](https://docs.docker.com/install/linux/docker-ce/ubuntu/)
+for troubleshooting.
+
+Add yourself to the proper group:
+
     $ sudo adduser `whoami` docker
-
-Installs `duckietown-shell`:
-
-**Note: Never use `sudo pip install` to install `duckietown-shell`.**
-
-    $ pip3 install --no-cache-dir --user -U duckietown-shell
 
 Note: you need to *log in and out* to have the group change take effect.
 
-Then, typing 
+Install the `duckietown-shell` Python package:
+
+    $ pip3 install --no-cache-dir --user -U duckietown-shell
+
+**Note: Never use `sudo pip install` to install `duckietown-shell`.**
+
+
+Then, typing
 
     $ which dts
-    
+
 should output something like: `/home/user/.local/bin/dts`
 
 ### Installation on Ubuntu 16.xx
