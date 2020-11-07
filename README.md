@@ -18,7 +18,6 @@ Please use the links provided and follow the instructions for your OS
 2. [Git LFS](https://git-lfs.github.com/) (for building and working with the docs only)
 2. [Docker](https://docs.docker.com/get-docker/)
 
-
 ## Installing the Duckietown Shell
 
 ### Installation on Ubuntu 18.xx or 20.xx
@@ -33,13 +32,12 @@ Add yourself to the `docker` group:
 
     $ sudo adduser `whoami` docker
 
-Install the `duckietown-shell`:
+**Note**: you may need to *log in and out* to have the group change take effect.
 
-**Note: Never use `sudo pip install` to install `duckietown-shell`.**
+Install the `duckietown-shell` Python package:
 
     $ pip3 install --no-cache-dir --user -U duckietown-shell
 
-Note: you may need to *log in and out* to have the group change take effect.
 
 #### Testing the Installation
 
@@ -49,7 +47,7 @@ Typing
     
 should output something like: `/home/![user]/.local/bin/dts`
 
-If it is not found you may need to add `/home/![user]/.local/bin` to your shell path. You can do so by adding the line:
+If nothing is output you may need to add `/home/![user]/.local/bin` to your shell path. You can do so by adding the line:
 
     `export PATH=$PATH:/root/.local/bin`
     
