@@ -236,6 +236,8 @@ class DTShell(Cmd):
                 setattr(base, command, klass)
             except UserError:
                 raise
+            except KeyboardInterrupt:
+                raise
             except BaseException as e:
                 # error_loading = True
                 from .utils import format_exception

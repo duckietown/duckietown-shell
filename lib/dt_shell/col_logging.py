@@ -7,7 +7,7 @@ def setup_logging_format():
     from logging import Logger, StreamHandler, Formatter
     import logging
 
-    FORMAT = "%(name)15s|%(filename)15s:%(lineno)-4s - %(funcName)-15s| %(message)s"
+    FORMAT = "%(name)15s|ds|%(filename)15s:%(lineno)-4s - %(funcName)-15s| %(message)s"
 
     logging.basicConfig(format=FORMAT)
 
