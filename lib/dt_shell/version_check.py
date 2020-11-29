@@ -11,7 +11,7 @@ from whichcraft import which
 
 from . import __version__, dtslogger
 from .constants import DTShellConstants
-from .exceptions import CouldNotGetVersion, NoCacheAvailable, URLException, UserError
+from .exceptions import CouldNotGetVersion, NoCacheAvailable, URLException
 
 
 def get_url(url, timeout=3):

@@ -7,6 +7,7 @@ __all__ = [
     "CouldNotGetVersion",
     "NoCacheAvailable",
     "URLException",
+    "InvalidConfig",
 ]
 
 

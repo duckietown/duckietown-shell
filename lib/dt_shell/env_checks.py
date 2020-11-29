@@ -6,7 +6,6 @@ from typing import List, Optional, Tuple
 
 from whichcraft import which
 
-from . import dtslogger
 from .config import read_shell_config
 from .exceptions import InvalidEnvironment, UserError
 

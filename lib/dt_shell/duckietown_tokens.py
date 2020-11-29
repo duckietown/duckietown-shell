@@ -1,9 +1,10 @@
 import json
 import os
+from typing import cast
 
 import base58
-import ecdsa
-from ecdsa import BadSignatureError, SigningKey, VerifyingKey
+
+from ecdsa import BadSignatureError, SigningKey, VerifyingKey, NIST192p
 
 
 class DuckietownToken:
@@ -34,10 +35,10 @@ class DuckietownToken:
 
 private = "key1.pem"
 public = "key1-pub.pem"
-curve = ecdsa.NIST192p
+curve =NIST192p
 
 
-def get_signing_key():
+def get_signing_key() -> SigningKey:
     if not os.path.exists(private):
         print("Creating private key %r" % private)
         sk0 = SigningKey.generate(curve=curve)
@@ -47,9 +48,11 @@ def get_signing_key():
         vk = sk0.get_verifying_key()
         with open(public, "w") as f:
             f.write(vk.to_pem())
-    pem = open(private).read()
+
+    with open(private) as f:
+        pem = f.read()
     sk = SigningKey.from_pem(pem)
-    return sk
+    return cast(SigningKey, sk)
 
 
 def get_verify_key():

@@ -77,6 +77,7 @@ def print_version_info() -> None:
     }
 
     try:
+        # noinspection PyCompatibility,PyUnresolvedReferences
         from pip._internal.utils.misc import get_installed_distributions
     except ImportError:
         dtslogger.warning('Please update "pip" to have better debug info.')
