@@ -1,6 +1,6 @@
 import os.path
 from dataclasses import dataclass
-from typing import Optional
+from typing import Dict, Optional
 
 import yaml
 
@@ -15,6 +15,7 @@ class ShellConfig:
     docker_username: Optional[str]
     docker_password: Optional[str]
     duckietown_version: Optional[str]  # daffy, master19, ...
+    docker_credentials: Dict[str, Dict[str, str]]
 
 
 @dataclass
@@ -37,7 +38,7 @@ def remoteurl_from_RepoInfo(ri: RepoInfo) -> str:
 
 def get_shell_config_default() -> ShellConfig:
     return ShellConfig(token_dt1=None, docker_username=None, duckietown_version=None,
-                       docker_password=None)
+                       docker_password=None, docker_credentials={})
 
 
 def get_config_path() -> str:
@@ -68,6 +69,7 @@ DT1_TOKEN_CONFIG_KEY = DTShellConstants.DT1_TOKEN_CONFIG_KEY
 CONFIG_DOCKER_USERNAME = DTShellConstants.CONFIG_DOCKER_USERNAME
 CONFIG_DOCKER_PASSWORD = DTShellConstants.CONFIG_DOCKER_PASSWORD
 CONFIG_DUCKIETOWN_VERSION = DTShellConstants.CONFIG_DUCKIETOWN_VERSION
+CONFIG_DOCKER_CREDENTIALS = DTShellConstants.CONFIG_DOCKER_CREDENTIALS
 
 
 def write_shell_config_to_file(shell_config: ShellConfig, filename: str) -> None:
@@ -110,6 +112,13 @@ def read_shell_config_from_file(fn: str) -> ShellConfig:
     docker_username = d.pop(CONFIG_DOCKER_USERNAME, None)
     docker_password = d.pop(CONFIG_DOCKER_PASSWORD, None)
     duckietown_version = d.pop(CONFIG_DUCKIETOWN_VERSION, None)
+    docker_credentials = d.pop(CONFIG_DOCKER_CREDENTIALS, None)
+
+    if 'docker.io' not in docker_credentials and docker_username is not None:
+        docker_credentials['docker.io'] = {
+            'username': docker_username,
+            'secret': docker_password
+        }
 
     if d:
         msg = f"The config file {fn} contains other options that I do not understand: {d}"
@@ -117,5 +126,6 @@ def read_shell_config_from_file(fn: str) -> ShellConfig:
 
     return ShellConfig(
         token_dt1=token_dt1, duckietown_version=duckietown_version, docker_username=docker_username,
-        docker_password=docker_password
+        docker_password=docker_password,
+        docker_credentials=docker_credentials
     )

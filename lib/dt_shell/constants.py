@@ -12,6 +12,7 @@ class DTShellConstants:
     CONFIG_DOCKER_USERNAME = "docker_username"
     CONFIG_DOCKER_PASSWORD = "docker_password"
     CONFIG_DUCKIETOWN_VERSION = "duckietown_version"
+    CONFIG_DOCKER_CREDENTIALS = "docker_credentials"
 
 
 ALLOWED_BRANCHES = ["ente(-[\w]+)?", "daffy(-[\w]+)?", "master19(-[\w]+)?", "devel(-[\w]+)?"]
