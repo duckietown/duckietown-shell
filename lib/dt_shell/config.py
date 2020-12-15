@@ -78,6 +78,7 @@ def write_shell_config_to_file(shell_config: ShellConfig, filename: str) -> None
         CONFIG_DOCKER_USERNAME: shell_config.docker_username,
         CONFIG_DUCKIETOWN_VERSION: shell_config.duckietown_version,
         CONFIG_DOCKER_PASSWORD: shell_config.docker_password,
+        CONFIG_DOCKER_CREDENTIALS: shell_config.docker_credentials,
     }
     dn = os.path.dirname(filename)
     if not os.path.exists(dn):
@@ -89,8 +90,11 @@ def write_shell_config_to_file(shell_config: ShellConfig, filename: str) -> None
 
 def read_shell_config_from_file(fn: str) -> ShellConfig:
     """ Raises InvalidConfig or ConfigNotPresent"""
+    dtslogger.debug(f'reading config {fn}')
+
     if not os.path.exists(fn):
         raise ConfigNotPresent(fn)
+
 
     with open(fn, "r") as fp:
         data = fp.read()
@@ -112,7 +116,9 @@ def read_shell_config_from_file(fn: str) -> ShellConfig:
     docker_username = d.pop(CONFIG_DOCKER_USERNAME, None)
     docker_password = d.pop(CONFIG_DOCKER_PASSWORD, None)
     duckietown_version = d.pop(CONFIG_DUCKIETOWN_VERSION, None)
-    docker_credentials = d.pop(CONFIG_DOCKER_CREDENTIALS, None)
+    docker_credentials = d.pop(CONFIG_DOCKER_CREDENTIALS, {})
+    if docker_credentials is None:
+        docker_credentials = {}
 
     if 'docker.io' not in docker_credentials and docker_username is not None:
         docker_credentials['docker.io'] = {

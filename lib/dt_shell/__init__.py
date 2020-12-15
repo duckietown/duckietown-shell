@@ -36,3 +36,4 @@ from .main import cli_main
 from .exceptions import *
 
 from .main import OtherVersions
+from .package_version_check import *
