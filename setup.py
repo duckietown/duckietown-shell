@@ -35,6 +35,7 @@ install_requires = [
     'termcolor',
     'PyYAML',
     'docker',
+    'docker-compose',
     'six',
     'psutil',
     'future',

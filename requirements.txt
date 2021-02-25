@@ -6,6 +6,7 @@ whichcraft
 termcolor
 PyYAML
 docker
+docker-compose
 psutil
 six
 ruamel.ordereddict
