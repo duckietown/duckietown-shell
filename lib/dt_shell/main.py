@@ -92,7 +92,8 @@ def print_version_info() -> None:
 
     versions = yaml.dump(v, default_flow_style=False)
     # Please = termcolor.colored('Please', 'red', attrs=['bold'])
-    fn = '/tmp/shell-debug-info.txt'
+    fn = '~/shell-debug-info.txt'
+    fn = os.path.expanduser(fn)
     with open(fn, 'w') as f:
         f.write(versions)
     msg = f"""\
