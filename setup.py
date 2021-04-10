@@ -39,7 +39,7 @@ install_requires = [
     'six',
     'psutil',
     'future',
-    'duckietown-docker-utils-{}>=6.0.9'.format(distro),
+    'duckietown-docker-utils-{}>=6.0.82'.format(distro),
     'zeroconf',
     'requests',
     'dt-authentication-{}'.format(distro),
