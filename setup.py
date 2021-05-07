@@ -47,7 +47,8 @@ setup(name='duckietown-shell',
           'psutil',
           'future',
           # 'duckietown-challenges-daffy',
-          'zeroconf'
+          'zeroconf',
+          'nbformat'
       ],
 
       tests_require=[
