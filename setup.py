@@ -48,7 +48,8 @@ setup(name='duckietown-shell',
           'future',
           # 'duckietown-challenges-daffy',
           'zeroconf',
-          'nbformat'
+          'nbformat',
+          'nbconvert'
       ],
 
       tests_require=[
