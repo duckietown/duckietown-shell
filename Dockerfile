@@ -16,7 +16,7 @@ RUN apk --update --no-cache add \
     && pip install -r requirements.txt \
     && apk del python2-dev gcc musl-dev linux-headers
 
-# copy the rest  
+# copy the rest
 COPY . .
 
 #   Note the contents of .dockerignore:
@@ -37,7 +37,7 @@ COPY . .
 
 COPY . .
 
-RUN pip install .
+RUN python3 -m pip install .
 
 ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
