@@ -15,7 +15,7 @@ class DTShellConstants:
     CONFIG_DOCKER_CREDENTIALS = "docker_credentials"
 
 
-ALLOWED_BRANCHES = ["ente(-[\w]+)?", "daffy(-[\w]+)?", "master19(-[\w]+)?", "devel(-[\w]+)?"]
+ALLOWED_BRANCHES = ["ente(-[\w]+)?", "daffy(-[\w]+)?", "master19(-[\w]+)?", "devel(-[\w]+)?", "montreal(-[\w]+)?"]
 
 DEBUG = False
 
