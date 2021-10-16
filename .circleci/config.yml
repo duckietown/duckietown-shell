@@ -10,7 +10,7 @@ jobs:
             name: deps
             command: |
                 #apt install python-pip
-                python3 -m pip update -U pip
+                python3 -m pip install -U pip
 
         - run:
             name: build
