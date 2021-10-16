@@ -10,12 +10,12 @@ jobs:
             name: deps
             command: |
                 #apt install python-pip
-                pip install --user --upgrade -r requirements.txt
+                python3 -m pip update -U pip
 
         - run:
             name: build
             command: |
-                python setup.py install --user
+                python3 -m pip install -e . --user
 
         - run:
             name: dts help
@@ -28,9 +28,3 @@ jobs:
             command: |
                  export PATH=/home/circleci/.local/bin:$PATH
                  dts version
-#
-#        - run:
-#            name: dts aido token
-#            command: |
-#               export PATH=/home/circleci/.local/bin:$PATH
-#               dts aido18 token dt1-XXzMstGtdJhJeXv-43dzqWFnWd8KBa1yev1g3UKnzVxZkkTbfQj2vduBXhfPjK6FSSCHQZPr986b8tXASH || true
