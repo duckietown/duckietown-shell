@@ -7,7 +7,7 @@ from typing import Dict, Union
 
 import yaml
 
-from . import __version__, dtslogger
+from . import __version__, _get_installed_distributions, dtslogger
 from .cli import DTShell, get_local_commands_info
 from .cli_options import get_cli_options
 from .config import get_shell_config_default, read_shell_config, write_shell_config
@@ -77,12 +77,7 @@ def print_version_info() -> None:
     }
 
     try:
-        # noinspection PyCompatibility,PyUnresolvedReferences
-        from pip._internal.utils.misc import get_installed_distributions
-    except ImportError:
-        dtslogger.warning('Please update "pip" to have better debug info.')
-    else:
-        installed = get_installed_distributions()
+        installed = _get_installed_distributions()
         pkgs = {_.project_name: _.version for _ in installed}
         for pkg_name, pkg_version in pkgs.items():
             include = (
@@ -93,6 +88,8 @@ def print_version_info() -> None:
             )
             if include:
                 v[pkg_name] = pkg_version
+    except ImportError:
+        dtslogger.warning('Please update "pip" to have better debug info.')
 
     versions = yaml.dump(v, default_flow_style=False)
     # Please = termcolor.colored('Please', 'red', attrs=['bold'])

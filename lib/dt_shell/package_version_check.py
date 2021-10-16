@@ -2,7 +2,7 @@ from typing import cast, List, Optional
 
 from .exceptions import UserError
 
-__all__ = ["check_package_version"]
+__all__ = ["check_package_version", "_get_installed_distributions"]
 
 
 def _get_installed_distributions(
