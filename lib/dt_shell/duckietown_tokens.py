@@ -35,7 +35,7 @@ class DuckietownToken:
 
 private = "key1.pem"
 public = "key1-pub.pem"
-curve =NIST192p
+curve = NIST192p
 
 
 def get_signing_key() -> SigningKey:
@@ -85,7 +85,7 @@ class InvalidToken(Exception):
 
 def get_id_from_token(s):
     """
-        Returns a numeric ID from the token, or raises InvalidToken.
+    Returns a numeric ID from the token, or raises InvalidToken.
 
     """
     try:

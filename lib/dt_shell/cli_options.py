@@ -29,8 +29,8 @@ def get_cli_options(args: List[str]) -> Tuple[CLIOptions, List[str]]:
         type=str,
         default=None,
         help=f"Set Duckietown version. Use one of {allowed_branches}. Branches from "
-             f"https://github.com/duckietown/duckietown-shell-commands of the form '[branch]-*' are also "
-             f"supported.",
+        f"https://github.com/duckietown/duckietown-shell-commands of the form '[branch]-*' are also "
+        f"supported.",
     )
 
     parsed, others = parser.parse_known_args(args)

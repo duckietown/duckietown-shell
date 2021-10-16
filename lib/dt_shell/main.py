@@ -85,16 +85,20 @@ def print_version_info() -> None:
         installed = get_installed_distributions()
         pkgs = {_.project_name: _.version for _ in installed}
         for pkg_name, pkg_version in pkgs.items():
-            include = ('duckietown' in pkg_name) or ('dt-' in pkg_name) or ('-z' in pkg_name) or (
-                    'aido' in pkg_name)
+            include = (
+                ("duckietown" in pkg_name)
+                or ("dt-" in pkg_name)
+                or ("-z" in pkg_name)
+                or ("aido" in pkg_name)
+            )
             if include:
                 v[pkg_name] = pkg_version
 
     versions = yaml.dump(v, default_flow_style=False)
     # Please = termcolor.colored('Please', 'red', attrs=['bold'])
-    fn = '~/shell-debug-info.txt'
+    fn = "~/shell-debug-info.txt"
     fn = os.path.expanduser(fn)
-    with open(fn, 'w') as f:
+    with open(fn, "w") as f:
         f.write(versions)
     msg = f"""\
 To report a bug, please also include the contents of {fn}

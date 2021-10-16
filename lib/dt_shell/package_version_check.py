@@ -1,6 +1,7 @@
 from .exceptions import UserError
 
-__all__ = ['check_package_version']
+__all__ = ["check_package_version"]
+
 
 def check_package_version(PKG: str, min_version: str):
     pip_version = "?"

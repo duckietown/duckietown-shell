@@ -28,13 +28,13 @@ def indent(s: str, prefix: str, first: Optional[str] = None) -> str:
 
 
 def raise_wrapped(etype, e, msg, compact=False, exc=None, **kwargs):
-    """ Raises an exception of type etype by wrapping
-        another exception "e" with its backtrace and adding
-        the objects in kwargs as formatted by format_obs.
+    """Raises an exception of type etype by wrapping
+    another exception "e" with its backtrace and adding
+    the objects in kwargs as formatted by format_obs.
 
-        if compact = False, write the whole traceback, otherwise just str(e).
+    if compact = False, write the whole traceback, otherwise just str(e).
 
-        exc = output of sys.exc_info()
+    exc = output of sys.exc_info()
     """
 
     e = raise_wrapped_make(etype, e, msg, compact=compact, **kwargs)

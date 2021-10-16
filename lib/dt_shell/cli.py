@@ -301,7 +301,7 @@ class DTShell(Cmd):
         var = DTShellConstants.DT1_TOKEN_CONFIG_KEY
         from_env = os.environ.get(var, None)
         if from_env:
-            msg = f'Using token from environment variable {var} instead of config.'
+            msg = f"Using token from environment variable {var} instead of config."
             dtslogger.info(msg)
             return from_env
 

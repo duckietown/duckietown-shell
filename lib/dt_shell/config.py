@@ -37,8 +37,13 @@ def remoteurl_from_RepoInfo(ri: RepoInfo) -> str:
 
 
 def get_shell_config_default() -> ShellConfig:
-    return ShellConfig(token_dt1=None, docker_username=None, duckietown_version=None,
-                       docker_password=None, docker_credentials={})
+    return ShellConfig(
+        token_dt1=None,
+        docker_username=None,
+        duckietown_version=None,
+        docker_password=None,
+        docker_credentials={},
+    )
 
 
 def get_config_path() -> str:
@@ -90,11 +95,10 @@ def write_shell_config_to_file(shell_config: ShellConfig, filename: str) -> None
 
 def read_shell_config_from_file(fn: str) -> ShellConfig:
     """ Raises InvalidConfig or ConfigNotPresent"""
-    dtslogger.debug(f'reading config {fn}')
+    dtslogger.debug(f"reading config {fn}")
 
     if not os.path.exists(fn):
         raise ConfigNotPresent(fn)
-
 
     with open(fn, "r") as fp:
         data = fp.read()
@@ -120,18 +124,17 @@ def read_shell_config_from_file(fn: str) -> ShellConfig:
     if docker_credentials is None:
         docker_credentials = {}
 
-    if 'docker.io' not in docker_credentials and docker_username is not None:
-        docker_credentials['docker.io'] = {
-            'username': docker_username,
-            'secret': docker_password
-        }
+    if "docker.io" not in docker_credentials and docker_username is not None:
+        docker_credentials["docker.io"] = {"username": docker_username, "secret": docker_password}
 
     if d:
         msg = f"The config file {fn} contains other options that I do not understand: {d}"
         dtslogger.warning(msg)
 
     return ShellConfig(
-        token_dt1=token_dt1, duckietown_version=duckietown_version, docker_username=docker_username,
+        token_dt1=token_dt1,
+        duckietown_version=duckietown_version,
+        docker_username=docker_username,
         docker_password=docker_password,
-        docker_credentials=docker_credentials
+        docker_credentials=docker_credentials,
     )

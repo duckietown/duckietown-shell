@@ -9,7 +9,7 @@ __all__ = ["dts_print"]
 
 def dts_print(msg: str, color: Optional[str] = None, attrs: Sequence[str] = ()) -> None:
     """
-        Prints a message to the user.
+    Prints a message to the user.
     """
     msg = msg.strip()  # remove space
     print("")  # always separate

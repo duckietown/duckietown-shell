@@ -114,14 +114,15 @@ def update_commands(commands_path: str, repo_info: RepoInfo) -> bool:
     # pull from origin (try 3 times)
     for trial in range(3):
         try:
-            run_cmd(["git", "-C", commands_path,
-                     "pull", "--recurse-submodules", "origin", repo_info.branch])
+            run_cmd(["git", "-C", commands_path, "pull", "--recurse-submodules", "origin", repo_info.branch])
             break
         except RuntimeError:
             wait_time = 4
-            th = {2: 'nd', 3: 'rd', 4: 'th'}
-            dtslogger.warning('An error occurred while pulling the updated commands. Retrying for '
-                              f'the {trial + 2}-{th[trial + 2]} in {wait_time} seconds.')
+            th = {2: "nd", 3: "rd", 4: "th"}
+            dtslogger.warning(
+                "An error occurred while pulling the updated commands. Retrying for "
+                f"the {trial + 2}-{th[trial + 2]} in {wait_time} seconds."
+            )
             time.sleep(wait_time)
     # update submodules
     run_cmd(["git", "-C", commands_path, "submodule", "update"])

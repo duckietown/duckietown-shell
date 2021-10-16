@@ -7,18 +7,17 @@ repos:
   - id: check-case-conflict
   - id: check-executables-have-shebangs
   - id: check-merge-conflict
-  - id: check-symlinks 
+  - id: check-symlinks
 - repo: https://github.com/psf/black
   rev: 20.8b1
   hooks:
   - id: black
     language_version: python3.8
-    args: [-l, '110'] 
+    args: [-l, '110']
 - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
   rev: 0.1.0 # or specific tag
   hooks:
   - id: yamlfmt
     args: [--mapping, '2', --sequence, '2', --offset, '0', --width, '150', --preserve-quotes]
- 
 
-files: (^src/.*py)|(.*yaml)
+files: (^src/.*py)|(.*yaml)|(^lib/.*py)
