@@ -7,7 +7,7 @@ from typing import Dict, Union
 
 import yaml
 
-from . import __version__, _get_installed_distributions, dtslogger
+from . import __version__, dtslogger
 from .cli import DTShell, get_local_commands_info
 from .cli_options import get_cli_options
 from .config import get_shell_config_default, read_shell_config, write_shell_config
@@ -22,7 +22,7 @@ from .exceptions import (
 )
 from .logging import dts_print
 from .utils import format_exception, href, replace_spaces
-
+from .package_version_check import _get_installed_distributions
 
 class OtherVersions:
     name2versions: Dict[str, Union[str, Dict[str, str]]] = {}
