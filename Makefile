@@ -52,3 +52,7 @@ test:
 
 black:
 	black -l 110 lib
+
+post-circle-tests:
+	PATH=/home/circleci/.local/bin:$PATH dts help
+	PATH=/home/circleci/.local/bin:$PATH dts version
