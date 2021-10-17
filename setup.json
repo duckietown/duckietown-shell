@@ -1,0 +1,38 @@
+{
+  "install_requires": [
+    "GitPython",
+    "PyYAML",
+    "base58",
+    "docker",
+    "docker-compose",
+    "dt-authentication-daffy",
+    "dt-data-api-daffy>=0.1.6",
+    "duckietown-docker-utils-daffy>=6.0.90",
+    "ecdsa",
+    "future",
+    "psutil",
+    "python-dateutil",
+    "pytz",
+    "requests",
+    "six",
+    "termcolor",
+    "texttable",
+    "whichcraft",
+    "zeroconf"
+  ],
+  "tests_require": [],
+  "srcdir": "lib",
+  "package_name": "duckietown-shell",
+  "entry_points": {
+    "console_scripts": []
+  },
+  "zip_safe": true,
+  "include_package_data": true,
+  "modules": [
+    "dt_shell"
+  ],
+  "version": "5.2.12",
+  "author": "",
+  "author_email": "",
+  "url": ""
+}
