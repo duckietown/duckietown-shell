@@ -45,6 +45,13 @@ jobs:
         command: |
           python3 -m pip install nose coverage pipdeptree rednose
 
+
+
+    - run:
+        name: install
+        command: |
+          python3 -m pip install -e . --user
+
     - run:
         name: Python stats
         command: |
@@ -55,12 +62,6 @@ jobs:
     - store_artifacts:
         path: build-stats
         destination: build-stats
-
-    - run:
-        name: install
-        command: |
-          python3 -m pip install -e . --user
-
 #    - run:
 #        name: Make docs
 #        command: |
@@ -172,6 +173,13 @@ jobs:
         command: |
           python3 -m pip install nose coverage pipdeptree rednose
 
+
+
+    - run:
+        name: install
+        command: |
+          python3 -m pip install -e . --user
+
     - run:
         name: Python stats
         command: |
@@ -182,12 +190,6 @@ jobs:
     - store_artifacts:
         path: build-stats
         destination: build-stats
-
-    - run:
-        name: install
-        command: |
-          python3 -m pip install -e . --user
-
 #    - run:
 #        name: Make docs
 #        command: |
@@ -271,4 +273,4 @@ jobs:
           bash <(curl -s https://codecov.io/bash)
     resource_class: medium
 
-# sigil c5b6592a9dc962df88d30c640b4cda65
+# sigil 77f719601078e2fa3aa46ed3730be9e9
