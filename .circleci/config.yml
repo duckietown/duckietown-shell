@@ -21,8 +21,8 @@ jobs:
       COLUMNS: '160'
       # default is /usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
       PATH: /home/circleci/.local/bin:/root/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-      COVER_PACKAGES: dt_shell
-      TEST_PACKAGES: ''
+      COVER_PACKAGES: dt_shell,dt_shell_tests
+      TEST_PACKAGES: dt_shell_tests
     docker:
     - image: $DOCKER_REGISTRY/circleci/python:3.8
       auth:
@@ -94,6 +94,19 @@ jobs:
           fi
 
 
+    - run:
+        name: dt_shell_tests
+        command: |-
+          set -euxo pipefail
+          mkdir -p out/test-results
+          xunit_output=$PWD/out/test-results/nose-${CIRCLE_NODE_INDEX}-dt_shell_tests-xunit.xml
+          nosetests \
+              --rednose --immediate \
+              --cover-tests --with-coverage \
+              --with-xunit --xunit-file=${xunit_output} \
+              --cover-package=${COVER_PACKAGES} \
+              dt_shell_tests
+        when: always
     - run:
         name: post-circle-tests
         command: |
@@ -135,8 +148,8 @@ jobs:
       COLUMNS: '160'
       # default is /usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
       PATH: /home/circleci/.local/bin:/root/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-      COVER_PACKAGES: dt_shell
-      TEST_PACKAGES: ''
+      COVER_PACKAGES: dt_shell,dt_shell_tests
+      TEST_PACKAGES: dt_shell_tests
     docker:
     - image: $DOCKER_REGISTRY/circleci/python:3.8
       auth:
@@ -209,6 +222,19 @@ jobs:
 
 
     - run:
+        name: dt_shell_tests
+        command: |-
+          set -euxo pipefail
+          mkdir -p out/test-results
+          xunit_output=$PWD/out/test-results/nose-${CIRCLE_NODE_INDEX}-dt_shell_tests-xunit.xml
+          nosetests \
+              --rednose --immediate \
+              --cover-tests --with-coverage \
+              --with-xunit --xunit-file=${xunit_output} \
+              --cover-package=${COVER_PACKAGES} \
+              dt_shell_tests
+        when: always
+    - run:
         name: post-circle-tests
         command: |
           TARGET=post-circle-tests
@@ -245,4 +271,4 @@ jobs:
           bash <(curl -s https://codecov.io/bash)
     resource_class: medium
 
-# sigil 05714de79eba721e1d40a9a80103f6fd
+# sigil c5b6592a9dc962df88d30c640b4cda65
