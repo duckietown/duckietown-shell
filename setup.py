@@ -44,7 +44,8 @@ install_requires = [
     'requests',
     'pytz',
     'dt-authentication-{}'.format(distro),
-    'dt-data-api-{}>=0.1.6'.format(distro)
+    'dt-data-api-{}>=0.1.6'.format(distro),
+    "pip",
 ]
 
 system_version = tuple(sys.version_info)[:3]
