@@ -20,12 +20,15 @@ if sys.version_info < (3, 6):
 from .exceptions import ConfigInvalid, ConfigNotPresent
 from .utils import format_exception
 
-import locale
-
-dtslogger.debug(
-    f"encoding: stdout {sys.stdout.encoding} stderr {sys.stderr.encoding} "
-    f"locale {locale.getpreferredencoding()}."
-)
+# This was useful in the days of Python 2. Removing because it breaks when the shell is called
+# using pipes (e.g. unit tests).
+#
+# import locale
+#
+# dtslogger.debug(
+#     f"encoding: stdout {sys.stdout.encoding} stderr {sys.stderr.encoding} "
+#     f"locale {locale.getpreferredencoding()}."
+# )
 
 from .cli import DTShell
 from .logging import dts_print
