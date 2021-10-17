@@ -53,7 +53,11 @@ test:
 black:
 	black -l 110 lib
 
+pre-circle-tests:
+	git --help
+
 post-circle-tests:
-	PATH=/home/circleci/.local/bin:$PATH dts --set-version daffy
-	PATH=/home/circleci/.local/bin:$PATH dts help
-	PATH=/home/circleci/.local/bin:$PATH dts version
+	git --help
+	dts --set-version daffy
+	dts help
+	dts version
