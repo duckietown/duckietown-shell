@@ -47,7 +47,7 @@ def raise_wrapped(etype, e, msg, compact=False, exc=None, **kwargs):
 
 
 def raise_wrapped_make(etype, e, msg, compact=False, **kwargs):
-    """ Constructs the exception to be thrown by raise_wrapped() """
+    """Constructs the exception to be thrown by raise_wrapped()"""
     assert isinstance(e, BaseException), type(e)
     assert isinstance(msg, str), type(msg)
     s = msg
@@ -74,7 +74,7 @@ def check_isinstance(ob, expected, **kwargs):
 
 
 def raise_type_mismatch(ob, expected, **kwargs):
-    """ Raises an exception concerning ob having the wrong type. """
+    """Raises an exception concerning ob having the wrong type."""
     e = "Object not of expected type:"
     e += "\n  expected: %s" % str(expected)
     e += "\n  obtained: %s" % str(type(ob))

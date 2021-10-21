@@ -59,13 +59,13 @@ def get_shell_config_file() -> str:
 
 
 def read_shell_config() -> ShellConfig:
-    """ Reads the config file. Raises InvalidConfig or ConfigNotPresent. """
+    """Reads the config file. Raises InvalidConfig or ConfigNotPresent."""
     config_file = get_shell_config_file()
     return read_shell_config_from_file(config_file)
 
 
 def write_shell_config(shell_config: ShellConfig) -> None:
-    """ Saves the she """
+    """Saves the she"""
     config_file = get_shell_config_file()
     write_shell_config_to_file(shell_config, config_file)
 
@@ -94,7 +94,7 @@ def write_shell_config_to_file(shell_config: ShellConfig, filename: str) -> None
 
 
 def read_shell_config_from_file(fn: str) -> ShellConfig:
-    """ Raises InvalidConfig or ConfigNotPresent"""
+    """Raises InvalidConfig or ConfigNotPresent"""
     dtslogger.debug(f"reading config {fn}")
 
     if not os.path.exists(fn):

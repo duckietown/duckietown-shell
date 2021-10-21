@@ -1,7 +1,7 @@
 ---
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v3.4.0
+  rev: v4.0.1
   hooks:
   - id: check-added-large-files
   - id: check-case-conflict
@@ -9,7 +9,7 @@ repos:
   - id: check-merge-conflict
   - id: check-symlinks
 - repo: https://github.com/psf/black
-  rev: 20.8b1
+  rev: 21.9b0
   hooks:
   - id: black
     language_version: python3.8

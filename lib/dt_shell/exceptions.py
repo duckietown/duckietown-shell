@@ -16,7 +16,7 @@ class InvalidEnvironment(Exception):
 
 
 class UserError(Exception):
-    """ an error that will be briefly printed"""
+    """an error that will be briefly printed"""
 
     pass
 

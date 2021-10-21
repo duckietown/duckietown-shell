@@ -15,7 +15,7 @@ class CLIOptions:
 
 
 def get_cli_options(args: List[str]) -> Tuple[CLIOptions, List[str]]:
-    """ Returns cli options plus other arguments for the commands. """
+    """Returns cli options plus other arguments for the commands."""
     allowed_branches = [b.split("(")[0] for b in ALLOWED_BRANCHES]
 
     if args and not args[0].startswith("-"):

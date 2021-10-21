@@ -27,7 +27,7 @@ As a matter of fact, do not run anything with "sudo" unless instructed to do so.
 
 
 def check_docker_environment():
-    """ Returns docker client """
+    """Returns docker client"""
 
     from . import dtslogger
 
@@ -115,7 +115,7 @@ def get_active_groups(username: Optional[str] = None) -> List[str]:
 
 
 def get_dockerhub_username() -> str:
-    """ raise InvalidEnvironment """
+    """raise InvalidEnvironment"""
 
     msg = """
         Please set docker username using
@@ -135,7 +135,7 @@ def get_dockerhub_username() -> str:
 
 
 def get_dockerhub_username_and_password() -> Tuple[str, str]:
-    """ raise InvalidEnvironment """
+    """raise InvalidEnvironment"""
     try:
         shell_config = read_shell_config()
     except Exception:

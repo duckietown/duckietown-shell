@@ -17,7 +17,7 @@ class InvalidRemote(Exception):
 
 
 def _init_commands(commands_path: str, repo_info: RepoInfo) -> None:
-    """ Raises InvalidRemote if it cannot find it"""
+    """Raises InvalidRemote if it cannot find it"""
 
     dtslogger.info("Downloading commands in %s ..." % commands_path)
     # the repo now exists

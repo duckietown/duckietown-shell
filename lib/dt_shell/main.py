@@ -24,6 +24,7 @@ from .logging import dts_print
 from .utils import format_exception, href, replace_spaces
 from .package_version_check import _get_installed_distributions
 
+
 class OtherVersions:
     name2versions: Dict[str, Union[str, Dict[str, str]]] = {}
 
