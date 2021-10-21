@@ -20,6 +20,7 @@ def dts_print(msg: str, color: Optional[str] = None, attrs: Sequence[str] = ()) 
 
     for i, line in enumerate(lines):
         f = prefix if i == 0 else filler
-        line = termcolor.colored(line, color=color, attrs=list(attrs))
+        on_color = None
+        line = termcolor.colored(line, color, on_color, list(attrs))
         s = "%s %s" % (dark_yellow(f), line)
         print(s)
