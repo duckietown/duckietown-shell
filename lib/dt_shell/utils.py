@@ -1,7 +1,8 @@
+import subprocess
 import traceback
 from typing import Optional
+
 import termcolor
-import subprocess
 
 from . import dtslogger
 
@@ -98,11 +99,11 @@ def format_exception(e):
 
 
 def href(x):
-    return termcolor.colored(x, "blue", attrs=["underline"])
+    return termcolor.colored(x, "blue", None, ["underline"])
 
 
 def dark_yellow(x):
-    return termcolor.colored(x, "yellow", attrs=[])
+    return termcolor.colored(x, "yellow")
 
 
 def dark(x):
