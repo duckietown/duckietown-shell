@@ -15,7 +15,7 @@ class ShellConfig:
     docker_username: Optional[str]
     docker_password: Optional[str]
     duckietown_version: Optional[str]  # daffy, master19, ...
-    docker_credentials: Dict[str, Dict[str, str]]
+    docker_credentials: Dict[str, Dict[str, str]]  # username, secret
 
 
 @dataclass
