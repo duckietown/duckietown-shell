@@ -11,9 +11,7 @@ from .exceptions import InvalidEnvironment, UserError
 
 
 def running_with_sudo() -> bool:
-    if "SUDO_USER" in os.environ:
-        return True
-    return False
+    return os.geteuid() == 0
 
 
 def abort_if_running_with_sudo() -> None:
