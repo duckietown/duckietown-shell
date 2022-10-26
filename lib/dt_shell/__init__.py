@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+from typing import Optional
 
 logging.basicConfig()
 
@@ -7,6 +8,7 @@ dtslogger = logging.getLogger("dts")
 dtslogger.setLevel(logging.INFO)
 
 __version__ = "5.2.21"
+
 
 dtslogger.debug(f"duckietown-shell {__version__}")
 
@@ -40,3 +42,7 @@ from .exceptions import *
 
 from .main import OtherVersions
 from .package_version_check import *
+
+
+# singleton
+shell: Optional[DTShell] = None

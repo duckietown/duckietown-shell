@@ -5,6 +5,7 @@ import re
 import sys
 from typing import Dict, Union
 
+import dt_shell
 import yaml
 
 from . import __version__, dtslogger
@@ -190,6 +191,9 @@ def cli_main_() -> None:
         )
 
     shell = DTShell(shell_config, commands_info)
+
+    # populate singleton
+    dt_shell.shell = shell
 
     if arguments:
         arguments = map(replace_spaces, arguments)
