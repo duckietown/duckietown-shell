@@ -148,8 +148,9 @@ There is an updated duckietown-shell available.
 WARNING: We strongly recommend updating to the latest version. ONLY THE LATEST VERSION IS SUPPORTED!
          If you experience issues, please make sure you're using the latest version before posting questions or issues. 
 
-You can update the shell using `pip`.        
-        
+You can update the shell using `pip`. Run the following command:
+        pip3 install --no-cache-dir --user -U duckietown-shell
+
         """.format(
             current=__version__, available=latest_version
         )
