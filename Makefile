@@ -59,5 +59,5 @@ pre-circle-tests:
 post-circle-tests:
 	git --help
 	dts --set-version daffy
-	dts help
-	dts version
+	dts help 
+	dts version 

@@ -16,6 +16,8 @@ def running_with_sudo() -> bool:
 
 def abort_if_running_with_sudo() -> None:
     if running_with_sudo():
+        if "CIRCLECI" in os.environ:
+            return
         msg = """\
 Do not run dts using "sudo".'
 
