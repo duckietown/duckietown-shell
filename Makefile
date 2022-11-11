@@ -10,12 +10,9 @@ bump: # v2
 	git push --tags
 	git push
 
-upload: # v3
-	dts build_utils check-not-dirty
-	dts build_utils check-tagged
-	dts build_utils check-need-upload --package duckietown-shell  make upload-do
 
-upload-do:
+
+upload:
 	rm -f dist/*
 	rm -rf src/*.egg-info
 	python3 setup.py sdist
@@ -59,5 +56,5 @@ pre-circle-tests:
 post-circle-tests:
 	git --help
 	dts --set-version daffy
-	dts help 
-	dts version 
+	dts help
+	dts version
