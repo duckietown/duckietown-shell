@@ -46,6 +46,7 @@ install_requires = [
     'dt-authentication-{}'.format(distro),
     'dt-data-api-{}>=0.1.6'.format(distro),
     "pip",
+    "pydock"
 ]
 
 system_version = tuple(sys.version_info)[:3]
