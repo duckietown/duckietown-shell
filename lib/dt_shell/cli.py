@@ -88,7 +88,7 @@ class DTShell(Cmd):
         self.shell_config = shell_config
         self.local_commands_info = commands_info
 
-        self.intro = INTRO(extra=self.get_billboard())
+        self.intro = INTRO()
         setattr(DTShell, "include", types.SimpleNamespace())
 
         # dtslogger.debug('sys.argv: %s' % sys.argv)
@@ -134,6 +134,11 @@ class DTShell(Cmd):
             and "update" not in sys.argv
         ):
             check_commands_outdated(self.commands_path, self.repo_info)
+
+        # show billboard (if any)
+        billboard: Optional[str] = self.get_billboard()
+        if billboard:
+            print(self.get_billboard())
 
         self.reload_commands()
 
