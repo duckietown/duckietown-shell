@@ -44,7 +44,7 @@ install_requires = [
     'requests',
     'pytz',
     'dt-authentication-{}'.format(distro),
-    'dt-data-api-{}>=1.1.0'.format(distro),
+    'dt-data-api-{}>=1.1.1'.format(distro),
     "pip",
     "dockertown>=0.1.1"
 ]

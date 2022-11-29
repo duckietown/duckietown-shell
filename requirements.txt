@@ -15,6 +15,6 @@ future
 duckietown-challenges-daffy>=5.1.4
 zeroconf
 dt-authentication-daffy
-dt-data-api-daffy>=1.1.0
+dt-data-api-daffy>=1.1.1
 pytz
 dockertown>=0.1.1
