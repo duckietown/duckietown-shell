@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import random
 import sys
 import time
 import types
@@ -7,7 +8,7 @@ from cmd import Cmd
 from dataclasses import dataclass
 from os import remove, utime
 from os.path import exists, isfile, join
-from typing import Mapping, Optional, Sequence
+from typing import Mapping, Optional, Sequence, List
 
 from . import dtslogger
 from .commands_ import (
@@ -87,7 +88,7 @@ class DTShell(Cmd):
         self.shell_config = shell_config
         self.local_commands_info = commands_info
 
-        self.intro = INTRO
+        self.intro = INTRO(extra=self.get_billboard())
         setattr(DTShell, "include", types.SimpleNamespace())
 
         # dtslogger.debug('sys.argv: %s' % sys.argv)
@@ -130,7 +131,7 @@ class DTShell(Cmd):
         if (
             not cmds_just_initialized
             and not self.local_commands_info.leave_alone
-            and not "update" in sys.argv
+            and "update" not in sys.argv
         ):
             check_commands_outdated(self.commands_path, self.repo_info)
 
@@ -318,6 +319,27 @@ class DTShell(Cmd):
     def sprint(self, msg: str, color: Optional[str] = None, attrs: Sequence[str] = None) -> None:
         attrs = attrs or []
         return dts_print(msg=msg, color=color, attrs=attrs)
+
+    @staticmethod
+    def get_billboard() -> Optional[str]:
+        # find billboards directory
+        billboard_dir: str = os.path.join(os.path.expanduser(DTShellConstants.ROOT), "billboards")
+        if (not os.path.exists(billboard_dir)) or (not os.path.isdir(billboard_dir)):
+            return None
+        # get all sources of ads from the billboards directory
+        sources: List[str] = os.listdir(billboard_dir)
+        if len(sources) <= 0:
+            return None
+        # pick one source at random
+        source: str = random.choice(sources)
+        try:
+            with open(os.path.join(billboard_dir, source), "rt") as fin:
+                content: str = fin.read()
+        except:
+            dtslogger.debug("Error occurred while loading billboard. Skipping...")
+            return None
+        # ---
+        return content
 
     def update_commands(self) -> bool:
         return update_commands(self.commands_path, self.repo_info)

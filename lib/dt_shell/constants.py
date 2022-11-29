@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from typing import Optional
+
 import termcolor
 
 from . import __version__
@@ -23,12 +25,16 @@ CHECK_CMDS_UPDATE_EVERY_MINS = 5
 
 DNAME = "Duckietown Shell"
 
-INTRO = """
+
+def INTRO(extra: Optional[str] = None) -> str:
+    return """
 
 Welcome to the {Duckietown} ({version}).
-
+{extra}
 Type "help" or "?" to list commands.
 
 """.format(
-    Duckietown=termcolor.colored(DNAME, "yellow", attrs=["bold"]), version=__version__
-).lstrip()
+        Duckietown=termcolor.colored(DNAME, "yellow", attrs=["bold"]),
+        version=__version__,
+        extra=extra or ""
+    ).lstrip()
