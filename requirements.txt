@@ -17,4 +17,4 @@ zeroconf
 dt-authentication-daffy
 dt-data-api-daffy
 pytz
-pydock>=0.0.5
+dockertown>=0.1.1
