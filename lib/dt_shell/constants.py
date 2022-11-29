@@ -34,7 +34,5 @@ Welcome to the {Duckietown} ({version}).
 Type "help" or "?" to list commands.
 
 """.format(
-        Duckietown=termcolor.colored(DNAME, "yellow", attrs=["bold"]),
-        version=__version__,
-        extra=extra or ""
+        Duckietown=termcolor.colored(DNAME, "yellow", attrs=["bold"]), version=__version__, extra=extra or ""
     ).lstrip()
