@@ -21,7 +21,7 @@ ALLOWED_BRANCHES = ["ente(-[\w]+)?", "daffy(-[\w]+)?", "master19(-[\w]+)?", "dev
 
 DEBUG = False
 
-CHECK_CMDS_UPDATE_EVERY_MINS = 5
+CHECK_CMDS_UPDATE_MINS = 5
 
 DNAME = "Duckietown Shell"
 

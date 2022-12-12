@@ -14,9 +14,9 @@ from . import dtslogger
 from .commands_ import (
     _get_commands,
     _init_commands,
-    check_commands_outdated,
+    _ensure_commands_exist,
+    _ensure_commands_updated,
     InvalidRemote,
-    update_commands,
 )
 from .config import (
     get_config_path,
@@ -105,6 +105,7 @@ class DTShell(Cmd):
         # init commands
         cmds_just_initialized = False
 
+        # check if the commands path exists
         if exists(commands_path) and isfile(commands_path):
             remove(commands_path)
         if not exists(commands_path):
@@ -133,7 +134,8 @@ class DTShell(Cmd):
             and not self.local_commands_info.leave_alone
             and "update" not in sys.argv
         ):
-            check_commands_outdated(self.commands_path, self.repo_info)
+            # assume commands exist
+            self.check_commands_update()
 
         # show billboard (if any)
         billboard: Optional[str] = self.get_billboard()
@@ -346,8 +348,11 @@ class DTShell(Cmd):
         # ---
         return content
 
-    def update_commands(self) -> bool:
-        return update_commands(self.commands_path, self.repo_info)
+    def check_commands_update(self) -> bool:
+        # check that the repo is initialized in the commands path
+        _ensure_commands_exist(self.commands_path, self.repo_info)
+        # update the commands if they are outdated
+        _ensure_commands_updated(self.commands_path, self.repo_info)
 
 
 def _touch(path: str) -> None:
