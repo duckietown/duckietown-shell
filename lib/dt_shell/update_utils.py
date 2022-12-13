@@ -7,7 +7,7 @@ from . import version_check
 from .config import remoteurl_from_RepoInfo, RepoInfo
 from .constants import CHECK_CMDS_UPDATE_MINS
 from .exceptions import UserError
-from utils import run_cmd
+from .utils import run_cmd
 
 
 def commands_need_update(commands_path: str, repo_info: RepoInfo) -> bool:
@@ -76,18 +76,18 @@ def update_cached_commands(commands_path: str, repo_info: RepoInfo) -> bool:
     if not os.path.exists(commands_path) and os.path.isdir(commands_path):
         raise UserError(f"There is no existing commands directory in '{commands_path}'.")
 
-    # Check for recipe repo updates
-    dtslogger.info("Checking if the project's recipe needs to be updated...")
+    # Check for shell commands repo updates
+    dtslogger.info("Checking for updates in the Duckietown shell commands repo...")
     if commands_need_update(commands_path, repo_info):
         dtslogger.info("The Duckietown shell commands have available updates. Attempting to pull them.")
-        dtslogger.debug(f"Updating recipe '{commands_path}'...")
+        dtslogger.debug(f"Updating Duckietown shell commands at '{commands_path}'...")
         wait_on_retry_secs = 4
         th = {2: "nd", 3: "rd", 4: "th"}
         for trial in range(3):
             try:
                 run_cmd(["git", "-C", commands_path, "pull", "--recurse-submodules", "origin", repo_info.branch])
-                dtslogger.debug(f"Updated recipe in '{commands_path}'.")
-                dtslogger.info(f"Recipe successfully updated!")
+                dtslogger.debug(f"Updated Duckietown shell commands in '{commands_path}'.")
+                dtslogger.info(f"Duckietown shell commands successfully updated!")
             except RuntimeError as e:
                 dtslogger.error(str(e))
                 dtslogger.warning(

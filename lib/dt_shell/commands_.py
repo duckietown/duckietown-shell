@@ -38,8 +38,10 @@ def _ensure_commands_exist(commands_path: str, repo_info: RepoInfo) -> bool:
     if not os.path.exists(commands_path):
         raise UserError(f"Commands not found at '{commands_path}'.")
 
-def _ensure_commands_updated(commands_path: str, repo_info: RepoInfo) -> None:
-    update_cached_commands(commands_path, repo_info)
+
+def _ensure_commands_updated(commands_path: str, repo_info: RepoInfo) -> bool:
+    return update_cached_commands(commands_path, repo_info)
+
 
 def _get_commands(path: str, lvl=0, all_commands=False) -> Optional[Dict[str, object]]:
     entries = glob.glob(os.path.join(path, "*"))

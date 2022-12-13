@@ -134,7 +134,6 @@ class DTShell(Cmd):
             and not self.local_commands_info.leave_alone
             and "update" not in sys.argv
         ):
-            # assume commands exist
             self.check_commands_update()
 
         # show billboard (if any)
@@ -352,7 +351,7 @@ class DTShell(Cmd):
         # check that the repo is initialized in the commands path
         _ensure_commands_exist(self.commands_path, self.repo_info)
         # update the commands if they are outdated
-        _ensure_commands_updated(self.commands_path, self.repo_info)
+        return _ensure_commands_updated(self.commands_path, self.repo_info)
 
 
 def _touch(path: str) -> None:
