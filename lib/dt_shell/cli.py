@@ -33,6 +33,9 @@ from .logging import dts_print
 from .version_check import check_if_outdated
 
 
+BILLBOARDS_VERSION: str = "v1"
+
+
 @dataclass
 class CommandsInfo:
     commands_path: str  # commands path
@@ -138,7 +141,7 @@ class DTShell(Cmd):
         # show billboard (if any)
         billboard: Optional[str] = self.get_billboard()
         if billboard:
-            print(self.get_billboard())
+            print(billboard)
 
         self.reload_commands()
 
@@ -328,7 +331,8 @@ class DTShell(Cmd):
     @staticmethod
     def get_billboard() -> Optional[str]:
         # find billboards directory
-        billboard_dir: str = os.path.join(os.path.expanduser(DTShellConstants.ROOT), "billboards")
+        dts_dir: str = os.path.expanduser(DTShellConstants.ROOT)
+        billboard_dir: str = os.path.join(dts_dir, "billboards", BILLBOARDS_VERSION)
         if (not os.path.exists(billboard_dir)) or (not os.path.isdir(billboard_dir)):
             return None
         # get all sources of ads from the billboards directory
