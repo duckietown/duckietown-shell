@@ -6,6 +6,7 @@ import sys
 from typing import Dict, Union
 
 import dt_shell
+import termcolor
 import yaml
 
 from . import __version__, dtslogger
@@ -22,7 +23,7 @@ from .exceptions import (
     UserError,
 )
 from .logging import dts_print
-from .utils import format_exception, href, replace_spaces
+from .utils import format_exception, replace_spaces
 from .package_version_check import _get_installed_distributions
 
 
@@ -105,28 +106,6 @@ To report a bug, please also include the contents of {fn}
     dts_print(msg, "red")
 
 
-def print_info_command() -> None:
-    url = href("https://github.com/duckietown/duckietown-shell-commands/issues")
-    msg = """
-
-    Problems with a command?
-
-    Report here: {url}
-
-    Troubleshooting:
-
-    - If some commands update fail, delete ~/.dt-shell/commands
-
-    - To reset the shell to "factory settings", delete ~/.dt-shell
-
-      (Note: you will have to re-configure.)
-
-        """.format(
-        url=url
-    )
-    dts_print(msg)
-
-
 def cli_main_() -> None:
     abort_if_running_with_sudo()
 
@@ -139,7 +118,9 @@ def cli_main_() -> None:
     cli_options, arguments = get_cli_options(cli_arguments)
 
     if not cli_options.quiet:
-        print_info_command()
+        print("{name} (v{version})".format(
+            name=termcolor.colored("Duckietown Shell", "yellow", attrs=["bold"]), version=__version__)
+        )
 
     # process options here
     if cli_options.debug:
