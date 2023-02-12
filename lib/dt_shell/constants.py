@@ -29,7 +29,7 @@ DNAME = "Duckietown Shell"
 def INTRO(extra: Optional[str] = None) -> str:
     return """
 
-Welcome to the {Duckietown} ({version}).
+Welcome to the interactive {Duckietown} ({version}).
 {extra}
 Type "help" or "?" to list commands.
 

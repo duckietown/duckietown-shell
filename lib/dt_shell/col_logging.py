@@ -1,7 +1,5 @@
 import logging
 
-__all__ = []
-
 
 def setup_logging_format():
     from logging import Logger, StreamHandler, Formatter
