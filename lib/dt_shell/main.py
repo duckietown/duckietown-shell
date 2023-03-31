@@ -151,6 +151,7 @@ def cli_main_() -> None:
             raise UserError(msg)
         shell_config.duckietown_version = v
         write_shell_config(shell_config)
+        dtslogger.info(f"Configured dts to version: {shell_config.duckietown_version}\n")
         # need this so we can use in non-interactive settings
         sys.exit(0)
 
