@@ -46,7 +46,7 @@ install_requires = [
     'dt-authentication-{}'.format(distro),
     'dt-data-api-{}>=1.2.0'.format(distro),
     "pip",
-    "dockertown>=0.2.1",
+    "dockertown>=0.2.2",
     "dtproject",
 ]
 
