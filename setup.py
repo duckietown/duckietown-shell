@@ -47,7 +47,7 @@ install_requires = [
     'dt-data-api-{}>=1.2.0'.format(distro),
     "pip",
     "dockertown>=0.2.2",
-    "dtproject>=0.0.2",
+    "dtproject>=0.0.3",
 ]
 
 system_version = tuple(sys.version_info)[:3]
