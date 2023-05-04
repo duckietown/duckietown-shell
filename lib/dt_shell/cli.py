@@ -192,7 +192,7 @@ class DTShell(Cmd):
 
             !   To recover, you might want to delete the directory
             !
-            !      ~/.dt-shell/commands
+            !      ~/.dt-shell/commands-multi
             !
             !
 
