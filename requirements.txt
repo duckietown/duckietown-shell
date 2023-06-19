@@ -17,4 +17,5 @@ zeroconf
 dt-authentication-daffy
 dt-data-api-daffy>=1.1.1
 pytz
-dockertown>=0.1.1,<=0.1.4
+dockertown>=0.2.2
+dtproject>=0.0.5
