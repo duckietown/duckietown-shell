@@ -216,3 +216,14 @@ This command will run the Duckiebot calibration procedure:
 
     $ dts calibrate_duckiebot <DUCKIEBOT_NAME_GOES_HERE>
 
+## Uninstalling or resetting
+
+In some cases, you might want to uninstall the `duckietown-shell`, or reset the configurations.
+
+If you want to just uninstall the duckietown-shell python module, you could do:
+
+    $ python3 -m pip uninstall duckietown-shell
+
+If you also want to reset the settings, e.g. your Duckietown token, docker logins, version of the shell you set via `dts --set-version ...`, you would also want to remove the `.dt-shell` folder in your home folder. On Ubuntu/mac for example, this could be done with:
+
+    $ rm -rf ~/.dt-shell
