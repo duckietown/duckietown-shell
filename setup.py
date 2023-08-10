@@ -42,6 +42,7 @@ install_requires = [
     'duckietown-docker-utils-{}>=6.0.90'.format(distro),
     'zeroconf',
     'requests',
+    'netifaces',
     'pytz',
     'dt-authentication-{}'.format(distro),
     'dt-data-api-{}>=1.2.0'.format(distro),

@@ -19,7 +19,8 @@
     "termcolor",
     "texttable",
     "whichcraft",
-    "zeroconf"
+    "zeroconf",
+    "netifaces"
   ],
   "tests_require": [],
   "srcdir": "lib",
