@@ -1,6 +1,16 @@
 # -*- coding: utf-8 -*-
 import logging
 from typing import Optional
+import pathlib
+
+# ===> COMPATIBILITY
+# these are only for older versions of the commands
+COMPATIBILITY_DIR = str(pathlib.Path(__file__).parent.joinpath("compatibility").resolve())
+__path__ += [COMPATIBILITY_DIR]
+
+from .compatibility import duckietown_tokens
+# <=== COMPATIBILITY
+
 
 logging.basicConfig()
 
@@ -19,9 +29,6 @@ if sys.version_info < (3, 6):
     logging.error(msg)
     sys.exit(2)
 
-from .exceptions import ConfigInvalid, ConfigNotPresent
-from .utils import format_exception
-
 # This was useful in the days of Python 2. Removing because it breaks when the shell is called
 # using pipes (e.g. unit tests).
 #
@@ -35,14 +42,12 @@ from .utils import format_exception
 from .cli import DTShell
 from .logging import dts_print
 
-from .dt_command_abs import DTCommandAbs
-from .dt_command_placeholder import DTCommandPlaceholder
+from .commands import DTCommandAbs, DTCommandPlaceholder
 from .main import cli_main
 from .exceptions import *
 
 from .main import OtherVersions
-from .package_version_check import *
-
+from .checks.packages import *
 
 # singleton
 shell: Optional[DTShell] = None

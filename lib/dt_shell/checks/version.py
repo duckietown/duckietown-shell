@@ -9,9 +9,9 @@ import termcolor
 import yaml
 from whichcraft import which
 
-from . import __version__, dtslogger
-from .constants import DTShellConstants
-from .exceptions import CouldNotGetVersion, NoCacheAvailable, URLException
+from .. import __version__, dtslogger
+from ..constants import DTShellConstants
+from ..exceptions import CouldNotGetVersion, NoCacheAvailable, URLException
 
 
 def get_url(url, timeout=3):

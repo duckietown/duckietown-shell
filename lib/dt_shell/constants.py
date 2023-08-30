@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import os
+
 from typing import Optional
 
 import termcolor
@@ -6,8 +8,13 @@ import termcolor
 from . import __version__
 
 
+DEFAULT_PROFILE = "default"
+DEFAULT_ROOT = "~/.duckietown/shell/{profile}"
+
+
 class DTShellConstants:
-    ROOT = "~/.dt-shell/"
+    PROFILE = os.environ.get("DTSHELL_PROFILE", DEFAULT_PROFILE)
+    ROOT = os.path.expanduser(os.environ.get("DTSHELL_ROOT", DEFAULT_ROOT.format(profile=PROFILE)))
     ENV_COMMANDS = "DTSHELL_COMMANDS"
 
     DT1_TOKEN_CONFIG_KEY = "token_dt1"

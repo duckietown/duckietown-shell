@@ -1,7 +1,7 @@
 *.pyc
-commands
 *egg-info
 dist
 cli
 .idea
 testing/ubuntu18/challenge-aido1_luck-template-python/
+build

@@ -1,6 +1,7 @@
 from typing import cast, List, Optional
 
-from .exceptions import UserError
+from ..exceptions import UserError
+from ..utils import parse_version
 
 __all__ = ["check_package_version", "_get_installed_distributions"]
 
@@ -76,7 +77,3 @@ def check_package_version(PKG: str, min_version: str):
         You might need to use "pip" instead of "pip3".)
        """
         raise UserError(msg)
-
-
-def parse_version(x):
-    return tuple(int(_) for _ in x.split("."))

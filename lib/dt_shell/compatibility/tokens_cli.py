@@ -5,7 +5,7 @@ import sys
 import dateutil.parser
 from future import builtins
 
-from .duckietown_tokens import DuckietownToken, get_verify_key
+from .duckietown_tokens import DuckietownToken
 
 
 def verify_a_token_main(args=None):
@@ -27,30 +27,6 @@ def verify_a_token_main(args=None):
             msg = "Invalid token format."
             sys.stderr.write(msg + "\n")
             sys.exit(3)
-
-        vk = get_verify_key()
-        ok = vk.verify(token.signature, token.payload)
-        if not ok:
-            msg = "This is an invalid token; signature check failed."
-            sys.stderr.write(msg + "\n")
-            sys.exit(5)
-
-        try:
-            data = json.loads(token.payload)
-        except ValueError:
-            msg = "Invalid token format; cannot interpret payload %r." % token.payload
-            sys.stderr.write(msg + "\n")
-            sys.exit(4)
-
-        if not "uid" in data or not "exp" in data:
-            msg = "Invalid token format; missing fields from %s." % data
-            sys.stderr.write(msg + "\n")
-            sys.exit(6)
-
-        if data["uid"] == -1:
-            msg = "This is the sample token. Use your own token."
-            sys.stderr.write(msg + "\n")
-            sys.exit(7)
 
         exp_date = dateutil.parser.parse(data["exp"])
         now = datetime.datetime.today()

@@ -11,7 +11,7 @@ from .exceptions import ConfigNotPresent, InvalidConfig
 
 @dataclass
 class ShellConfig:
-    token_dt1: Optional[str]  ## key
+    token_dt1: Optional[str]  # key
     docker_username: Optional[str]
     docker_password: Optional[str]
     duckietown_version: Optional[str]  # ente, daffy, master19, ...

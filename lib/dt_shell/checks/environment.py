@@ -6,8 +6,9 @@ from typing import List, Optional, Tuple
 
 from whichcraft import which
 
-from .config import read_shell_config
-from .exceptions import InvalidEnvironment, UserError
+from ..config import read_shell_config
+from ..exceptions import InvalidEnvironment, UserError
+from .. import dtslogger
 
 
 def running_with_sudo() -> bool:
@@ -29,7 +30,6 @@ As a matter of fact, do not run anything with "sudo" unless instructed to do so.
 def check_docker_environment():
     """Returns docker client"""
 
-    from . import dtslogger
 
     # dtslogger.debug('Checking docker environment for user %s' % username)
 

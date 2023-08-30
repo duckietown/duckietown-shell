@@ -8,10 +8,15 @@ __all__ = [
     "NoCacheAvailable",
     "URLException",
     "InvalidConfig",
+    "InvalidRemote"
 ]
 
 
 class InvalidEnvironment(Exception):
+    pass
+
+
+class InvalidRemote(Exception):
     pass
 
 

@@ -28,10 +28,10 @@ shell_version = get_version(filename='lib/dt_shell/__init__.py')
 install_requires = [
     'GitPython',
     'texttable',
-    'base58',
-    'ecdsa',
+    # 'base58',
+    # 'ecdsa',
     'python-dateutil',
-    'whichcraft',
+    # 'whichcraft',
     'termcolor',
     'PyYAML',
     'docker',
@@ -39,16 +39,17 @@ install_requires = [
     'six',
     'psutil',
     'future',
-    'duckietown-docker-utils-{}>=6.0.90'.format(distro),
-    'zeroconf',
-    'requests',
+    # 'zeroconf',
+    # 'requests',
     'netifaces',
     'pytz',
-    'dt-authentication-{}'.format(distro),
-    'dt-data-api-{}>=1.2.0'.format(distro),
     "pip",
     "dockertown>=0.2.2",
     "dtproject>=0.0.5",
+    # TODO: these should be removed
+    'dt-authentication-{}'.format(distro),
+    'dt-data-api-{}>=1.2.0'.format(distro),
+    'duckietown-docker-utils-{}>=6.0.90'.format(distro),
 ]
 
 system_version = tuple(sys.version_info)[:3]
@@ -60,7 +61,14 @@ setup(
     version=shell_version,
     download_url='http://github.com/duckietown/duckietown-shell/tarball/%s' % shell_version,
     package_dir={'': 'lib'},
-    packages=['dt_shell'],
+    packages=[
+        'dt_shell',
+        'dt_shell.checks',
+        'dt_shell.commands',
+        'dt_shell.compatibility',
+        'dt_shell.database',
+        'dt_shell_cli'
+    ],
     # we want the python 2 version to download it, and then exit with an error
     # python_requires='>=3.6',
 
@@ -75,7 +83,7 @@ setup(
 
     entry_points={
         'console_scripts': [
-            'dts = dt_shell:cli_main',
+            'dts = dt_shell_cli.dts:main',
         ]
     }
 )

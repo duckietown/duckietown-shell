@@ -3,6 +3,7 @@ import logging
 import os
 import re
 import sys
+from traceback import format_exc
 from typing import Dict, Union
 
 import dt_shell
@@ -10,11 +11,11 @@ import termcolor
 import yaml
 
 from . import __version__, dtslogger
-from .cli import DTShell, get_local_commands_info
-from .cli_options import get_cli_options
+from .cli import DTShell, get_cli_options
+from .commands import get_local_commands_info
 from .config import get_shell_config_default, read_shell_config, write_shell_config
 from .constants import ALLOWED_BRANCHES
-from .env_checks import abort_if_running_with_sudo
+from .checks.environment import abort_if_running_with_sudo
 from .exceptions import (
     CommandsLoadingException,
     ConfigInvalid,
@@ -22,9 +23,9 @@ from .exceptions import (
     InvalidEnvironment,
     UserError,
 )
-from .logging import dts_print
-from .utils import format_exception, replace_spaces
-from .package_version_check import _get_installed_distributions
+from .logging import dts_print, setup_logging_color
+from .utils import replace_spaces
+from .checks.packages import _get_installed_distributions
 
 
 class OtherVersions:
@@ -32,8 +33,6 @@ class OtherVersions:
 
 
 def cli_main() -> None:
-    from .col_logging import setup_logging_color
-
     setup_logging_color()
 
     known_exceptions = (InvalidEnvironment, CommandsLoadingException)
@@ -55,8 +54,8 @@ def cli_main() -> None:
     except KeyboardInterrupt:
         dts_print("User aborted operation.")
         pass
-    except BaseException as e:
-        msg = format_exception(e)
+    except BaseException:
+        msg = format_exc()
         dts_print(msg, "red", attrs=["bold"])
         print_version_info()
         sys.exit(2)

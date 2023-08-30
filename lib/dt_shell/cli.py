@@ -1,65 +1,71 @@
 # -*- coding: utf-8 -*-
+import argparse
 import os
 import random
 import sys
 import time
+import traceback
 import types
 from cmd import Cmd
 from dataclasses import dataclass
 from os import remove, utime
 from os.path import exists, isfile, join
-from typing import Mapping, Optional, Sequence, List
+from typing import List, Optional, Tuple
+from typing import Mapping, Sequence
 
 from . import dtslogger
-from .commands_ import (
-    _get_commands,
-    _init_commands,
-    _ensure_commands_exist,
-    _ensure_commands_updated,
-    InvalidRemote,
+from .logging import dts_print
+from .commands import DTCommandAbs, CommandsInfo
+from .commands import DTCommandPlaceholder
+from .commands import (
+    get_commands,
+    init_commands,
+    ensure_commands_exist,
+    ensure_commands_updated,
 )
 from .config import (
-    get_config_path,
     RepoInfo,
     RepoInfo_for_version,
     ShellConfig,
     write_shell_config,
 )
+from .constants import ALLOWED_BRANCHES
 from .constants import DEBUG, DTShellConstants, INTRO
-from .dt_command_abs import DTCommandAbs
-from .dt_command_placeholder import DTCommandPlaceholder
-from .exceptions import CommandsLoadingException, UserError
-from .logging import dts_print
-from .version_check import check_if_outdated
-
+from .exceptions import CommandsLoadingException, UserError, InvalidRemote
+from .checks.version import check_if_outdated
 
 BILLBOARDS_VERSION: str = "v1"
 
 
 @dataclass
-class CommandsInfo:
-    commands_path: str  # commands path
-    leave_alone: bool  # whether to leave this alone (local)
+class CLIOptions:
+    debug: bool
+    set_version: Optional[str]
+    quiet: bool
 
 
-def get_local_commands_info() -> CommandsInfo:
-    # define commands_path
-    config_path = get_config_path()
-    V = DTShellConstants.ENV_COMMANDS
-    if V in os.environ:
-        commands_path = os.environ[V]
+def get_cli_options(args: List[str]) -> Tuple[CLIOptions, List[str]]:
+    """Returns cli options plus other arguments for the commands."""
+    allowed_branches = [b.split("(")[0] for b in ALLOWED_BRANCHES]
 
-        if not os.path.exists(commands_path):
-            msg = "The path %s that you gave with the env. variable %s does not exist." % (commands_path, V)
-            raise Exception(msg)
+    if args and not args[0].startswith("-"):
+        return CLIOptions(debug=False, set_version=None, quiet=False), args
+    parser = argparse.ArgumentParser()
 
-        commands_path_leave_alone = True
-        msg = "Using path %r as prescribed by env variable %s." % (commands_path, V)
-        dtslogger.info(msg)
-    else:
-        commands_path = join(config_path, "commands-multi")
-        commands_path_leave_alone = False
-    return CommandsInfo(commands_path, commands_path_leave_alone)
+    parser.add_argument("--debug", action="store_true", default=False, help="More debug information")
+    parser.add_argument("-q", "--quiet", action="store_true", default=False, help="Quiet execution")
+    parser.add_argument(
+        "--set-version",
+        type=str,
+        default=None,
+        help=f"Set Duckietown version. Use one of {allowed_branches}. Branches from "
+             f"https://github.com/duckietown/duckietown-shell-commands of the form '[branch]-*' are also "
+             f"supported.",
+    )
+
+    parsed, others = parser.parse_known_args(args)
+
+    return CLIOptions(debug=parsed.debug, set_version=parsed.set_version, quiet=parsed.quiet), others
 
 
 prompt = "dts> "
@@ -68,7 +74,6 @@ prompt = "dts> "
 class DTShell(Cmd):
     errors_loading = []
 
-    # config = {}
     commands = {}
     core_commands = [
         "commands",
@@ -117,7 +122,7 @@ class DTShell(Cmd):
                 raise Exception(msg)
             dtslogger.warning(msg)
             try:
-                _init_commands(commands_path, self.repo_info)
+                init_commands(commands_path, self.repo_info)
             except InvalidRemote as e:
                 msg = "I could not initialize the commands."
                 raise CommandsLoadingException(msg) from e
@@ -170,7 +175,7 @@ class DTShell(Cmd):
                 if hasattr(DTShell, a + command):
                     delattr(DTShell, a + command)
         # re-install commands
-        self.commands = _get_commands(self.commands_path)
+        self.commands = get_commands(self.commands_path)
         if self.commands is None:
             dtslogger.error("No commands found.")
             self.commands = {}
@@ -183,16 +188,16 @@ class DTShell(Cmd):
         # TODO: load commands with prefix "challenges"
 
         if DTShell.errors_loading:
-            msg = """
+            msg = f"""
 
 
             !   Could not load commands.
 
                 %s
 
-            !   To recover, you might want to delete the directory
+            !   To recover, you might want to delete the following profile directory
             !
-            !      ~/.dt-shell/commands
+            !      {DTShellConstants.ROOT}
             !
             !
 
@@ -208,7 +213,7 @@ class DTShell(Cmd):
         if command_name in self.core_commands:
             return True
         # get list of all commands
-        res = _get_commands(self.commands_path, all_commands=True)
+        res = get_commands(self.commands_path, all_commands=True)
         present = res.keys() if res is not None else []
         # enable if possible
         if command_name in present:
@@ -220,7 +225,7 @@ class DTShell(Cmd):
         if command_name in self.core_commands:
             return False
         # get list of all commands
-        res = _get_commands(self.commands_path, all_commands=True)
+        res = get_commands(self.commands_path, all_commands=True)
         present = res.keys() if res is not None else []
         # enable if possible
         if command_name in present:
@@ -250,10 +255,7 @@ class DTShell(Cmd):
                 raise
             except BaseException as e:
                 # error_loading = True
-                from .utils import format_exception
-
-                se = format_exception(e)
-
+                se = traceback.format_exc()
                 msg = "Cannot load command class %r (package=%r, command=%r): %s" % (
                     spec,
                     package,
@@ -353,9 +355,9 @@ class DTShell(Cmd):
 
     def update_commands(self) -> bool:
         # check that the repo is initialized in the commands path
-        _ensure_commands_exist(self.commands_path, self.repo_info)
+        ensure_commands_exist(self.commands_path, self.repo_info)
         # update the commands if they are outdated
-        return _ensure_commands_updated(self.commands_path, self.repo_info)
+        return ensure_commands_updated(self.commands_path, self.repo_info)
 
 
 def _touch(path: str) -> None:
