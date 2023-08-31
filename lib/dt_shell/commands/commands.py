@@ -2,12 +2,13 @@ import glob
 import os
 from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass
-from typing import Dict, Optional
-
-from dt_shell.constants import DTShellConstants
+from types import SimpleNamespace
+from typing import Dict, Type, Union
 
 from .. import dtslogger
 from ..config import remoteurl_from_RepoInfo, RepoInfo, get_config_path
+from ..constants import DTShellConstants
+from ..environments import ShellCommandEnvironmentAbs, Python3Environment
 from ..exceptions import UserError
 from ..update_utils import update_cached_commands
 from ..utils import run_cmd, undo_replace_spaces
@@ -108,6 +109,47 @@ class CommandsInfo:
     leave_alone: bool  # whether to leave this alone (local)
 
 
+@dataclass
+class CommandSetConfiguration:
+    default_environment: ShellCommandEnvironmentAbs   # environment in which the commands will run
+
+
+class DTCommandConfigurationAbs:
+    environment: ShellCommandEnvironmentAbs   # environment in which this command will run
+
+
+class DTCommandConfigurationDefault(DTCommandConfigurationAbs):
+    # TODO: we need a way to connect the default environment given by the commandset here
+    environment: ShellCommandEnvironmentAbs = Python3Environment()
+
+
+@dataclass
+class CommandDescriptor:
+    name: str
+    path: str
+    selector: str
+    configuration: Type[DTCommandConfigurationAbs]
+    command: Type[DTCommandAbs] = None
+    installed: bool = True
+
+
+class NoOpCommand(DTCommandAbs):
+    @staticmethod
+    def command(shell, args, **kwargs):
+        pass
+
+
+class FailedToLoadCommand(NoOpCommand):
+    @staticmethod
+    def command(shell, args, **kwargs):
+        dtslogger.warning("This command was not loaded")
+
+
+noop_command = SimpleNamespace(DTCommand=NoOpCommand)
+failed_to_load_command = SimpleNamespace(DTCommand=FailedToLoadCommand)
+default_command_configuration = SimpleNamespace(DTCommandConfiguration=DTCommandConfigurationDefault)
+
+
 def get_local_commands_info() -> CommandsInfo:
     # define commands_path
     V = DTShellConstants.ENV_COMMANDS
@@ -152,27 +194,38 @@ def ensure_commands_updated(commands_path: str, repo_info: RepoInfo) -> bool:
     return update_cached_commands(commands_path, repo_info)
 
 
-def get_commands(path: str, lvl=0, all_commands=False) -> Optional[Dict[str, object]]:
+def get_commands(path: str, lvl=0, all_commands=False, selector: str = "") \
+        -> Union[None, Dict[str, object], CommandDescriptor]:
     entries = glob.glob(os.path.join(path, "*"))
     files = [os.path.basename(e) for e in entries if os.path.isfile(e)]
     dirs = [e for e in entries if os.path.isdir(e) and (lvl > 0 or os.path.basename(e) != "lib")]
-    # base case: empty dir
+    # base case: empty dir -> not a command
     if "command.py" not in files and not dirs:
         return None
-    if (
-        not all_commands
-        and lvl == 1
-        and ("installed.flag" not in files and "installed.user.flag" not in files)
-    ):
+    # commands that are not installed
+    installed: bool = lvl != 1 or ("installed.flag" in files or "installed.user.flag" in files)
+    if not installed and not all_commands:
         return None
-    # check subcommands
+    name: str = os.path.basename(path)
+    # load subcommands
     subcmds = {}
     for d in dirs:
-        f = get_commands(d, lvl + 1, all_commands)
+        cmd_name: str = os.path.basename(d)
+        cmd_package = f"{selector}.{cmd_name}".lstrip(".")
+        f = get_commands(d, lvl + 1, all_commands, cmd_package)
         if f is not None:
-            subcmds[os.path.basename(d)] = f
-    # return
+            subcmds[cmd_name] = f
+    # not an empty directory, but not a command and not a container of subcommands either
     if "command.py" not in files and not subcmds:
         return None
+    # leaf command
+    if "command.py" in files and not subcmds:
+        return CommandDescriptor(
+            name=name,
+            path=path,
+            selector=selector,
+            installed=installed,
+            configuration=DTCommandConfigurationDefault
+        )
     # ---
     return subcmds

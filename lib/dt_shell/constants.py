@@ -8,6 +8,7 @@ import termcolor
 from . import __version__
 
 
+DEBUG = False
 DEFAULT_PROFILE = "default"
 DEFAULT_ROOT = "~/.duckietown/shell/{profile}"
 
@@ -17,6 +18,7 @@ class DTShellConstants:
     ROOT = os.path.expanduser(os.environ.get("DTSHELL_ROOT", DEFAULT_ROOT.format(profile=PROFILE)))
     ENV_COMMANDS = "DTSHELL_COMMANDS"
 
+    # TODO: these should go
     DT1_TOKEN_CONFIG_KEY = "token_dt1"
     CONFIG_DOCKER_USERNAME = "docker_username"
     CONFIG_DOCKER_PASSWORD = "docker_password"
@@ -24,9 +26,8 @@ class DTShellConstants:
     CONFIG_DOCKER_CREDENTIALS = "docker_credentials"
 
 
+# TODO: this should go
 ALLOWED_BRANCHES = ["ente(-[\w]+)?", "daffy(-[\w]+)?", "master19(-[\w]+)?", "devel(-[\w]+)?"]
-
-DEBUG = False
 
 CHECK_CMDS_UPDATE_MINS = 5
 

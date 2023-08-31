@@ -1,9 +1,11 @@
 import re
 import subprocess
+import importlib
 from traceback import format_exc
-from typing import Optional
+from typing import Optional, Any
 
 import termcolor
+from .constants import DEBUG
 
 from . import dtslogger
 
@@ -130,3 +132,10 @@ def run_cmd(cmd, print_output=False, suppress_errors=False):
 
 def parse_version(x):
     return tuple(int(_) for _ in x.split("."))
+
+
+def load_class(name: str, module: str, package: Optional[str] = None) -> Any:
+    if DEBUG:
+        dtslogger.debug(f"Loading class {package or ''}.{module}.{name}")
+    mod = importlib.import_module(name=module, package=package)
+    return getattr(mod, name)

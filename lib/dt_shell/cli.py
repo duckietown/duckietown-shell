@@ -10,29 +10,37 @@ from cmd import Cmd
 from dataclasses import dataclass
 from os import remove, utime
 from os.path import exists, isfile, join
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union, Type
 from typing import Mapping, Sequence
 
+from dt_shell.user_profile import UserProfile
+
+from dt_shell.database.database import DTShellDatabase
+
 from . import dtslogger
-from .logging import dts_print
-from .commands import DTCommandAbs, CommandsInfo
-from .commands import DTCommandPlaceholder
-from .commands import (
-    get_commands,
-    init_commands,
-    ensure_commands_exist,
-    ensure_commands_updated,
-)
+from .checks.version import check_if_outdated
+from .commands import \
+    DTCommandAbs, \
+    CommandsInfo, \
+    CommandDescriptor, \
+    DTCommandPlaceholder, \
+    get_commands, \
+    init_commands, \
+    ensure_commands_exist, \
+    ensure_commands_updated, \
+    DTCommandConfigurationAbs
+from .commands.importer import import_command, import_configuration
 from .config import (
     RepoInfo,
     RepoInfo_for_version,
     ShellConfig,
     write_shell_config,
 )
-from .constants import ALLOWED_BRANCHES
+from .constants import ALLOWED_BRANCHES, DEFAULT_PROFILE
 from .constants import DEBUG, DTShellConstants, INTRO
+from .environments import Python3Environment
 from .exceptions import CommandsLoadingException, UserError, InvalidRemote
-from .checks.version import check_if_outdated
+from .logging import dts_print
 
 BILLBOARDS_VERSION: str = "v1"
 
@@ -85,11 +93,15 @@ class DTShell(Cmd):
         "help",
     ]
 
+    # TODO: this needs to go in favor of Databases
     shell_config: ShellConfig
+
+    # TODO: these need to go and have a similar functionality in the profile
     local_commands_info: CommandsInfo
     repo_info: RepoInfo
     commands_path: str
 
+    # tree of commands once loaded
     include: types.SimpleNamespace
 
     def __init__(self, shell_config: ShellConfig, commands_info: CommandsInfo):
@@ -98,6 +110,19 @@ class DTShell(Cmd):
 
         self.intro = INTRO()
         setattr(DTShell, "include", types.SimpleNamespace())
+
+        # open databases
+        self._db_profiles: DTShellDatabase = DTShellDatabase.open("profiles")
+        self._db_settings: DTShellDatabase = DTShellDatabase.open("settings")
+        self._db_user: DTShellDatabase = DTShellDatabase.open("user")
+
+        # load current profile
+        self._current_profile_name: str = self._db_user.get("active_profile", DEFAULT_PROFILE)
+        self._current_profile: UserProfile = UserProfile(self._current_profile_name)
+
+        # update shell constants
+        DTShellConstants.PROFILE = self._current_profile
+        DTShellConstants.ROOT = self._current_profile.path
 
         # dtslogger.debug('sys.argv: %s' % sys.argv)
         check_if_outdated()
@@ -180,7 +205,6 @@ class DTShell(Cmd):
             dtslogger.error("No commands found.")
             self.commands = {}
         # load commands
-        # print('commands: %s' % self.commands)
         for cmd, subcmds in self.commands.items():
             # noinspection PyTypeChecker
             self._load_commands("", cmd, subcmds, 0)
@@ -233,54 +257,50 @@ class DTShell(Cmd):
             remove(flag_file)
         return True
 
-    def _load_commands(self, package, command, sub_commands: Optional[Mapping[str, object]], lvl):
+    def _load_commands(self,
+                       package: str,
+                       command: str,
+                       sub_commands: Union[None, Mapping[str, object], CommandDescriptor],
+                       lvl: int) -> Union[None, Type[DTCommandAbs]]:
+        # print("package: ", package, "command: ", command, "sub_commands: ", sub_commands, "lvl: ", lvl)
         # load command
-        klass = None
-        error_loading = False
-        if not sub_commands:
-            spec = package + command + ".command.DTCommand"
-            try:
-                klass = _load_class(spec)
-                # add loaded class to DTShell.include.<cmd_path>
-                klass_path = [p for p in package.split(".") if len(p)]
-                base = DTShell.include
-                for p in klass_path:
-                    if not hasattr(base, p):
-                        setattr(base, p, types.SimpleNamespace())
-                    base = getattr(base, p)
-                setattr(base, command, klass)
-            except UserError:
-                raise
-            except KeyboardInterrupt:
-                raise
-            except BaseException as e:
-                # error_loading = True
-                se = traceback.format_exc()
-                msg = "Cannot load command class %r (package=%r, command=%r): %s" % (
-                    spec,
-                    package,
-                    command,
-                    se,
-                )
-                # msg += ' sys.path: %s' % sys.path
-                DTShell.errors_loading.append(msg)
-                return
+        klass = DTCommandPlaceholder()
+        if isinstance(sub_commands, CommandDescriptor):
+            descriptor: CommandDescriptor = sub_commands
+            # load command configuration
+            configuration: Type[DTCommandConfigurationAbs] = import_configuration(descriptor.path)
+            descriptor.configuration = configuration
+            # import class only if this is the environment in which the commands will run
+            if isinstance(descriptor.configuration.environment, Python3Environment):
+                try:
+                    klass = import_command(descriptor.configuration, descriptor.path)
+                    descriptor.command = klass
+                except UserError:
+                    raise
+                except KeyboardInterrupt:
+                    raise
+                except BaseException:
+                    se = traceback.format_exc()
+                    msg = f"Cannot load command class {descriptor.selector}.command.DTCommand " \
+                          f"(package={package}, command={command}): {se}"
+                    DTShell.errors_loading.append(msg)
+                    return
 
-        # handle loading error and wrong class
-        if error_loading:
-            klass = DTCommandPlaceholder()
-            if DEBUG:
-                dtslogger.debug(
-                    "ERROR while loading the command `%s`" % (package + command + ".command.DTCommand",)
-                )
-        if not issubclass(klass.__class__, DTCommandAbs.__class__):
-            klass = DTCommandPlaceholder()
-            if DEBUG:
-                dtslogger.debug("Command `%s` not found" % (package + command + ".command.DTCommand",))
+            descriptor.command = klass
+            # add loaded class to DTShell.include.<cmd_path>
+            klass_path = [p for p in package.split(".") if len(p)]
+            base = DTShell.include
+            for p in klass_path:
+                if not hasattr(base, p):
+                    setattr(base, p, types.SimpleNamespace())
+                base = getattr(base, p)
+            setattr(base, command, klass)
+
         # initialize list of subcommands
         klass.name = command
         klass.level = lvl
         klass.commands = {}
+
         # attach first-level commands to the shell
         if lvl == 0:
             do_command = getattr(klass, "do_command")
@@ -298,14 +318,17 @@ class DTShell(Cmd):
         # stop recursion if there is no subcommand
         if sub_commands is None:
             return
+
         # load sub-commands
-        for cmd, subcmds in sub_commands.items():
-            if DEBUG:
-                dtslogger.debug("Searching %s at level %d" % (package + command + ".*", lvl))
-            # noinspection PyTypeChecker
-            kl = self._load_commands(package + command + ".", cmd, subcmds, lvl + 1)
-            if kl is not None:
-                klass.commands[cmd] = kl
+        if isinstance(sub_commands, dict):
+            for cmd, subcmds in sub_commands.items():
+                if DEBUG:
+                    dtslogger.debug("Searching %s at level %d" % (package + command + ".*", lvl))
+                # noinspection PyTypeChecker
+                kl = self._load_commands(package + command + ".", cmd, subcmds, lvl + 1)
+                if kl is not None:
+                    klass.commands[cmd] = kl
+
         # return class for this command
         return klass
 
@@ -363,21 +386,3 @@ class DTShell(Cmd):
 def _touch(path: str) -> None:
     with open(path, "a"):
         utime(path, None)
-
-
-def _load_class(name):
-    if DEBUG:
-        dtslogger.debug("Loading class %s" % name)
-    components = name.split(".")
-
-    mod = __import__(components[0])
-
-    for comp in components[1:]:
-        try:
-            mod = getattr(mod, comp)
-        except AttributeError as e:
-            msg = "Could not get field %r of module %r: %s" % (comp, mod.__name__, e)
-            msg += "\t\n - Module file %s;" % getattr(mod, "__file__", "?")
-            msg += "\t\n - Module content %s;" % list(vars(mod).keys())
-            raise AttributeError(msg)
-    return mod

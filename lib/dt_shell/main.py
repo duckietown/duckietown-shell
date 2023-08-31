@@ -37,7 +37,7 @@ def cli_main() -> None:
 
     known_exceptions = (InvalidEnvironment, CommandsLoadingException)
     try:
-        cli_main_()
+        _cli_main()
     except UserError as e:
 
         msg = str(e)
@@ -105,7 +105,7 @@ To report a bug, please also include the contents of {fn}
     dts_print(msg, "red")
 
 
-def cli_main_() -> None:
+def _cli_main() -> None:
     abort_if_running_with_sudo()
 
     # Problems with a step in the Duckiebot operation manual?
@@ -171,6 +171,7 @@ def cli_main_() -> None:
             commands_info.commands_path, shell_config.duckietown_version
         )
 
+    # instantiate shell
     shell = DTShell(shell_config, commands_info)
 
     # populate singleton

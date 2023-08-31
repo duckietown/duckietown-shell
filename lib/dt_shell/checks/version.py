@@ -136,6 +136,9 @@ def check_if_outdated() -> None:
     latest_version = get_last_version()
     # print('last version: %r' % latest_version)
     # print('installed: %r' % __version__)
+
+    # TODO: this should take into account the distro we are using and the max major version declared in them
+
     if latest_version and is_older(__version__, latest_version):
         msg = """
 

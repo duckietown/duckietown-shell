@@ -4,7 +4,7 @@ from typing import Optional
 import pathlib
 
 # ===> COMPATIBILITY
-# these are only for older versions of the commands
+# these are only for older versions of the commands, we will drop these with the shell v7
 COMPATIBILITY_DIR = str(pathlib.Path(__file__).parent.joinpath("compatibility").resolve())
 __path__ += [COMPATIBILITY_DIR]
 
