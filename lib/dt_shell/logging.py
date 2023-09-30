@@ -8,6 +8,7 @@ from .utils import dark_yellow
 __all__ = ["dts_print", "setup_logging_color"]
 
 
+# TODO: find out who is using this and remove
 def dts_print(msg: str, color: Optional[str] = None, attrs: Sequence[str] = ()) -> None:
     """
     Prints a message to the user.
@@ -67,8 +68,8 @@ def add_coloring_to_emit_ansi(fn):
 
         lines = msg.split("\n")
 
-        def color_line(l):
-            return "%s%s%s" % (color, l, "\x1b[0m")  # normal
+        def color_line(line):
+            return "%s%s%s" % (color, line, "\x1b[0m")  # normal
 
         lines = list(map(color_line, lines))
 

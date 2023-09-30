@@ -3,7 +3,9 @@
 #   - commands/command.py
 #   - install/command.py
 #
-def _get_commands(*args, **kwargs):
-    from dt_shell.commands import get_commands
-    return get_commands(*args, **kwargs)
+from typing import Optional, Dict
 
+
+def _get_commands(*args, **kwargs) -> Optional[Dict[str, object]]:
+    import dt_shell
+    return dt_shell.shell.commands

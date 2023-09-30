@@ -20,3 +20,7 @@ dt-data-api-daffy>=1.1.1
 pytz
 dockertown>=0.2.2
 dtproject>=0.0.5
+
+questionary
+pyfiglet
+termcolor

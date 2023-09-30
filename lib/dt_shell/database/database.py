@@ -1,15 +1,16 @@
+import copy
 import os.path
 from abc import abstractmethod, ABC
 from threading import Semaphore
-from typing import Union, TypeVar, Generic, Tuple, Optional, Dict
+from typing import Union, TypeVar, Generic, Tuple, Optional, Dict, Iterator
 
 import yaml
 
-from dt_shell.utils import safe_pathname
+from ..utils import safe_pathname
 
 
-T = TypeVar('T')
 SerializedValue = Union[int, float, str, bytes, dict, list]
+T = TypeVar('T', bound=SerializedValue)
 Key = Union[str, Tuple[str]]
 
 
@@ -29,6 +30,7 @@ class DTSerializable(ABC):
         pass
 
     @classmethod
+    @abstractmethod
     def load(cls, v: SerializedValue) -> 'DTSerializable':
         pass
 
@@ -49,19 +51,21 @@ class DTShellDatabase(Generic[T]):
     def __init__(self):
         self._name: str = ""
         self._location: str = ""
+        self._readonly: bool = False
         self._data: dict = {}
         self._lock: Semaphore = Semaphore()
         # ---
         raise RuntimeError('Call DTShellDatabase.open() instead')
 
     @classmethod
-    def open(cls, name: str, location: Optional[str] = DATABASES_DIR):
+    def open(cls, name: str, location: Optional[str] = DATABASES_DIR, readonly: bool = False):
         if name not in cls._instances:
             inst = cls.__new__(cls)
             cls._instances[name] = inst
             # populate instance fields
             inst._name = name
             inst._location = location
+            inst._readonly = readonly
             inst._data = {}
             inst._lock = Semaphore()
             # load DB from disk
@@ -75,19 +79,14 @@ class DTShellDatabase(Generic[T]):
 
     @property
     def yaml(self) -> str:
-        return self._ensure_dir(os.path.join(self._location, f"{safe_pathname(self._name)}.yaml"))
+        yaml_fpath: str = os.path.abspath(os.path.join(self._location, f"{safe_pathname(self._name)}.yaml"))
+        # make destination if it does not exist
+        if not self._readonly:
+            self._ensure_dir(yaml_fpath)
+        # ---
+        return yaml_fpath
 
-    # @property
-    # def filelock(self) -> str:
-    #     return self._ensure_dir(os.path.join(DATABASES_DIR, f"{safe_pathname(self._name)}.yaml.lock"))
-
-    def set(self, key: Key, value: SerializableValue):
-        key = self._key(key)
-        with self._lock:
-            self._data[key] = value
-        self._write()
-
-    def get(self, key: Key, default: Optional[SerializableValue] = NOTSET) -> SerializableValue:
+    def get(self, key: Key, default: Optional[T] = NOTSET) -> T:
         key = self._key(key)
         try:
             return self._data[key]
@@ -97,16 +96,49 @@ class DTShellDatabase(Generic[T]):
             else:
                 return default
 
+    def set(self, key: Key, value: T):
+        key = self._key(key)
+        with self._lock:
+            self._data[key] = value
+        self._write()
+
+    def keys(self) -> Iterator[Key]:
+        with self._lock:
+            data: dict = copy.copy(self._data)
+        return iter(data.keys())
+
+    def values(self) -> Iterator[T]:
+        with self._lock:
+            data: dict = copy.copy(self._data)
+        return iter(data.values())
+
+    def items(self) -> Iterator[Tuple[Key, T]]:
+        with self._lock:
+            data: dict = copy.copy(self._data)
+        return iter(data.items())
+
     def _load(self):
-        if not os.path.exists(self.yaml):
-            self._write()
-        with open(self.yaml, "rt") as fin:
-            content = yaml.safe_load(fin)
-        self._data = content["data"]
+        if not self._readonly:
+            # make files if they don't exist
+            if not os.path.exists(self.yaml):
+                self._write()
+        # check if the file exists
+        exists: bool = os.path.exists(self.yaml) and os.path.isfile(self.yaml)
+        # read from disk
+        if exists:
+            with open(self.yaml, "rt") as fin:
+                content = yaml.safe_load(fin)
+            # populate internal state
+            self._data = content["data"]
 
     def _write(self):
+        # skip writing to disk if in read-only mode
+        if self._readonly:
+            return
+        # complete data with other metadata
         with self._lock:
             content = {**EMPTY_DB, "data": {**self._data}}
+        # write to disk
         with open(self.yaml, "wt") as fout:
             yaml.safe_dump(content, fout, indent=4)
 
@@ -121,11 +153,9 @@ class DTShellDatabase(Generic[T]):
             return v.dump()
 
     @staticmethod
-    def _ensure_dir(f: str) -> str:
-        f = os.path.abspath(f)
+    def _ensure_dir(f: str):
         os.makedirs(os.path.dirname(f), exist_ok=True)
-        return f
 
     @staticmethod
-    def _key(k: Key) -> tuple:
-        return k if isinstance(k, tuple) else (k,)
+    def _key(k: Key) -> str:
+        return k

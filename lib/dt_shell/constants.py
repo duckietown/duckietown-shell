@@ -1,33 +1,44 @@
 # -*- coding: utf-8 -*-
+import dataclasses
+import datetime
 import os
-
-from typing import Optional
+from typing import Optional, List
 
 import termcolor
 
 from . import __version__
 
-
 DEBUG = False
-DEFAULT_PROFILE = "default"
-DEFAULT_ROOT = "~/.duckietown/shell/{profile}"
+DEFAULT_ROOT = os.path.expanduser("~/.duckietown/shell/")
+DUCKIETOWN_TOKEN_URL = "https://hub.duckietown.com/token"
+SHELL_LIB_DIR = os.path.dirname(os.path.abspath(__file__))
+DEFAULT_PROFILES_DIR = os.path.join(DEFAULT_ROOT, "profiles")
+DEFAULT_COMMAND_SET_REPOSITORY = {"username": "duckietown", "project": "duckietown-shell-commands"}
+
+
+@dataclasses.dataclass
+class Distro:
+    name: str
+    end_of_life: Optional[datetime.date] = None
+
+    @property
+    def end_of_life_fmt(self, fmt: str = "%d %B %Y") -> str:
+        if self.end_of_life is None:
+            return ""
+        return self.end_of_life.strftime(fmt)
+
+
+KNOWN_DISTRIBUTIONS: List[Distro] = [
+    Distro("daffy", end_of_life=datetime.date(2024, 3, 31)),
+    Distro("ente"),
+]
+SUGGESTED_DISTRIBUTION: str = "ente"
 
 
 class DTShellConstants:
-    PROFILE = os.environ.get("DTSHELL_PROFILE", DEFAULT_PROFILE)
-    ROOT = os.path.expanduser(os.environ.get("DTSHELL_ROOT", DEFAULT_ROOT.format(profile=PROFILE)))
-    ENV_COMMANDS = "DTSHELL_COMMANDS"
+    PROFILE: Optional[str] = None
+    ROOT = os.path.expanduser(os.environ.get("DTSHELL_ROOT", DEFAULT_ROOT))
 
-    # TODO: these should go
-    DT1_TOKEN_CONFIG_KEY = "token_dt1"
-    CONFIG_DOCKER_USERNAME = "docker_username"
-    CONFIG_DOCKER_PASSWORD = "docker_password"
-    CONFIG_DUCKIETOWN_VERSION = "duckietown_version"
-    CONFIG_DOCKER_CREDENTIALS = "docker_credentials"
-
-
-# TODO: this should go
-ALLOWED_BRANCHES = ["ente(-[\w]+)?", "daffy(-[\w]+)?", "master19(-[\w]+)?", "devel(-[\w]+)?"]
 
 CHECK_CMDS_UPDATE_MINS = 5
 

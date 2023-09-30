@@ -1,0 +1,224 @@
+import dataclasses
+import os.path
+from typing import Optional, List, Dict, Union, Iterator, Tuple, Type, Any
+
+import questionary
+
+from dt_authentication import DuckietownToken
+from . import logger
+from .commands import CommandSet, CommandDescriptor
+from .commands.repository import CommandsRepository
+from .constants import DUCKIETOWN_TOKEN_URL, SHELL_LIB_DIR, DEFAULT_COMMAND_SET_REPOSITORY, \
+    DEFAULT_PROFILES_DIR
+from .utils import safe_pathname, validator_token, yellow_bold
+from .database.database import DTShellDatabase, NOTSET
+
+
+@dataclasses.dataclass
+class GenericCredentials:
+    username: str
+    password: str
+
+    @property
+    def secret(self) -> str:
+        return self.password
+
+    def asdict(self) -> dict:
+        return {"username": self.username, "password": self.password}
+
+    @classmethod
+    def fromdict(cls, d: dict) -> 'GenericCredentials':
+        return GenericCredentials(**d)
+
+
+class DockerCredentials(DTShellDatabase[dict]):
+
+    @classmethod
+    def load(cls, location: str):
+        return ShellProfileSecrets.open("secrets/docker", location=location)
+
+    def get(self, registry: str, default: GenericCredentials = NOTSET) -> GenericCredentials:
+        try:
+            d: dict = super(DockerCredentials, self).get(key=registry)
+            return GenericCredentials.fromdict(d)
+        except DTShellDatabase.NotFound:
+            if default is NOTSET:
+                raise DTShellDatabase.NotFound(f"No credentials found for registry '{registry}' in database.")
+            else:
+                return default
+
+    def set(self, registry: str, value: GenericCredentials):
+        super(DockerCredentials, self).set(registry, value.asdict())
+
+
+class ShellProfileSecrets(DTShellDatabase):
+
+    @classmethod
+    def load(cls, location: str):
+        return ShellProfileSecrets.open("secrets", location=location)
+
+    @property
+    def dt_token(self) -> Optional[str]:
+        return self.dt2_token
+
+    @dt_token.setter
+    def dt_token(self, value: str):
+        self.dt2_token = value
+
+    @property
+    def dt1_token(self) -> Optional[str]:
+        return self.get("token/dt1", None)
+
+    @dt1_token.setter
+    def dt1_token(self, value: str):
+        assert isinstance(value, str)
+        self.set("token/dt1", value)
+
+    @property
+    def dt2_token(self) -> Optional[str]:
+        return self.get("token/dt2", None)
+
+    @dt2_token.setter
+    def dt2_token(self, value: str):
+        assert isinstance(value, str)
+        self.set("token/dt2", value)
+
+    @property
+    def docker_credentials(self) -> DockerCredentials:
+        return DockerCredentials.load(self._location)
+
+
+class ShellProfileSettings(DTShellDatabase):
+
+    @classmethod
+    def load(cls, location: str):
+        return ShellProfileSettings.open("settings", location=location)
+
+    @property
+    def check_for_updates(self) -> bool:
+        return self.get("check_for_updates", True)
+
+    @check_for_updates.setter
+    def check_for_updates(self, value: bool):
+        assert isinstance(value, bool)
+        self.set("check_for_updates", value)
+
+    @property
+    def auto_update(self) -> bool:
+        return self.get("auto_update", True)
+
+    @auto_update.setter
+    def auto_update(self, value: bool):
+        assert isinstance(value, bool)
+        self.set("auto_update", value)
+
+
+@dataclasses.dataclass
+class ShellProfile:
+    name: str
+    path: Optional[str] = None
+    command_sets: List[CommandSet] = dataclasses.field(default_factory=list)
+    readonly: bool = False
+
+    def __post_init__(self):
+        # load from disk
+        if self.path is None:
+            profiles_dir: str = os.environ.get("DTSHELL_PROFILES", DEFAULT_PROFILES_DIR)
+            if profiles_dir != DEFAULT_PROFILES_DIR:
+                logger.info(f"Loading profiles from '{profiles_dir}' as prescribed by the environment "
+                            f"variable DTSHELL_PROFILES.")
+            safe_name: str = safe_pathname(self.name)
+            self.path = os.path.join(profiles_dir, safe_name)
+            # make sure the profile directory exists
+            if not os.path.exists(self.path) and not self.readonly:
+                os.makedirs(self.path)
+
+        # configure profile
+        if not self.readonly:
+            self._configure()
+
+        # we always start with core commands that are embedded into the shell
+        self.command_sets: List[CommandSet] = [
+            CommandSet(
+                "embedded",
+                os.path.join(SHELL_LIB_DIR, "embedded"),
+                leave_alone=True,
+            )
+        ]
+
+        # load command sets
+        if "DTSHELL_COMMANDS" in os.environ:
+            commands_path = os.environ["DTSHELL_COMMANDS"]
+            # make sure the given path exists
+            if not os.path.exists(commands_path):
+                msg = f"The path {commands_path} given with the environment variable DTSHELL_COMMANDS does " \
+                      f"not exist."
+                raise Exception(msg)
+            # load commands from given path
+            msg = f"Loading commands from '{commands_path}' as instructed by the environment variable " \
+                  f"DTSHELL_COMMANDS."
+            logger.info(msg)
+            self.command_sets.append(
+                CommandSet(
+                    "development",
+                    commands_path,
+                    CommandsRepository.from_file_system(commands_path),
+                    leave_alone=True,
+                )
+            )
+        else:
+            profile_command_sets_dir: str = os.path.join(self.path, "commands")
+            # add the default 'duckietown' command set
+            default_repo: CommandsRepository = CommandsRepository(**DEFAULT_COMMAND_SET_REPOSITORY)
+            self.command_sets.append(
+                CommandSet(
+                    default_repo.project,
+                    os.path.join(profile_command_sets_dir, default_repo.project),
+                    default_repo,
+                )
+            )
+            # add user defined command sets
+            for n, r in self.user_command_sets_repositories:
+                self.command_sets.append(CommandSet(n, os.path.join(profile_command_sets_dir, n), r))
+
+    @property
+    def commands(self) -> Dict[str, Union[dict, CommandDescriptor]]:
+        # collapse all command sets into a single tree of commands
+        cmds = {}
+        for cmd_set in self.command_sets:
+            cmds.update(cmd_set.commands)
+        return cmds
+
+    @property
+    def _databases_location(self) -> str:
+        return os.path.join(self.path, "databases")
+
+    @property
+    def user_command_sets_repositories(self) -> Iterator[Tuple[str, CommandsRepository]]:
+        return self.database("user_command_sets_repositories").list()
+
+    @property
+    def settings(self) -> ShellProfileSettings:
+        return ShellProfileSettings.load(location=self._databases_location)
+
+    @property
+    def secrets(self) -> ShellProfileSecrets:
+        return ShellProfileSecrets.load(location=self._databases_location)
+
+    def database(self, name: str, cls: Optional[Type[DTShellDatabase]] = None) -> DTShellDatabase:
+        if cls is None:
+            cls = DTShellDatabase
+        return cls.open(name, location=self._databases_location)
+
+    def _configure(self):
+        # make sure we have a token for this profile
+        if self.secrets.dt2_token is None:
+            print()
+            print(f"The Duckietown Shell needs a Duckietown Token to work properly. "
+                  f"Get yours for free at {DUCKIETOWN_TOKEN_URL}")
+            # let the user insert the token
+            token_str: str = questionary.password("Enter your token:", validate=validator_token).unsafe_ask()
+            token: DuckietownToken = DuckietownToken.from_string(token_str)
+            print(f"Token verified successfully. Your ID is: {yellow_bold(token.uid)}")
+            # store token
+            self.secrets.dt2_token = token_str

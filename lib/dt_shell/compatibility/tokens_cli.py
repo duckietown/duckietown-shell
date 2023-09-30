@@ -1,8 +1,6 @@
-import datetime
 import json
 import sys
 
-import dateutil.parser
 from future import builtins
 
 from .duckietown_tokens import DuckietownToken
@@ -28,17 +26,9 @@ def verify_a_token_main(args=None):
             sys.stderr.write(msg + "\n")
             sys.exit(3)
 
-        exp_date = dateutil.parser.parse(data["exp"])
-        now = datetime.datetime.today()
-
-        if exp_date < now:
-            msg = "This token has expired on %s" % exp_date
-            sys.stderr.write(msg + "\n")
-            sys.exit(6)
-
         o = dict()
-        o["uid"] = data["uid"]
-        o["expiration"] = data["exp"]
+        o["uid"] = token.uid
+        o["payload"] = token.payload
         msg = json.dumps(o)
         print(msg)
         sys.exit(0)

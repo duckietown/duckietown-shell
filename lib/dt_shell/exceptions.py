@@ -3,6 +3,7 @@ from .utils import parse_version
 
 
 __all__ = [
+    "NotFound",
     "InvalidEnvironment",
     "UserError",
     "CommandsLoadingException",
@@ -17,6 +18,10 @@ __all__ = [
 ]
 
 
+class NotFound(Exception):
+    pass
+
+
 class InvalidEnvironment(Exception):
     pass
 
@@ -27,7 +32,6 @@ class InvalidRemote(Exception):
 
 class UserError(Exception):
     """an error that will be briefly printed"""
-
     pass
 
 

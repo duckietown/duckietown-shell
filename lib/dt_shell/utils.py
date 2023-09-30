@@ -1,13 +1,34 @@
 import re
 import subprocess
 import importlib
+from math import floor
 from traceback import format_exc
-from typing import Optional, Any
+from typing import Optional, Any, Tuple, List, Dict, Union
 
 import termcolor
+from termcolor import colored
+from questionary import Style
+
+import dt_authentication
+from dt_authentication import DuckietownToken
 from .constants import DEBUG
 
-from . import dtslogger
+from dt_shell_cli import logger
+
+
+cli_style = Style([
+    ('qmark', 'fg:#673ab7 bold'),       # token in front of the question
+    ('question', 'bold'),               # question text
+    ('choice', 'fg:#fec20b bold'),      # a possible choice in select
+    ('answer', 'fg:#f44336 bold'),      # submitted answer text behind the question
+    ('pointer', 'fg:#673ab7 bold'),     # pointer used in select and checkbox prompts
+    ('highlighted', 'fg:#673ab7 bold'), # pointed-at choice in select and checkbox prompts
+    ('selected', 'fg:#cc5454'),         # style for a selected item of a checkbox
+    ('separator', 'fg:#cc5454'),        # separator in lists
+    ('instruction', ''),                # user instructions for select, rawselect, checkbox
+    ('text', ''),                       # plain text
+    ('disabled', 'fg:#bbbbbb italic')   # disabled choices for select and checkbox prompts
+])
 
 
 def indent(s: str, prefix: str, first: Optional[str] = None) -> str:
@@ -114,7 +135,7 @@ def safe_pathname(s: str) -> str:
 
 
 def run_cmd(cmd, print_output=False, suppress_errors=False):
-    dtslogger.debug("$ %s" % cmd)
+    logger.debug("$ %s" % cmd)
     # spawn new process
     proc = subprocess.Popen(cmd, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
     stdout, stderr = proc.communicate()
@@ -136,6 +157,62 @@ def parse_version(x):
 
 def load_class(name: str, module: str, package: Optional[str] = None) -> Any:
     if DEBUG:
-        dtslogger.debug(f"Loading class {package or ''}.{module}.{name}")
+        logger.debug(f"Loading class {package or ''}.{module}.{name}")
     mod = importlib.import_module(name=module, package=package)
     return getattr(mod, name)
+
+
+def provider_username_project_from_git_url(url: str) -> Tuple[str, str, str]:
+    ssh_pattern = "git@([^:]+):([^/]+)/(.+)"
+    res = re.search(ssh_pattern, url, re.IGNORECASE)
+    if res:
+        return res.group(1), res.group(2), res.group(3)
+    https_pattern = "https://([^/]+)/([^/]+)/(.+)"
+    res = re.search(https_pattern, url, re.IGNORECASE)
+    if res:
+        return res.group(1), res.group(2), res.group(3)
+
+
+def ln(s: str) -> int:
+    """
+    Computes the length of a string while taking into account the coloring characters.
+    """
+    return len(re.sub(rb"(\x1b|\[\d{1,2}m)*", b"", s.encode("utf-8")))
+
+
+def text_distribute(chunks: List[str], width: int) -> str:
+    remaining: int = width - sum(map(ln, chunks))
+    spaces: List[int] = [0] + [int(floor(remaining / (len(chunks) - 1)))] * (len(chunks) - 1)
+    spaces[-1] += remaining - sum(spaces)
+
+    txt: str = ""
+    for s, t in zip(spaces, chunks):
+        txt += f"{' ' * s}{t}"
+    return txt
+
+
+def text_justify(txt: str, width: int) -> str:
+    return "\n".join(
+        [" " * int(floor((width - ln(line)) / 2)) + line for line in txt.splitlines(keepends=False)]
+    )
+
+
+def validator_token(token: str) -> bool:
+    try:
+        DuckietownToken.from_string(token, allow_expired=False)
+    except dt_authentication.exceptions.InvalidToken as e:
+        # logger.error(f"The given token is not valid: {str(e)}")
+        return False
+    except dt_authentication.exceptions.ExpiredToken:
+        # logger.warning(f"The given token is expired, make sure you get a fresh one before continuing.")
+        return False
+    # ---
+    return True
+
+
+def yellow_bold(x: Any) -> str:
+    return colored(str(x), color="yellow", attrs=["bold"])
+
+
+class DebugInfo:
+    name2versions: Dict[str, Union[str, Dict[str, str]]] = {}

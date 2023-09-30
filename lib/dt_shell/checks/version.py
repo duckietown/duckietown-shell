@@ -9,7 +9,7 @@ import termcolor
 import yaml
 from whichcraft import which
 
-from .. import __version__, dtslogger
+from .. import __version__, logger
 from ..constants import DTShellConstants
 from ..exceptions import CouldNotGetVersion, NoCacheAvailable, URLException
 
@@ -25,7 +25,7 @@ def get_url(url, timeout=3):
             raise URLException(str(res))
         return content.decode("utf-8")
     except urllib.error.URLError:
-        dtslogger.debug("Falling back to using curl because urllib failed.")
+        logger.debug("Falling back to using curl because urllib failed.")
         if which("curl") is not None:
             cmd = ["curl", url, "-m", "2"]
             try:
@@ -109,11 +109,11 @@ def get_last_version() -> Optional[str]:
     if not update:
         delta = now - timestamp
         if delta > timedelta(minutes=10):
-            # dtslogger.debug('Version cache is outdated (%s).' % delta)
+            # logger.debug('Version cache is outdated (%s).' % delta)
             update = True
 
     if update:
-        # dtslogger.debug('Getting last version from PyPI.')
+        # logger.debug('Getting last version from PyPI.')
         try:
             version = get_last_version_fresh()
             write_cache(version, now)
@@ -132,12 +132,12 @@ def is_older(a: str, b: str) -> bool:
     return na < nb
 
 
-def check_if_outdated() -> None:
+def check_for_updates() -> None:
     latest_version = get_last_version()
     # print('last version: %r' % latest_version)
     # print('installed: %r' % __version__)
 
-    # TODO: this should take into account the distro we are using and the max major version declared in them
+    # TODO: this should take into account the profile we are using and the max major version declared in them
 
     if latest_version and is_older(__version__, latest_version):
         msg = """
