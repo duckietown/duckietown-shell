@@ -1,6 +1,8 @@
+import json
 import re
 import subprocess
 import importlib
+import traceback
 from math import floor
 from traceback import format_exc
 from typing import Optional, Any, Tuple, List, Dict, Union
@@ -11,10 +13,9 @@ from questionary import Style
 
 import dt_authentication
 from dt_authentication import DuckietownToken
-from .constants import DEBUG
 
 from dt_shell_cli import logger
-
+from .exceptions import ShellInitException, RunCommandException
 
 cli_style = Style([
     ('qmark', 'fg:#673ab7 bold'),       # token in front of the question
@@ -137,15 +138,16 @@ def safe_pathname(s: str) -> str:
 def run_cmd(cmd, print_output=False, suppress_errors=False):
     logger.debug("$ %s" % cmd)
     # spawn new process
-    proc = subprocess.Popen(cmd, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+    proc = subprocess.Popen(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
     stdout, stderr = proc.communicate()
     stdout = stdout.decode("utf-8") if stdout else None
     stderr = stderr.decode("utf-8") if stderr else None
     returncode = proc.returncode
     # ---
     if returncode != 0 and not suppress_errors:
-        msg = "The command %r failed with exit code %d.\nError:\n%s" % (cmd, returncode, stderr)
-        raise RuntimeError(msg)
+        msg = "The command %r failed with exit code %d.\nError:\n%s\nOutput:\n%s\n" % (
+            cmd, returncode, indent_block(stderr), indent_block(stdout))
+        raise RunCommandException(msg, returncode, stdout, stderr)
     if print_output:
         print(stdout)
     return stdout
@@ -156,8 +158,7 @@ def parse_version(x):
 
 
 def load_class(name: str, module: str, package: Optional[str] = None) -> Any:
-    if DEBUG:
-        logger.debug(f"Loading class {package or ''}.{module}.{name}")
+    logger.debug(f"Loading class {package or ''}.{module}.{name}")
     mod = importlib.import_module(name=module, package=package)
     return getattr(mod, name)
 
@@ -216,3 +217,26 @@ def yellow_bold(x: Any) -> str:
 
 class DebugInfo:
     name2versions: Dict[str, Union[str, Dict[str, str]]] = {}
+
+
+def pip_install(interpreter: str, requirements: str):
+    try:
+        subprocess.check_output(
+            [interpreter, "-m", "pip", "install", "-r", requirements], stderr=subprocess.PIPE)
+    except subprocess.CalledProcessError as e:
+        msg: str = "An error occurred while installing python dependencies"
+        raise ShellInitException(msg, stdout=e.stdout, stderr=e.stderr)
+
+
+def indent_block(s: str, indent_len: int = 4) -> str:
+    space: str = " " * indent_len
+    return space + f"\n{space}".join(s.splitlines() if s is not None else ["None"])
+
+
+def pretty_json(data: Any, indent_len: int = 0) -> str:
+    return indent_block(json.dumps(data, sort_keys=True, indent=4), indent_len=indent_len)
+
+
+def pretty_exc(exc: Exception, indent_len: int = 0) -> str:
+    return indent_block(
+        ''.join(traceback.TracebackException.from_exception(exc).format()), indent_len=indent_len)

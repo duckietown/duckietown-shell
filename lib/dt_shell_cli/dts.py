@@ -1,106 +1,22 @@
+import logging
 import os
-import subprocess
 import sys
-import venv
-from typing import Optional, List, Dict
+from typing import Optional, Dict
 
+# NOTE: DO NOT IMPORT DT_SHELL HERE
 from . import logger
-from .constants import SHELL_CLI_LIB_DIR, SHELL_REQUIREMENTS_LIST
-from .exceptions import ShellInitException
-from .utils import InstalledDependenciesDatabase, pip_install
-from dt_shell import DTShell
 
 
-def _use_this_interpreter(location: Optional[str] = None):
-    # import shell library
-    from .main import cli_main
-    # run shell entrypoint
-    cli_main()
+# TODO: separate the common part between this file and main.py and avoid duplication of code
 
+def dts():
+    # make sure we have not imported dt_shell yet
+    modules = [m.__name__ for m in sys.modules.values() if m]
+    if "dt_shell" in modules:
+        logger.fatal("The module 'dt_shell' was found imported before we had a chance to update "
+                     "the PYTHONPATH. This should not have happened. Please, contact technical support.")
+        return
 
-def _use_virtual_environment(location: Optional[str] = None):
-    # load shell skeleton
-    shell = DTShell(skeleton=True, billboard=False)
-
-    # if we don't have a profile, we bail
-    if shell.profile is None:
-        raise RuntimeError("The shell could not load a profile. This should not have happened, please "
-                           "contact technical support")
-        # TODO: maybe suggest clearing the profile directory?
-
-    # we make a virtual environment
-    DTSHELL_VENV_DIR: str = os.environ.get("DTSHELL_VENV_DIR", None)
-    if DTSHELL_VENV_DIR:
-        logger.info(f"Using virtual environment from '{DTSHELL_VENV_DIR}' as instructed by the environment "
-                    f"variable DTSHELL_VENV_DIR.")
-        venv_dir: str = DTSHELL_VENV_DIR
-    else:
-        venv_dir: str = os.path.join(shell.profile.path, "venv")
-
-    # define path to virtual env's interpreter
-    interpreter_fpath: str = os.path.join(venv_dir, "bin", "python3")
-
-    # make and configure env path if it does not exist
-    # TODO: this is a place where a --hard-reset flag would ignore the fact that the venv already exists and make a new one
-    if not os.path.exists(interpreter_fpath):
-        os.makedirs(venv_dir, exist_ok=True)
-        # make venv if it does not exist
-        logger.info(f"Creating new virtual environment in '{venv_dir}'...")
-        venv.create(
-            venv_dir,
-            system_site_packages=False,
-            clear=False,
-            symlinks=True,
-            with_pip=False,
-            prompt="dts"
-        )
-        # install pip
-        get_pip_fpath: str = os.path.join(SHELL_CLI_LIB_DIR, "assets", "get-pip.py")
-        assert os.path.exists(get_pip_fpath)
-        logger.info(f"Installing pip...")
-        try:
-            subprocess.check_output([interpreter_fpath, get_pip_fpath], stderr=subprocess.PIPE)
-        except subprocess.CalledProcessError as e:
-            msg: str = "An error occurred while installing pip in the virtual environment"
-            raise ShellInitException(msg, stdout=e.stdout, stderr=e.stderr)
-
-    # install dependencies
-    cache: InstalledDependenciesDatabase = InstalledDependenciesDatabase.load(shell.profile)
-    # - shell
-    if cache.needs_install_step(SHELL_REQUIREMENTS_LIST):
-        logger.info("Installing shell dependencies...")
-        pip_install(interpreter_fpath, SHELL_REQUIREMENTS_LIST)
-        cache.mark_as_installed(SHELL_REQUIREMENTS_LIST)
-    # - command sets
-    for cs in shell.command_sets:
-        requirements_list: Optional[str] = cs.configuration.requirements()
-        if cache.needs_install_step(requirements_list):
-            logger.info(f"Installing dependencies for command set '{cs.name}'...")
-            pip_install(interpreter_fpath, requirements_list)
-            cache.mark_as_installed(requirements_list)
-
-    # run shell in virtual environment
-    main_py: str = os.path.join(os.path.dirname(os.path.abspath(__file__)), "main.py")
-    exec_args: List[str] = [interpreter_fpath, interpreter_fpath, main_py, *sys.argv[1:]]
-    exec_env: Dict[str, str] = {
-        **os.environ,
-        "EXTRA_PYTHONPATH": ":".join(sys.path),
-    }
-    exec_env.pop("PYTHONPATH", None)
-
-    # noinspection PyTypeChecker
-    os.execle(*exec_args, exec_env)
-
-
-def unix(location: Optional[str] = None):
-    _use_virtual_environment(location=location)
-
-
-def windows(location: Optional[str] = None):
-    _use_this_interpreter(location=location)
-
-
-def main():
     # custom path to dt_shell library can be set using the DTSHELL_LIB environment variable
     DTSHELL_LIB = os.environ.get("DTSHELL_LIB", None)
     if DTSHELL_LIB:
@@ -122,20 +38,99 @@ def main():
         # give the given path the highest priority
         sys.path.insert(0, DTSHELL_LIB)
 
+    # import dt_shell
+    from dt_shell.constants import DTShellConstants
+    from dt_shell.logging import setup_logging_color, dts_print
+    from dt_shell.checks.environment import abort_if_running_with_sudo
+    from dt_shell.shell import get_cli_options
+    from dt_shell.commands import CommandDescriptor
+    from dt_shell.environments import ShellCommandEnvironmentAbs
+    from dt_shell.exceptions import CommandNotFound
+    from dt_shell.utils import replace_spaces
+    from dt_shell import DTShell, dtslogger, constants
+
+    # make sure we are not running as sudo
+    abort_if_running_with_sudo()
+
+    # configure logger
+    setup_logging_color()
+
+    # parse shell options (anything between `dts` and the first word that does not start with --)
+    cli_arguments = sys.argv[1:]
+    cli_options, arguments = get_cli_options(cli_arguments)
+
+    # propagate options to the constants
+    DTShellConstants.DEBUG = cli_options.debug
+    DTShellConstants.VERBOSE = cli_options.verbose
+    DTShellConstants.QUIET = cli_options.quiet
+
+    # process options here
+    if cli_options.debug:
+        dtslogger.setLevel(logging.DEBUG)
+    if cli_options.verbose:
+        logger.setLevel(logging.DEBUG)
+
+    # load shell skeleton
     try:
-        # TODO: this is wrong, the environment is not chosen solely based on OS but the command/commandset choose it
-        # call system-specific main function
-        if sys.platform.startswith('linux'):
-            unix(location=DTSHELL_LIB)
-        elif sys.platform.startswith('darwin'):
-            unix(location=DTSHELL_LIB)
-        elif sys.platform.startswith('win32'):
-            windows(location=DTSHELL_LIB)
-    except ShellInitException as e:
-        from dt_shell.logging import dts_print
-        from dt_shell_cli.main import print_debug_info
-        # ---
-        msg = str(e)
-        print_debug_info()
-        dts_print(msg, "red")
-        sys.exit(1)
+        shell = DTShell(
+            skeleton=True,
+            readonly=False,
+            banner=True,
+            billboard=True
+        )
+    except KeyboardInterrupt:
+        dts_print("User aborted operation.")
+        return
+
+    # if we don't have a profile, we bail
+    if shell.profile is None:
+        raise RuntimeError("The shell could not load a profile. This should not have happened, please "
+                           "contact technical support")
+        # TODO: maybe suggest clearing the profile directory?
+
+    # get command's environment and use it to execute the command
+    arguments = list(map(replace_spaces, arguments))
+    cmdline = " ".join(arguments)
+    command: Optional[CommandDescriptor] = None
+    try:
+        command = shell.get_command(cmdline)
+    except CommandNotFound as e:
+        inpt: str = cmdline.strip()
+        if e.last_matched is None:
+            if len(inpt) <= 0:
+                # no input
+                dts_print("Use the syntax\n\n"
+                          "\t\tdts [options] command [subcommand1 [subcommand2] ...] [arguments]\n",
+                          color="red")
+                exit(1)
+            else:
+                # input was given but it was not recognized
+                shell.default(cmdline)
+
+        else:
+            # we have a partial match of the arguments
+            word: Optional[str] = e.remaining[0] if e.remaining else None
+            subcommands: Dict[str] = e.last_matched.commands
+            if len(subcommands) > 0:
+                subcommands_list: str = "\n\t\t".join(subcommands.keys())
+                # the partially matched command has subcommands
+                if word:
+                    dts_print(
+                        f"Sub-command '{word}' not recognized.\n"
+                        f"Available sub-commands are:\n\n\t\t{subcommands_list}"
+                    )
+                else:
+                    dts_print(f"Available sub-commands are:\n\n\t\t{subcommands_list}")
+            else:
+                # the partially matched command is a leaf command (i.e., no subcommands)
+                # TODO: make sure this does not happen
+                raise NotImplementedError("NOT IMPLEMENTED")
+
+    if command is not None:
+        env: ShellCommandEnvironmentAbs = command.environment
+        logger.debug(f"Running command '{command.selector}' in environment '{env.__class__.__name__}'")
+        env.execute(shell, arguments)
+
+
+if __name__ == '__main__':
+    dts()

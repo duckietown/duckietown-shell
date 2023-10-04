@@ -55,7 +55,7 @@ class DTShellDatabase(Generic[T]):
         self._data: dict = {}
         self._lock: Semaphore = Semaphore()
         # ---
-        raise RuntimeError('Call DTShellDatabase.open() instead')
+        raise RuntimeError(f'Call {self.__class__.__name__}.open() instead')
 
     @classmethod
     def open(cls, name: str, location: Optional[str] = DATABASES_DIR, readonly: bool = False):
@@ -85,6 +85,10 @@ class DTShellDatabase(Generic[T]):
             self._ensure_dir(yaml_fpath)
         # ---
         return yaml_fpath
+
+    def contains(self, key: Key) -> bool:
+        key = self._key(key)
+        return key in self._data
 
     def get(self, key: Key, default: Optional[T] = NOTSET) -> T:
         key = self._key(key)

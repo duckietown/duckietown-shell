@@ -8,12 +8,11 @@ from .utils import dark_yellow
 __all__ = ["dts_print", "setup_logging_color"]
 
 
-# TODO: find out who is using this and remove
 def dts_print(msg: str, color: Optional[str] = None, attrs: Sequence[str] = ()) -> None:
     """
     Prints a message to the user.
     """
-    msg = msg.strip()  # remove space
+    msg = msg.strip(" ")  # remove space
     print("")  # always separate
     lines = msg.split("\n")
     prefix = "dts : "
@@ -23,6 +22,7 @@ def dts_print(msg: str, color: Optional[str] = None, attrs: Sequence[str] = ()) 
     for i, line in enumerate(lines):
         f = prefix if i == 0 else filler
         on_color = None
+        line = line.replace("\t", " " * 4)
         line = termcolor.colored(line, color, on_color, list(attrs))
         s = "%s %s" % (dark_yellow(f), line)
         print(s)
@@ -88,6 +88,5 @@ def setup_logging_color():
 
 
 def setup_logging():
-    # logging.basicConfig()
     setup_logging_color()
     setup_logging_format()

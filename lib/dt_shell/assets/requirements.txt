@@ -1,0 +1,15 @@
+argparse
+GitPython
+texttable
+python-dateutil
+termcolor
+PyYAML
+six
+psutil
+future
+pytz
+pyfiglet>=1.0.2,<2
+questionary>=2.0.1,<3
+dockertown>=0.2.2,<1
+dtproject>=0.0.5,<1
+dt-authentication>=2.1.4,<3

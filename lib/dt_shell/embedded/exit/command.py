@@ -1,3 +1,5 @@
+import sys
+
 from dt_shell import DTCommandAbs, DTShell
 
 

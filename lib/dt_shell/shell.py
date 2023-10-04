@@ -1,17 +1,21 @@
 # -*- coding: utf-8 -*-
+
 import argparse
+import atexit
+import dataclasses
 import inspect
 import os
 import random
+import signal
 import sys
 import time
 import traceback
 import types
 from cmd import Cmd
 from dataclasses import dataclass
+from enum import Enum
 from math import floor
-from os import utime
-from typing import List, Optional, Tuple, Union, Type, Dict
+from typing import List, Optional, Tuple, Union, Type, Dict, Callable
 from typing import Mapping, Sequence
 
 import questionary
@@ -25,10 +29,10 @@ from .profile import ShellProfile
 from .checks.version import check_for_updates
 from .commands import DTCommandAbs, CommandDescriptor, DTCommandPlaceholder, DTCommandConfigurationAbs, CommandSet, NoOpCommand
 from .commands.importer import import_command, import_configuration
-from .constants import DEBUG, DTShellConstants, INTRO
+from .constants import DTShellConstants, INTRO, IGNORE_ENVIRONMENTS, DB_SETTINGS, DB_PROFILES
 from .constants import DNAME, KNOWN_DISTRIBUTIONS, SUGGESTED_DISTRIBUTION
-from .environments import Python3Environment, ShellCommandEnvironmentAbs, DEFAULT_COMMAND_ENVIRONMENT
-from .exceptions import UserError, NotFound
+from .environments import ShellCommandEnvironmentAbs, DEFAULT_COMMAND_ENVIRONMENT
+from .exceptions import UserError, NotFound, CommandNotFound
 from .logging import dts_print
 from .utils import text_justify, text_distribute, cli_style
 
@@ -40,23 +44,40 @@ CommandsTree = Dict[CommandName, Union[None, Mapping[CommandName, dict], Command
 
 @dataclass
 class CLIOptions:
-    debug: bool
-    quiet: bool
+    debug: bool = False
+    verbose: bool = False
+    quiet: bool = False
 
 
 def get_cli_options(args: List[str]) -> Tuple[CLIOptions, List[str]]:
     """Returns cli options plus other arguments for the commands."""
 
     if args and not args[0].startswith("-"):
-        return CLIOptions(debug=False, quiet=False), args
+        return CLIOptions(), args
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--debug", action="store_true", default=False, help="More debug information")
-    parser.add_argument("-q", "--quiet", action="store_true", default=False, help="Quiet execution")
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        default=False,
+        help="More debug information"
+    )
+    parser.add_argument(
+        "-vv", "--verbose",
+        action="store_true",
+        default=False,
+        help="More debug information from the shell"
+    )
+    parser.add_argument(
+        "-q", "--quiet",
+        action="store_true",
+        default=False,
+        help="Quiet execution"
+    )
 
     parsed, others = parser.parse_known_args(args)
 
-    return CLIOptions(debug=parsed.debug, quiet=parsed.quiet), others
+    return CLIOptions(debug=parsed.debug, verbose=parsed.verbose, quiet=parsed.quiet), others
 
 
 prompt = "dts> "
@@ -66,7 +87,7 @@ class ShellSettings(DTShellDatabase):
 
     @classmethod
     def load(cls, location: Optional[str] = None):
-        return DTShellDatabase.open("settings", location=location)
+        return DTShellDatabase.open(DB_SETTINGS, location=location)
 
     @property
     def check_for_updates(self) -> bool:
@@ -87,6 +108,21 @@ class ShellSettings(DTShellDatabase):
         self.set("profile", value)
 
 
+class EventType(Enum):
+    START = "start"
+    PRE_COMMAND_IMPORT = "pre-command-import"
+    POST_COMMAND_IMPORT = "post-command-import"
+    KEYBOARD_INTERRUPT = "keyboard-interrupt"
+    SHUTDOWN = "shutdown"
+
+
+@dataclasses.dataclass
+class Event:
+    type: EventType
+    origin: str
+    time: float = dataclasses.field(default_factory=time.time)
+
+
 class DTShell(Cmd):
     commands: CommandsTree = {}
     core_commands: List[CommandName] = [
@@ -102,16 +138,30 @@ class DTShell(Cmd):
     # tree of commands once loaded
     include: types.SimpleNamespace
 
-    def __init__(self, skeleton: bool = False, banner: bool = True, billboard: bool = True):
+    def __init__(self, skeleton: bool = False, readonly: bool = False, banner: bool = True, billboard: bool = True):
         self.intro = INTRO()
         DTShell.include = types.SimpleNamespace()
+        self._event_handlers: Dict[EventType, List[Callable]] = {
+            EventType.START: [],
+            EventType.PRE_COMMAND_IMPORT: [],
+            EventType.POST_COMMAND_IMPORT: [],
+            EventType.KEYBOARD_INTERRUPT: [
+                self._on_keyboard_interrupt_event
+            ],
+            EventType.SHUTDOWN: [
+                self._on_shutdown_event
+            ],
+        }
+
+        # start event
+        self._trigger_event(Event(EventType.START, "shell"))
 
         # open databases
-        self._db_profiles: DTShellDatabase = DTShellDatabase.open("profiles", readonly=skeleton)
-        self._db_settings: ShellSettings = ShellSettings.open("settings", readonly=skeleton)
+        self._db_profiles: DTShellDatabase = DTShellDatabase.open(DB_PROFILES, readonly=readonly)
+        self._db_settings: ShellSettings = ShellSettings.open(DB_SETTINGS, readonly=readonly)
 
         # load current profile
-        self._profile: ShellProfile = ShellProfile(self.settings.profile, readonly=skeleton) \
+        self._profile: ShellProfile = ShellProfile(self.settings.profile, readonly=readonly) \
             if self.settings.profile else None
 
         # print banner
@@ -161,6 +211,9 @@ class DTShell(Cmd):
             if bboard:
                 print(bboard)
 
+        # pre-import event
+        self._trigger_event(Event(EventType.PRE_COMMAND_IMPORT, "shell"))
+
         # load commands
         self.load_commands(skeleton)
 
@@ -179,8 +232,20 @@ class DTShell(Cmd):
             if terminate:
                 raise UserError("Some command implementations were imported while running in skeleton mode.")
 
+        # post-import event
+        self._trigger_event(Event(EventType.POST_COMMAND_IMPORT, "shell"))
+
         # apply backward-compatibility edits
         compatibility.apply(self)
+
+        # register SIGINT handler
+        signal.signal(
+            signal.SIGINT,
+            lambda sig, frame: self._trigger_event(Event(EventType.KEYBOARD_INTERRUPT, "user"))
+        )
+
+        # register at-exit (we use a lambda so that the event is created at the proper time)
+        atexit.register(lambda: self._trigger_event(Event(EventType.SHUTDOWN, "shell")))
 
     @property
     def profile(self) -> Optional[ShellProfile]:
@@ -203,6 +268,9 @@ class DTShell(Cmd):
         return self._profile.command_sets
 
     def command_set(self, name: str) -> CommandSet:
+        """
+        Returns the CommandSet with the given name if found installed. Raises NotFound otherwise.
+        """
         for cs in self.command_sets:
             if cs.name == name:
                 return cs
@@ -212,6 +280,9 @@ class DTShell(Cmd):
         if len(line.strip()) > 0:
             print("")
 
+    def default(self, line: str) -> None:
+        dts_print(f"Unknown syntax:\n\n\t\tdts {line}\n", color="red")
+
     def emptyline(self):
         pass
 
@@ -220,6 +291,37 @@ class DTShell(Cmd):
         if res is not None:
             res += " "
         return res
+
+    def on_event(self, event: EventType, handler: Callable[[Event], None]):
+        if event not in self._event_handlers:
+            raise KeyError(f"Event name '{event.name}' not recognized. "
+                           f"Known events are: {list(self._event_handlers.keys())}")
+        self._event_handlers[event].append(handler)
+
+    def on_start(self, handler: Callable[[Event], None]):
+        self.on_event(EventType.SHUTDOWN, handler)
+
+    def on_shutdown(self, handler: Callable[[Event], None]):
+        self.on_event(EventType.SHUTDOWN, handler)
+
+    def on_keyboard_interrupt(self, handler: Callable[[Event], None]):
+        self.on_event(EventType.KEYBOARD_INTERRUPT, handler)
+
+    def _on_keyboard_interrupt_event(self, event: Event):
+        pass
+
+    def _on_shutdown_event(self, event: Event):
+        pass
+
+    def _trigger_event(self, event: Event):
+        logger.debug(f"{event.origin.title()} triggered the event '{event.type.name}'")
+        for cb in self._event_handlers[event.type]:
+            try:
+                cb(event)
+            except Exception:
+                traceback.print_exc()
+                logger.error(f"An handler for the event '{event.type.name}' failed its execution. "
+                             f"The exception is printed to screen.")
 
     def load_commands(self, skeleton: bool):
         # rediscover commands
@@ -254,7 +356,6 @@ class DTShell(Cmd):
                     """ % "\n\n".join(
                 self._errors_loading
             )
-
             time.sleep(1)
             logger.error(msg)
             time.sleep(3)
@@ -278,8 +379,10 @@ class DTShell(Cmd):
         lvl: int,
         skeleton: bool,
     ) -> Union[None, Type[DTCommandAbs]]:
-        # load command
-        klass = DTCommandPlaceholder()
+        # make a new (temporary) class
+        class klass(DTCommandPlaceholder):
+            pass
+
         if isinstance(sub_commands, CommandDescriptor):
             descriptor: CommandDescriptor = sub_commands
 
@@ -287,20 +390,25 @@ class DTShell(Cmd):
             configuration: Type[DTCommandConfigurationAbs] = import_configuration(command_set, descriptor)
             descriptor.configuration = configuration
 
-            # figure out the environment for this command
-            environment: ShellCommandEnvironmentAbs = descriptor.configuration.environment()
-            if environment is None:
-                # revert to command set's default environment
-                environment = command_set.configuration.default_environment()
-            if environment is None:
-                # use default environment
+            # if we ignore environments, we assume default global environment for every command
+            environment: ShellCommandEnvironmentAbs
+            if IGNORE_ENVIRONMENTS:
                 environment = DEFAULT_COMMAND_ENVIRONMENT
+            else:
+                # figure out the environment for this command
+                environment = descriptor.configuration.environment()
+                if environment is None:
+                    # revert to command set's default environment
+                    environment = command_set.configuration.default_environment()
+                if environment is None:
+                    # use default environment
+                    environment = DEFAULT_COMMAND_ENVIRONMENT
 
             # add environment to command's descriptor
             descriptor.environment = environment
 
             # import class only if this is the environment in which the commands will run
-            if not skeleton and isinstance(descriptor.environment, Python3Environment):
+            if not skeleton:
                 try:
                     klass = import_command(command_set, descriptor.path)
                 except UserError:
@@ -316,7 +424,9 @@ class DTShell(Cmd):
                     self._errors_loading.append(msg)
                     return
 
+            # link descriptor <-> command
             descriptor.command = klass
+            klass.descriptor = descriptor
             # add loaded class to DTShell.include.<cmd_path>
             klass_path = [p for p in package.split(".") if len(p)]
             base = DTShell.include
@@ -335,14 +445,17 @@ class DTShell(Cmd):
         if lvl == 0:
             # TODO: this is where we check and make sure we don't replace existing commands with new ones with the same names (useful to avoid old versions of duckietown-shell-commands replace core commands that are now embedded)
             do_command = getattr(klass, "do_command")
+            get_command = getattr(klass, "get_command")
             complete_command = getattr(klass, "complete_command")
             help_command = getattr(klass, "help_command")
             # wrap [klass, function] around a lambda function
             do_command_lam = lambda s, w: do_command(klass, s, w)
+            get_command_lam = lambda s, w: get_command(klass, s, w)
             complete_command_lam = lambda s, w, l, i, _: complete_command(klass, s, w, l, i, _)
             help_command_lam = lambda s: help_command(klass, s)
             # add functions do_* and complete_* to the shell
             setattr(DTShell, "do_" + command, do_command_lam)
+            setattr(DTShell, "get_" + command, get_command_lam)
             setattr(DTShell, "complete_" + command, complete_command_lam)
             setattr(DTShell, "help_" + command, help_command_lam)
 
@@ -353,8 +466,7 @@ class DTShell(Cmd):
         # load sub-commands
         if isinstance(sub_commands, dict):
             for cmd, subcmds in sub_commands.items():
-                if DEBUG:
-                    logger.debug("Searching %s at level %d" % (package + command + ".*", lvl))
+                logger.debug("Searching %s at level %d" % (package + command + ".*", lvl))
                 # noinspection PyTypeChecker
                 kl = self._load_command_subtree(
                     command_set, package + command + ".", cmd, subcmds, lvl + 1, skeleton
@@ -364,6 +476,23 @@ class DTShell(Cmd):
 
         # return class for this command
         return klass
+
+    def get_command(self, line) -> CommandDescriptor:
+        """
+        Interpret the argument and looks for the command that would be executed by the function onemcd(line).
+
+        """
+        cmd, arg, line = self.parseline(line)
+        if not line or cmd is None or cmd == '':
+            raise CommandNotFound(last_matched=None, remaining=line.split(" "))
+        else:
+            try:
+                get_command = getattr(self, 'get_' + cmd)
+            except AttributeError:
+                raise CommandNotFound(last_matched=None, remaining=line.split(" "))
+            # find command recursively down the tree
+            cmd, _ = get_command(arg)
+            return cmd
 
     # noinspection PyMethodMayBeStatic
     def sprint(self, msg: str, color: Optional[str] = None, attrs: Sequence[str] = None) -> None:
@@ -459,8 +588,3 @@ class DTShell(Cmd):
         print(txt.rstrip())
         print()
         print("+" + "-" * (width - 2) + "+")
-
-
-def _touch(path: str) -> None:
-    with open(path, "a"):
-        utime(path, None)

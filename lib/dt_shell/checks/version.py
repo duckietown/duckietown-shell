@@ -30,7 +30,7 @@ def get_url(url, timeout=3):
             cmd = ["curl", url, "-m", "2"]
             try:
                 data = subprocess.check_output(cmd, stderr=subprocess.PIPE)
-                return data
+                return data.decode("utf-8")
             except subprocess.CalledProcessError as e:
                 msg = "Could not call %s: %s" % (cmd, e)
                 raise URLException(msg)

@@ -81,7 +81,7 @@ if system_version < (3, 7):
 
 # embed requirements as asset into the release
 requirements_fpath: str = os.path.join(
-    os.path.dirname(__file__), "lib", "dt_shell_cli", "assets", "requirements.txt"
+    os.path.dirname(__file__), "lib", "dt_shell", "assets", "requirements.txt"
 )
 with open(requirements_fpath, "wt") as fout:
     fout.write("\n".join(shell_requires))
@@ -115,8 +115,8 @@ setup(
     # without this, the stuff is included but not installed
     include_package_data=True,
     package_data={
-        'dt_shell': ['embedded/*/*'],
-        'dt_shell_cli': ['assets/*'],
+        'dt_shell': ['embedded/*/*', 'assets/*'],
+        'dt_shell_cli': [],
     },
 
     # additional data files
@@ -126,7 +126,7 @@ setup(
 
     entry_points={
         'console_scripts': [
-            'dts = dt_shell_cli.dts:main',
+            'dts = dt_shell_cli.dts:dts',
         ]
     }
 )

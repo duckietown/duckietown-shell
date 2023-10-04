@@ -1,15 +1,16 @@
 import dataclasses
 import os.path
-from typing import Optional, List, Dict, Union, Iterator, Tuple, Type, Any
+from typing import Optional, List, Dict, Union, Iterator, Tuple, Type
 
 import questionary
 
 from dt_authentication import DuckietownToken
-from . import logger
+from . import logger, shell
 from .commands import CommandSet, CommandDescriptor
 from .commands.repository import CommandsRepository
 from .constants import DUCKIETOWN_TOKEN_URL, SHELL_LIB_DIR, DEFAULT_COMMAND_SET_REPOSITORY, \
-    DEFAULT_PROFILES_DIR
+    DEFAULT_PROFILES_DIR, DB_SECRETS, DB_SECRETS_DOCKER, DB_SETTINGS, DB_USER_COMMAND_SETS_REPOSITORIES, \
+    DB_PROFILES
 from .utils import safe_pathname, validator_token, yellow_bold
 from .database.database import DTShellDatabase, NOTSET
 
@@ -35,7 +36,7 @@ class DockerCredentials(DTShellDatabase[dict]):
 
     @classmethod
     def load(cls, location: str):
-        return ShellProfileSecrets.open("secrets/docker", location=location)
+        return ShellProfileSecrets.open(DB_SECRETS_DOCKER, location=location)
 
     def get(self, registry: str, default: GenericCredentials = NOTSET) -> GenericCredentials:
         try:
@@ -55,7 +56,7 @@ class ShellProfileSecrets(DTShellDatabase):
 
     @classmethod
     def load(cls, location: str):
-        return ShellProfileSecrets.open("secrets", location=location)
+        return ShellProfileSecrets.open(DB_SECRETS, location=location)
 
     @property
     def dt_token(self) -> Optional[str]:
@@ -92,7 +93,7 @@ class ShellProfileSettings(DTShellDatabase):
 
     @classmethod
     def load(cls, location: str):
-        return ShellProfileSettings.open("settings", location=location)
+        return ShellProfileSettings.open(DB_SETTINGS, location=location)
 
     @property
     def check_for_updates(self) -> bool:
@@ -136,12 +137,17 @@ class ShellProfile:
         # configure profile
         if not self.readonly:
             self._configure()
+            # record new profile
+            db: DTShellDatabase = DTShellDatabase.open(DB_PROFILES)
+            if not db.contains(self.name):
+                db.set(self.name, self.path)
 
         # we always start with core commands that are embedded into the shell
         self.command_sets: List[CommandSet] = [
             CommandSet(
                 "embedded",
                 os.path.join(SHELL_LIB_DIR, "embedded"),
+                profile=self,
                 leave_alone=True,
             )
         ]
@@ -162,7 +168,8 @@ class ShellProfile:
                 CommandSet(
                     "development",
                     commands_path,
-                    CommandsRepository.from_file_system(commands_path),
+                    profile=self,
+                    repository=CommandsRepository.from_file_system(commands_path),
                     leave_alone=True,
                 )
             )
@@ -172,14 +179,15 @@ class ShellProfile:
             default_repo: CommandsRepository = CommandsRepository(**DEFAULT_COMMAND_SET_REPOSITORY)
             self.command_sets.append(
                 CommandSet(
-                    default_repo.project,
+                    "duckietown",
                     os.path.join(profile_command_sets_dir, default_repo.project),
-                    default_repo,
+                    profile=self,
+                    repository=default_repo,
                 )
             )
             # add user defined command sets
             for n, r in self.user_command_sets_repositories:
-                self.command_sets.append(CommandSet(n, os.path.join(profile_command_sets_dir, n), r))
+                self.command_sets.append(CommandSet(n, os.path.join(profile_command_sets_dir, n), self, r))
 
     @property
     def commands(self) -> Dict[str, Union[dict, CommandDescriptor]]:
@@ -195,7 +203,7 @@ class ShellProfile:
 
     @property
     def user_command_sets_repositories(self) -> Iterator[Tuple[str, CommandsRepository]]:
-        return self.database("user_command_sets_repositories").list()
+        return self.database(DB_USER_COMMAND_SETS_REPOSITORIES).items()
 
     @property
     def settings(self) -> ShellProfileSettings:
