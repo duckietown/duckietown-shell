@@ -21,7 +21,7 @@ class DTCommand(DTCommandAbs):
                 command_set_versions[cs.name] = f"v{head_version}"
             # revert to the closest tag otherwise
             elif closest_version:
-                command_set_versions[cs.name] = f"development (closest: {closest_version})"
+                command_set_versions[cs.name] = f"devel (closest: {closest_version})"
             else:
                 command_set_versions[cs.name] = "NA"
 
