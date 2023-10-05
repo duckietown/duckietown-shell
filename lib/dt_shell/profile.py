@@ -5,18 +5,19 @@ from typing import Optional, List, Dict, Union, Iterator, Tuple, Type
 import questionary
 
 from dt_authentication import DuckietownToken
-from . import logger, shell
+from . import logger
 from .commands import CommandSet, CommandDescriptor
 from .commands.repository import CommandsRepository
 from .constants import DUCKIETOWN_TOKEN_URL, SHELL_LIB_DIR, DEFAULT_COMMAND_SET_REPOSITORY, \
     DEFAULT_PROFILES_DIR, DB_SECRETS, DB_SECRETS_DOCKER, DB_SETTINGS, DB_USER_COMMAND_SETS_REPOSITORIES, \
     DB_PROFILES
+from .database.database import DTShellDatabase, NOTSET, DTSerializable
 from .utils import safe_pathname, validator_token, yellow_bold
-from .database.database import DTShellDatabase, NOTSET
 
 
 @dataclasses.dataclass
-class GenericCredentials:
+class GenericCredentials(DTSerializable):
+
     username: str
     password: str
 
@@ -24,24 +25,24 @@ class GenericCredentials:
     def secret(self) -> str:
         return self.password
 
-    def asdict(self) -> dict:
+    def dump(self) -> dict:
         return {"username": self.username, "password": self.password}
 
     @classmethod
-    def fromdict(cls, d: dict) -> 'GenericCredentials':
-        return GenericCredentials(**d)
+    def load(cls, v: dict) -> 'GenericCredentials':
+        return GenericCredentials(**v)
 
 
 class DockerCredentials(DTShellDatabase[dict]):
 
     @classmethod
     def load(cls, location: str):
-        return ShellProfileSecrets.open(DB_SECRETS_DOCKER, location=location)
+        return DockerCredentials.open(DB_SECRETS_DOCKER, location=location)
 
     def get(self, registry: str, default: GenericCredentials = NOTSET) -> GenericCredentials:
         try:
             d: dict = super(DockerCredentials, self).get(key=registry)
-            return GenericCredentials.fromdict(d)
+            return GenericCredentials.load(d)
         except DTShellDatabase.NotFound:
             if default is NOTSET:
                 raise DTShellDatabase.NotFound(f"No credentials found for registry '{registry}' in database.")
@@ -49,7 +50,7 @@ class DockerCredentials(DTShellDatabase[dict]):
                 return default
 
     def set(self, registry: str, value: GenericCredentials):
-        super(DockerCredentials, self).set(registry, value.asdict())
+        super(DockerCredentials, self).set(registry, value.dump())
 
 
 class ShellProfileSecrets(DTShellDatabase):
@@ -134,9 +135,8 @@ class ShellProfile:
             if not os.path.exists(self.path) and not self.readonly:
                 os.makedirs(self.path)
 
-        # configure profile
+        # add profile to database
         if not self.readonly:
-            self._configure()
             # record new profile
             db: DTShellDatabase = DTShellDatabase.open(DB_PROFILES)
             if not db.contains(self.name):
@@ -176,13 +176,17 @@ class ShellProfile:
         else:
             profile_command_sets_dir: str = os.path.join(self.path, "commands")
             # add the default 'duckietown' command set
-            default_repo: CommandsRepository = CommandsRepository(**DEFAULT_COMMAND_SET_REPOSITORY)
+            repository: CommandsRepository = CommandsRepository(
+                **DEFAULT_COMMAND_SET_REPOSITORY,
+                # NOTE: this is assuming that the profile uses the distribution as its name
+                branch=self.name,
+            )
             self.command_sets.append(
                 CommandSet(
                     "duckietown",
-                    os.path.join(profile_command_sets_dir, default_repo.project),
+                    os.path.join(profile_command_sets_dir, "duckietown"),
                     profile=self,
-                    repository=default_repo,
+                    repository=repository,
                 )
             )
             # add user defined command sets
@@ -218,7 +222,7 @@ class ShellProfile:
             cls = DTShellDatabase
         return cls.open(name, location=self._databases_location)
 
-    def _configure(self):
+    def configure(self):
         # make sure we have a token for this profile
         if self.secrets.dt2_token is None:
             print()
@@ -227,6 +231,7 @@ class ShellProfile:
             # let the user insert the token
             token_str: str = questionary.password("Enter your token:", validate=validator_token).unsafe_ask()
             token: DuckietownToken = DuckietownToken.from_string(token_str)
+            # TODO: here we make sure this is a dt2 token (dt1 can be used otherwise)
             print(f"Token verified successfully. Your ID is: {yellow_bold(token.uid)}")
             # store token
             self.secrets.dt2_token = token_str

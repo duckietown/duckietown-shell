@@ -73,15 +73,4 @@ DB_SECRETS_DOCKER: str = "secrets_docker"
 DB_COMMAND_SET_UPDATES_CHECK: str = "command_sets_updates_check"
 DB_INSTALLED_DEPENDENCIES: str = "installed_dependencies"
 DB_USER_COMMAND_SETS_REPOSITORIES: str = "user_command_sets_repositories"
-
-
-def INTRO(extra: Optional[str] = None) -> str:
-    return """
-
-Welcome to the interactive {Duckietown} ({version}).
-{extra}
-Type "help" or "?" to list commands.
-
-""".format(
-        Duckietown=termcolor.colored(DNAME, "yellow", attrs=["bold"]), version=__version__, extra=extra or ""
-    ).lstrip()
+DB_MIGRATIONS: str = "migrations"

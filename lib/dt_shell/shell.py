@@ -24,16 +24,23 @@ from questionary import Choice
 from termcolor import termcolor
 
 from . import __version__, logger, compatibility
-from .database import DTShellDatabase
-from .profile import ShellProfile
 from .checks.version import check_for_updates
-from .commands import DTCommandAbs, CommandDescriptor, DTCommandPlaceholder, DTCommandConfigurationAbs, CommandSet, NoOpCommand
+from .commands import DTCommandAbs, CommandDescriptor, DTCommandPlaceholder, DTCommandConfigurationAbs, \
+    CommandSet, NoOpCommand
 from .commands.importer import import_command, import_configuration
-from .constants import DTShellConstants, INTRO, IGNORE_ENVIRONMENTS, DB_SETTINGS, DB_PROFILES
+from .compatibility.migrations import \
+    migrate_distro, \
+    needs_migrate_docker_credentials, migrate_docker_credentials, \
+    needs_migrate_token_dt1, migrate_token_dt1, \
+    needs_migrate_secrets, migrate_secrets, mark_docker_credentials_migrated, \
+    mark_token_dt1_migrated, mark_secrets_migrated, needs_migrations, mark_all_migrated, needs_migrate_distro
 from .constants import DNAME, KNOWN_DISTRIBUTIONS, SUGGESTED_DISTRIBUTION
+from .constants import DTShellConstants, IGNORE_ENVIRONMENTS, DB_SETTINGS, DB_PROFILES
+from .database import DTShellDatabase
 from .environments import ShellCommandEnvironmentAbs, DEFAULT_COMMAND_ENVIRONMENT
 from .exceptions import UserError, NotFound, CommandNotFound
 from .logging import dts_print
+from .profile import ShellProfile
 from .utils import text_justify, text_distribute, cli_style
 
 BILLBOARDS_VERSION: str = "v1"
@@ -139,7 +146,6 @@ class DTShell(Cmd):
     include: types.SimpleNamespace
 
     def __init__(self, skeleton: bool = False, readonly: bool = False, banner: bool = True, billboard: bool = True):
-        self.intro = INTRO()
         DTShell.include = types.SimpleNamespace()
         self._event_handlers: Dict[EventType, List[Callable]] = {
             EventType.START: [],
@@ -168,8 +174,14 @@ class DTShell(Cmd):
         if banner:
             self._show_banner(profile=self._profile)
 
+        # check if we configure the shell by migrating an old profile
+        self._attempt_migrations()
+
         # make sure the shell is configured
         self._configure()
+
+        # make sure the profile is configured
+        self._profile.configure()
 
         # make sure the shell is properly configured
         assert self._profile is not None
@@ -322,6 +334,94 @@ class DTShell(Cmd):
                 traceback.print_exc()
                 logger.error(f"An handler for the event '{event.type.name}' failed its execution. "
                              f"The exception is printed to screen.")
+
+    def _attempt_migrations(self):
+        # make sure we need migrations
+        if not needs_migrations():
+            return
+
+        asked_confirmation: bool = False
+        # get the name of the old profile
+        distro: Optional[str] = migrate_distro(dryrun=True)
+        # if we didn't have a version set in the old format then we have nothing to migrate
+        if distro is None:
+            # we mark everything as migrated, so we don't ask again
+            mark_all_migrated()
+            return
+
+        def _ask_confirmation() -> bool:
+            print(f"The Duckietown shell now uses a new profile format. "
+                  f"An old profile '{distro}' was found on disk. "
+                  f"We can automatically migrate all your preferences, credentials and tokens into the "
+                  f"new profile format.")
+            # ask the user whether to continue with the migration
+            return questionary.confirm(
+                "Do you want to migrate your old profile?",
+                auto_enter=True
+            ).unsafe_ask()
+
+        # try to migrate profile/distro
+        if self.profile is None:
+            granted: bool = _ask_confirmation()
+            asked_confirmation = True
+            if not granted:
+                print("A fresh start, we can work with that.")
+                # we mark everything as migrated, so we don't ask again
+                mark_all_migrated()
+                return
+            # we are migrating
+            distro: str = migrate_distro(dryrun=True)
+            # make new profile
+            logger.info(f"Migrating profile '{distro}'...")
+            self._profile = ShellProfile(name=distro)
+            # set the new profile as the profile to load at the next launch
+            self.settings.profile = distro
+
+        # by now we must have a profile
+        assert self.profile is not None
+
+        # try to migrate dt1 token
+        if needs_migrate_token_dt1():
+            migrate: bool = True
+            if not asked_confirmation:
+                migrate = _ask_confirmation()
+                asked_confirmation = True
+            # migrate?
+            if migrate:
+                token: Optional[str] = migrate_token_dt1(self.profile)
+                if token is not None:
+                    logger.info(f"Migrated: Tokens")
+                # mark it as migrated, so we don't ask again
+                mark_token_dt1_migrated()
+
+        # try to migrate docker credentials
+        if needs_migrate_docker_credentials():
+            migrate: bool = True
+            if not asked_confirmation:
+                migrate = _ask_confirmation()
+                asked_confirmation = True
+            # migrate?
+            if migrate:
+                no_migrated: int = migrate_docker_credentials(self.profile)
+                logger.info(f"Migrated: {no_migrated} Docker credentials")
+                # mark it as migrated, so we don't ask again
+                mark_docker_credentials_migrated()
+
+        # try to migrate secrets
+        if needs_migrate_secrets():
+            migrate: bool = True
+            if not asked_confirmation:
+                migrate = _ask_confirmation()
+                asked_confirmation = True
+            # migrate?
+            if migrate:
+                migrate_secrets(self.profile)
+                logger.info(f"Migrated: Other secrets")
+                # mark it as migrated, so we don't ask again
+                mark_secrets_migrated()
+
+        # complete profile configuration
+        self.profile.configure()
 
     def load_commands(self, skeleton: bool):
         # rediscover commands
@@ -557,6 +657,8 @@ class DTShell(Cmd):
             self._profile = ShellProfile(name=new_profile)
             # set the new profile as the profile to load at the next launch
             self.settings.profile = new_profile
+            # configure profile
+            self._profile.configure()
 
     def _show_banner(self, profile: Optional[ShellProfile]):
         width: int = 120
