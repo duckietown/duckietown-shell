@@ -47,6 +47,10 @@ class DTCommandAbs(metaclass=ABCMeta):
 
     @classmethod
     def aliases(cls) -> List[str]:
+        if not cls.descriptor:
+            return []
+        if not cls.descriptor.configuration:
+            return []
         return cls.descriptor.configuration.aliases()
 
     @staticmethod

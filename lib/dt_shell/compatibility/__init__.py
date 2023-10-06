@@ -22,27 +22,27 @@ def apply(shell):
     Applies backward compatibility edits to an instance of the shell
     """
 
-    def get_dt1_token(self) -> str:
+    def get_dt1_token() -> str:
         var = "token_dt1"
         from_env = os.environ.get(var, None)
         if from_env:
             msg = f"Using token from environment variable {var} instead of config."
             print(msg)
             return from_env
-        if self.profile.secrets.dt1_token is None:
+        if shell.profile.secrets.dt1_token is None:
             msg = 'Please set up a token for this using "dts tok set".'
             raise Exception(msg)
         else:
-            return self.profile.secrets.dt1_token
+            return shell.profile.secrets.dt1_token
 
-    def get_commands_version(self) -> str:
-        return self.profile.name
+    def get_commands_version() -> str:
+        return shell.profile.name
 
     @property
-    def shell_config(self) -> ShellConfig:
+    def shell_config() -> ShellConfig:
         return read_shell_config()
 
-    def save_config(self):
+    def save_config():
         # TODO: implement this by taking the info from .config._instance and updating shell.secrets...
         pass
 
