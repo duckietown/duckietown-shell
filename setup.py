@@ -3,9 +3,6 @@ import sys
 
 from setuptools import setup
 
-from setuptools.command.develop import develop
-from setuptools.command.install import install
-
 
 def get_version(filename):
     import ast
@@ -31,18 +28,10 @@ distro = 'daffy'
 shell_version = get_version(filename='lib/dt_shell/__init__.py')
 
 shell_requires = [
-    "argparse",
-
-    # TODO: check these and see if they are used
-    "GitPython",
-    "texttable",
-    "python-dateutil",
-    "termcolor",
-    "PyYAML",
-    "six",
-    "psutil",
-    "future",
-    "pytz",
+    "argparse>=1.4.0,<2",
+    "termcolor>=2.3.0,<3",
+    "PyYAML<7",
+    "requests>=2.31.0,<3",
 
     # CLI utils
     "pyfiglet>=1.0.2,<2",
@@ -52,27 +41,15 @@ shell_requires = [
     "dockertown>=0.2.2,<1",
     "dtproject>=0.0.5,<1",
     "dt-authentication>=2.1.4,<3",
+    'dt-data-api>=1.2.0,<2',
 ]
 
 compatibility_requires = [
-    # TODO: we should clear these by releasing non-distro version of them and moving them to the list above
-    'dt-authentication-{}'.format(distro),
-    'dt-data-api-{}>=1.2.0'.format(distro),
-    'duckietown-docker-utils-{}>=6.0.90'.format(distro),
+    # NOTE: this is used by checks/environment.py and cannot be removed for compatibility
+    "docker>=6.1.3,<7",
 ]
 
-commands_require = [
-    # TODO: these are used by the commands and should be removed
-    "netifaces",
-    "docker",
-    "docker-compose",
-    "dt-data-api>=1.2.0",
-    "duckietown-docker-utils>=6.0.90",
-]
-
-# TODO: compatibility should be cleared out and removed before releasing v6
-# TODO: commands should be cleared out and removed before releasing v6
-install_requires = shell_requires + compatibility_requires + commands_require
+install_requires = shell_requires + compatibility_requires
 
 system_version = tuple(sys.version_info)[:3]
 if system_version < (3, 7):
@@ -118,11 +95,6 @@ setup(
         'dt_shell': ['embedded/*/*', 'assets/*'],
         'dt_shell_cli': [],
     },
-
-    # additional data files
-    # data_files=[
-    #     ("dt_shell", ["dependencies.txt"]),
-    # ],
 
     entry_points={
         'console_scripts': [

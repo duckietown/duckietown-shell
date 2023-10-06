@@ -1,8 +1,6 @@
 import json
 import sys
 
-from future import builtins
-
 from .duckietown_tokens import DuckietownToken
 
 
@@ -15,7 +13,7 @@ def verify_a_token_main(args=None):
             token_s = args[0]
         else:
             msg = "Please enter token:\n> "
-            token_s = builtins.input(msg)
+            token_s = input(msg)
 
         sys.stderr.write("Verifying token %r\n" % token_s)
 

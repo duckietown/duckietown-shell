@@ -1,42 +1,28 @@
 # -*- coding: utf-8 -*-
 import json
 import os
-import subprocess
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
 
+import requests
 import termcolor
 import yaml
-from whichcraft import which
+from requests import Response, HTTPError
 
-from .. import __version__, logger
+from .. import __version__
 from ..constants import DTShellConstants
 from ..exceptions import CouldNotGetVersion, NoCacheAvailable, URLException
 
 
-def get_url(url, timeout=3):
-    from six.moves import urllib
-
+def get_url(url, timeout=3) -> str:
     try:
-        req = urllib.request.Request(url)
-        res = urllib.request.urlopen(req, timeout=timeout)
-        content = res.read()
-        if res.getcode() != 200:
-            raise URLException(str(res))
-        return content.decode("utf-8")
-    except urllib.error.URLError:
-        logger.debug("Falling back to using curl because urllib failed.")
-        if which("curl") is not None:
-            cmd = ["curl", url, "-m", "2"]
-            try:
-                data = subprocess.check_output(cmd, stderr=subprocess.PIPE)
-                return data.decode("utf-8")
-            except subprocess.CalledProcessError as e:
-                msg = "Could not call %s: %s" % (cmd, e)
-                raise URLException(msg)
-        else:
-            msg = "curl not available"
-            raise URLException(msg)
+        response: Response = requests.get(url, timeout=timeout)
+        response.raise_for_status()
+        return response.text
+    except HTTPError as e:
+        raise URLException(str(e))
+    except ConnectionError as e:
+        raise URLException(str(e))
 
 
 def get_last_version_fresh() -> str:
@@ -149,7 +135,8 @@ There is an updated duckietown-shell available.
   Available: {available} 
  
 WARNING: We strongly recommend updating to the latest version. ONLY THE LATEST VERSION IS SUPPORTED!
-         If you experience issues, please make sure you're using the latest version before posting questions or issues. 
+         If you experience issues, please make sure you're using the latest version before posting 
+         questions or issues. 
 
 You can update the shell using `pip`. Run the following command:
         pip3 install --no-cache-dir --user -U duckietown-shell
