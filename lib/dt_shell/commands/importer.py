@@ -50,9 +50,9 @@ def import_commandset_configuration(command_set: CommandSet) -> Type[DTCommandSe
         return default_commandset_configuration.DTCommandSetConfiguration
 
 
-def import_configuration(command_set: CommandSet, command: CommandDescriptor) -> Type[DTCommandConfigurationAbs]:
+def import_configuration(command_set: CommandSet, selector: str) -> Type[DTCommandConfigurationAbs]:
     # constants
-    _command_dir = _dirname(command.path)
+    _command_dir = command_set.command_path(selector)
     _configuration_file = _join(_command_dir, "configuration.py")
     # import command configuration
     if _exists(_configuration_file):

@@ -1,4 +1,5 @@
 import argparse
+import copy
 import dataclasses
 import glob
 import inspect
@@ -11,8 +12,7 @@ from types import SimpleNamespace
 from typing import Dict, Type, Union, Optional, Mapping, Tuple, List, Any
 
 from .repository import CommandsRepository
-from .. import __version__
-from .. import logger
+from .. import __version__, logger
 from ..constants import CHECK_CMDS_UPDATE_MINS, DB_COMMAND_SET_UPDATES_CHECK, DTShellConstants, \
     EMBEDDED_COMMAND_SET_NAME
 from ..environments import ShellCommandEnvironmentAbs, Python3Environment
@@ -21,7 +21,7 @@ from ..utils import run_cmd, undo_replace_spaces
 
 
 CommandName = str
-CommandsTree = Dict[CommandName, Union[None, Mapping[CommandName, dict], 'CommandDescriptor']]
+CommandsTree = Dict[CommandName, Union[Mapping[CommandName, dict], Type['DTCommandAbs']]]
 
 
 class DTCommandAbs(metaclass=ABCMeta):
@@ -45,8 +45,15 @@ class DTCommandAbs(metaclass=ABCMeta):
     def fail(msg):
         raise Exception(msg)
 
+    @classmethod
+    def aliases(cls) -> List[str]:
+        return cls.descriptor.configuration.aliases()
+
     @staticmethod
     def get_command(cls, shell, line) -> Tuple['CommandDescriptor', List[str]]:
+        cls: Type[DTCommandAbs]
+        line: str
+        # ---
         # print('>[%s]@(%s, %s)' % (line, cls.name, cls.__class__))
         line = line.strip()
         parts = [p.strip() for p in line.split(" ")]
@@ -56,8 +63,13 @@ class DTCommandAbs(metaclass=ABCMeta):
         # print('[%s, %r]@(%s, %s)' % (word, parts, cls.name, cls.__class__))
         if len(word) > 0:
             if len(cls.commands) > 0:
-                if word in cls.commands:
-                    return cls.commands[word].get_command(cls.commands[word], shell, " ".join(parts[1:]))
+                # search every command and their aliases
+                subcmds: Dict[str, Type[DTCommandAbs]] = copy.copy(cls.commands)
+                for subcmd_name, subcmd in cls.commands.items():
+                    subcmds.update({k: subcmd for k in subcmd.aliases()})
+                # if we have a match we keep looking down recursively
+                if word in subcmds:
+                    return subcmds[word].get_command(subcmds[word], shell, " ".join(parts[1:]))
                 else:
                     raise CommandNotFound(last_matched=cls, remaining=parts)
             else:
@@ -70,6 +82,9 @@ class DTCommandAbs(metaclass=ABCMeta):
 
     @staticmethod
     def do_command(cls, shell, line):
+        cls: Type[DTCommandAbs]
+        line: str
+        # ---
         descriptor: Optional[CommandDescriptor]
         args: List[str]
         # find the subcommand to execute
@@ -80,9 +95,16 @@ class DTCommandAbs(metaclass=ABCMeta):
 
     @staticmethod
     def complete_command(cls, shell, word, line, start_index, end_index):
+        cls: Type[DTCommandAbs]
+        word: str
+        line: str
+        start_index: int
+        end_index: int
+        # ---
         # print('[%s](%s)@(%s, %s)' % (word, line, cls.name, cls.__class__))
         word = word.strip()
         line = line.strip()
+        # add aliases
         subcmds = cls.commands.keys()
         parts = [p.strip() for p in line.split(" ")]
         #
@@ -102,11 +124,13 @@ class DTCommandAbs(metaclass=ABCMeta):
                 return DTCommandAbs.complete_command(
                     cls.commands[child], shell, word, nline, start_index, end_index
                 )
-        # print '!D'
+        # ---
         return []
 
     @staticmethod
     def help_command(cls, shell):
+        cls: Type[DTCommandAbs]
+        # ---
         msg = cls.help if (cls.level == 0 and cls.help is not None) else str(shell.nohelp % cls.name)
         print(msg)
 
@@ -146,6 +170,13 @@ class DTCommandConfigurationAbs(metaclass=ABCMeta):
         The parser this command will use.
         """
         return None
+
+    @classmethod
+    def aliases(cls) -> List[str]:
+        """
+        Alternative names for this command.
+        """
+        return []
 
 
 class DTCommandConfigurationDefault(DTCommandConfigurationAbs):
@@ -190,6 +221,10 @@ class CommandDescriptor:
     configuration: Type[DTCommandConfigurationAbs]
     environment: Optional[ShellCommandEnvironmentAbs] = None
     command: Type[DTCommandAbs] = None
+
+    @property
+    def aliases(self) -> List[str]:
+        return self.configuration.aliases()
 
 
 noop_command = SimpleNamespace(DTCommand=NoOpCommand)
@@ -247,6 +282,9 @@ class CommandSet:
     def refresh(self):
         # reload commands
         self.commands = self._find_commands()
+
+    def command_path(self, selector: str) -> str:
+        return os.path.join(self.path, selector.strip(".").replace(".", os.path.sep))
 
     def download(self) -> bool:
         """Raises InvalidRemote if it cannot find it"""

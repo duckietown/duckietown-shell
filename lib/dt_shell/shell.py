@@ -478,16 +478,17 @@ class DTShell(Cmd):
         sub_commands: Union[None, Mapping[str, object], CommandDescriptor],
         lvl: int,
         skeleton: bool,
-    ) -> Union[None, Type[DTCommandAbs]]:
+    ) -> Optional[Type[DTCommandAbs]]:
         # make a new (temporary) class
         class klass(DTCommandPlaceholder):
             pass
+        selector: str = f"{package}{command}"
+        configuration: Type[DTCommandConfigurationAbs] = import_configuration(command_set, selector)
 
         if isinstance(sub_commands, CommandDescriptor):
             descriptor: CommandDescriptor = sub_commands
 
             # load command configuration
-            configuration: Type[DTCommandConfigurationAbs] = import_configuration(command_set, descriptor)
             descriptor.configuration = configuration
 
             # if we ignore environments, we assume default global environment for every command
@@ -554,10 +555,13 @@ class DTShell(Cmd):
             complete_command_lam = lambda s, w, l, i, _: complete_command(klass, s, w, l, i, _)
             help_command_lam = lambda s: help_command(klass, s)
             # add functions do_* and complete_* to the shell
-            setattr(DTShell, "do_" + command, do_command_lam)
-            setattr(DTShell, "get_" + command, get_command_lam)
-            setattr(DTShell, "complete_" + command, complete_command_lam)
-            setattr(DTShell, "help_" + command, help_command_lam)
+            for command_name in [command] + configuration.aliases():
+                if DTShellConstants.VERBOSE:
+                    logger.debug(f"Attaching root command '{command_name}' to shell")
+                setattr(DTShell, "do_" + command_name, do_command_lam)
+                setattr(DTShell, "get_" + command_name, get_command_lam)
+                setattr(DTShell, "complete_" + command_name, complete_command_lam)
+                setattr(DTShell, "help_" + command_name, help_command_lam)
 
         # stop recursion if there is no subcommand
         if sub_commands is None:
