@@ -222,7 +222,9 @@ class DebugInfo:
 def pip_install(interpreter: str, requirements: str):
     try:
         subprocess.check_output(
-            [interpreter, "-m", "pip", "install", "-r", requirements], stderr=subprocess.PIPE)
+            [interpreter, "-m", "pip", "install", "-r", requirements],
+            stderr=subprocess.STDOUT,
+        )
     except subprocess.CalledProcessError as e:
         msg: str = "An error occurred while installing python dependencies"
         raise ShellInitException(msg, stdout=e.stdout, stderr=e.stderr)

@@ -14,6 +14,13 @@ class InstalledDependenciesDatabase(DTShellDatabase):
         name: str = "installed_dependencies"
         return profile.database(name, cls=InstalledDependenciesDatabase)
 
+    def contains(self, dependencies_fpath: Optional[str]) -> bool:
+        # no dependencies filepath? => do no have it
+        if dependencies_fpath is None:
+            return False
+        dependencies_fpath: str = os.path.abspath(dependencies_fpath)
+        return super(InstalledDependenciesDatabase, self).contains(dependencies_fpath)
+
     def needs_install_step(self, dependencies_fpath: Optional[str]) -> bool:
         # no dependencies files no need to install
         if dependencies_fpath is None:

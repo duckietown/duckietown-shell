@@ -45,7 +45,7 @@ def dts():
     from dt_shell.shell import get_cli_options
     from dt_shell.commands import CommandDescriptor
     from dt_shell.environments import ShellCommandEnvironmentAbs
-    from dt_shell.exceptions import CommandNotFound
+    from dt_shell.exceptions import CommandNotFound, ShellInitException
     from dt_shell.utils import replace_spaces
     from dt_shell import DTShell, dtslogger, constants
 
@@ -99,6 +99,7 @@ def dts():
         if e.last_matched is None:
             if len(inpt) <= 0:
                 # no input
+                # TODO: suggest possible commands as well
                 dts_print("Use the syntax\n\n"
                           "\t\tdts [options] command [subcommand1 [subcommand2] ...] [arguments]\n",
                           color="red")
@@ -129,7 +130,11 @@ def dts():
     if command is not None:
         env: ShellCommandEnvironmentAbs = command.environment
         logger.debug(f"Running command '{command.selector}' in environment '{env.__class__.__name__}'")
-        env.execute(shell, arguments)
+        try:
+            env.execute(shell, arguments)
+        except ShellInitException:
+            logger.error("An error occurred, the reason for the error should be printed above.")
+            exit(99)
 
 
 if __name__ == '__main__':

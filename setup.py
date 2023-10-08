@@ -30,8 +30,9 @@ shell_version = get_version(filename='lib/dt_shell/__init__.py')
 shell_requires = [
     "argparse>=1.4.0,<2",
     "termcolor>=2.3.0,<3",
-    "PyYAML<7",
     "requests>=2.31.0,<3",
+    # force pyyaml away from specific versions: https://github.com/yaml/pyyaml/issues/724
+    "pyyaml!=6.0.0,!=5.4.0,!=5.4.1,<7",
 
     # CLI utils
     "pyfiglet>=1.0.2,<2",

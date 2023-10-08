@@ -11,7 +11,7 @@ from dt_shell_cli.utils import print_debug_info
 
 from . import logger
 from .exceptions import ShellInitException, InvalidEnvironment, CommandsLoadingException, UserError
-from .constants import SHELL_CLI_LIB_DIR, SHELL_REQUIREMENTS_LIST
+from .constants import SHELL_CLI_LIB_DIR, SHELL_REQUIREMENTS_LIST, DTShellConstants
 from .database.utils import InstalledDependenciesDatabase
 from .logging import dts_print
 from .utils import pip_install, replace_spaces
@@ -78,11 +78,13 @@ class VirtualPython3Environment(ShellCommandEnvironmentAbs):
         # ---
         # we make a virtual environment
         DTSHELL_VENV_DIR: str = os.environ.get("DTSHELL_VENV_DIR", None)
+        venv_leave_alone: bool = False
         if DTSHELL_VENV_DIR:
             logger.info(
                 f"Using virtual environment from '{DTSHELL_VENV_DIR}' as instructed by the environment "
                 f"variable DTSHELL_VENV_DIR.")
             venv_dir: str = DTSHELL_VENV_DIR
+            venv_leave_alone = True
         else:
             venv_dir: str = os.path.join(shell.profile.path, "venv")
 
@@ -92,9 +94,15 @@ class VirtualPython3Environment(ShellCommandEnvironmentAbs):
         # make and configure env path if it does not exist
         # TODO: this is a place where a --hard-reset flag would ignore the fact that the venv already exists and make a new one
         if not os.path.exists(interpreter_fpath):
-            os.makedirs(venv_dir, exist_ok=True)
+            if venv_leave_alone:
+                msg: str = f"The custom Virtual Environment path '{venv_dir}' was given but no virtual " \
+                           f"environments were found at that location."
+                logger.error(msg)
+                raise ShellInitException(msg)
+
             # make venv if it does not exist
             logger.info(f"Creating new virtual environment in '{venv_dir}'...")
+            os.makedirs(venv_dir, exist_ok=True)
             venv.create(
                 venv_dir,
                 system_site_packages=False,
@@ -117,17 +125,35 @@ class VirtualPython3Environment(ShellCommandEnvironmentAbs):
         # install dependencies
         cache: InstalledDependenciesDatabase = InstalledDependenciesDatabase.load(shell.profile)
         # - shell
+        if DTShellConstants.VERBOSE:
+            logger.debug("Checking for changes in the shell's dependencies list...")
         if cache.needs_install_step(SHELL_REQUIREMENTS_LIST):
+            # warn user of detected changes (if any)
+            if cache.contains(SHELL_REQUIREMENTS_LIST):
+                logger.info("Detected changes in the dependencies list for the shell")
+            # proceed with installing new dependencies
             logger.info("Installing shell dependencies...")
             pip_install(interpreter_fpath, SHELL_REQUIREMENTS_LIST)
             cache.mark_as_installed(SHELL_REQUIREMENTS_LIST)
+        else:
+            if DTShellConstants.VERBOSE:
+                logger.debug("No new dependencies or constraints detected")
         # - command sets
         for cs in shell.command_sets:
+            if DTShellConstants.VERBOSE:
+                logger.debug(f"Checking for changes in the dependencies list for command set '{cs.name}'...")
             requirements_list: Optional[str] = cs.configuration.requirements()
             if cache.needs_install_step(requirements_list):
+                # warn user of detected changes (if any)
+                if cache.contains(requirements_list):
+                    logger.info(f"Detected changes in the dependencies list for the command set '{cs.name}'")
+                # proceed with installing new dependencies
                 logger.info(f"Installing dependencies for command set '{cs.name}'...")
                 pip_install(interpreter_fpath, requirements_list)
                 cache.mark_as_installed(requirements_list)
+            else:
+                if DTShellConstants.VERBOSE:
+                    logger.debug("No new dependencies or constraints detected")
 
         # run shell in virtual environment
         import dt_shell_cli

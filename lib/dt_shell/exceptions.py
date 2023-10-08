@@ -1,5 +1,5 @@
 import sys
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Union
 
 from . import __version__
 
@@ -75,13 +75,21 @@ class ShellNeedsUpdate(Exception):
 
 class ShellInitException(Exception):
 
-    def __init__(self, msg: str, stdout: Optional[str] = None, stderr: Optional[str] = None):
+    def __init__(self,
+                 msg: str,
+                 stdout: Optional[Union[str, bytes]] = None,
+                 stderr: Optional[Union[str, bytes]] = None):
+        from dt_shell.logging import dts_print
         # write stdout
         if stdout:
-            sys.stdout.write(stdout)
+            if isinstance(stdout, bytes):
+                stdout = stdout.decode("utf-8")
+            dts_print(stdout, color="red")
             sys.stdout.flush()
         # write stderr
         if stderr:
+            if isinstance(stderr, bytes):
+                stderr = stderr.decode("utf-8")
             sys.stderr.write(stderr)
             sys.stderr.flush()
         # store message

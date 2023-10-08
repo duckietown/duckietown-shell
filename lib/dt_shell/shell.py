@@ -293,6 +293,7 @@ class DTShell(Cmd):
             print("")
 
     def default(self, line: str) -> None:
+        # TODO: suggest possible commands as well
         dts_print(f"Unknown syntax:\n\n\t\tdts {line}\n", color="red")
 
     def emptyline(self):

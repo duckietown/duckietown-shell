@@ -39,11 +39,14 @@ def import_commandset_configuration(command_set: CommandSet) -> Type[DTCommandSe
         # restore PYTHONPATH
         sys.path = old
 
-        DTCommandSetConfiguration = configuration.DTCommandSetConfiguration
+        DTCommandSetConfiguration: Type[DTCommandSetConfigurationAbs] = \
+            configuration.DTCommandSetConfiguration
         if not issubclass(DTCommandSetConfiguration.__class__, DTCommandSetConfigurationAbs.__class__):
             msg = f"Cannot load command set configuration class in {_configuration_file}, the class " \
                   f"'DTCommandSetConfiguration' must extend the class 'DTCommandSetConfigurationAbs'"
             raise CommandsLoadingException(msg)
+        # populate path
+        DTCommandSetConfiguration.path = command_set.path
 
         return DTCommandSetConfiguration
     else:

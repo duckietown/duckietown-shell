@@ -187,8 +187,8 @@ class DTCommandConfigurationDefault(DTCommandConfigurationAbs):
     pass
 
 
-@dataclass
 class DTCommandSetConfigurationAbs(metaclass=ABCMeta):
+    path: str = None
 
     @classmethod
     def default_environment(cls, **kwargs) -> Optional[ShellCommandEnvironmentAbs]:
@@ -202,7 +202,7 @@ class DTCommandSetConfigurationAbs(metaclass=ABCMeta):
         """
         File containing the list of dependency python projects needed by the commands in this command set.
         """
-        command_set_metadir: str = os.path.dirname(os.path.abspath(inspect.getfile(cls)))
+        command_set_metadir: str = os.path.join(os.path.abspath(cls.path), "__command_set__")
         requirements_fpath: str = os.path.join(command_set_metadir, "requirements.txt")
         return requirements_fpath if os.path.exists(requirements_fpath) else None
 
