@@ -10,12 +10,16 @@ import logging
 from dt_shell_cli import logger
 
 import dt_shell
-from dt_shell import DTShell, dtslogger
+from dt_shell import DTShell, dtslogger, CommandsLoadingException
 from dt_shell.shell import get_cli_options
-from dt_shell.logging import setup_logging_color
+from dt_shell.logging import setup_logging_color, dts_print
 from dt_shell.constants import DTShellConstants
 from dt_shell.environments import Python3Environment
 from dt_shell.checks.environment import abort_if_running_with_sudo
+
+
+# NOTE: this file runs the shell in this interpreter and in quiet mode, the entrypoint should always be
+#       the file dts.py.
 
 
 def main() -> None:
@@ -37,18 +41,24 @@ def main() -> None:
     # process options here
     if cli_options.debug:
         dtslogger.setLevel(logging.DEBUG)
-    if cli_options.verbose:
-        logger.setLevel(logging.DEBUG)
+
+    # we run in quiet mode
+    logger.setLevel(logging.WARNING)
 
     # instantiate shell
-    shell = DTShell(
-        skeleton=False,
-        readonly=False,
-        banner=False,
-        billboard=False,
-    )
+    try:
+        shell = DTShell(
+            skeleton=False,
+            readonly=False,
+            banner=False,
+            billboard=False,
+        )
+    except CommandsLoadingException as e:
+        dts_print("FATAL: " + str(e))
+        exit(90)
 
     # populate singleton
+    # noinspection PyUnboundLocalVariable
     dt_shell.shell = shell
 
     # run command in this interpreter
