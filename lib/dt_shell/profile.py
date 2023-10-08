@@ -3,6 +3,7 @@ import os.path
 from typing import Optional, List, Dict, Union, Iterator, Tuple, Type
 
 import questionary
+from questionary import Choice
 
 from dt_authentication import DuckietownToken
 from . import logger
@@ -10,9 +11,9 @@ from .commands import CommandSet, CommandDescriptor
 from .commands.repository import CommandsRepository
 from .constants import DUCKIETOWN_TOKEN_URL, SHELL_LIB_DIR, DEFAULT_COMMAND_SET_REPOSITORY, \
     DEFAULT_PROFILES_DIR, DB_SECRETS, DB_SECRETS_DOCKER, DB_SETTINGS, DB_USER_COMMAND_SETS_REPOSITORIES, \
-    DB_PROFILES
+    DB_PROFILES, KNOWN_DISTRIBUTIONS, SUGGESTED_DISTRIBUTION
 from .database.database import DTShellDatabase, NOTSET, DTSerializable
-from .utils import safe_pathname, validator_token, yellow_bold
+from .utils import safe_pathname, validator_token, yellow_bold, cli_style
 
 
 @dataclasses.dataclass
@@ -97,6 +98,15 @@ class ShellProfileSettings(DTShellDatabase):
         return ShellProfileSettings.open(DB_SETTINGS, location=location)
 
     @property
+    def distro(self) -> Optional[str]:
+        return self.get("distro", None)
+
+    @distro.setter
+    def distro(self, value: str):
+        assert isinstance(value, str)
+        self.set("distro", value)
+
+    @property
     def check_for_updates(self) -> bool:
         return self.get("check_for_updates", True)
 
@@ -178,8 +188,7 @@ class ShellProfile:
             # add the default 'duckietown' command set
             repository: CommandsRepository = CommandsRepository(
                 **DEFAULT_COMMAND_SET_REPOSITORY,
-                # NOTE: this is assuming that the profile uses the distribution as its name
-                branch=self.name,
+                branch=self.distro,
             )
             self.command_sets.append(
                 CommandSet(
@@ -217,12 +226,51 @@ class ShellProfile:
     def secrets(self) -> ShellProfileSecrets:
         return ShellProfileSecrets.load(location=self._databases_location)
 
+    @property
+    def distro(self) -> Optional[str]:
+        return self.settings.distro
+
+    @distro.setter
+    def distro(self, value: str):
+        self.settings.distro = value
+
     def database(self, name: str, cls: Optional[Type[DTShellDatabase]] = None) -> DTShellDatabase:
         if cls is None:
             cls = DTShellDatabase
         return cls.open(name, location=self._databases_location)
 
     def configure(self):
+        # make sure we have a distro for this profile
+        if self.distro is None:
+            # see if we can find the distro ourselves
+            matched: bool = False
+            for distro in KNOWN_DISTRIBUTIONS:
+                if distro.name == self.name:
+                    logger.info(f"Automatically selecting distribution '{distro.name}' as it matches "
+                                f"the profile name")
+                    self.distro = self.name
+                    matched = True
+
+            # if we don't have a match, we ask the user to pick a distribution
+            if not matched:
+                print()
+                print("You need to choose the distribution you want to work with in this profile.")
+                distros: List[Choice] = []
+                for distro in KNOWN_DISTRIBUTIONS:
+                    eol: str = "" if distro.end_of_life is None else \
+                        f"(end of life: {distro.end_of_life_fmt})"
+                    label = [("class:choice", distro.name), ("class:disabled", f"  {eol}")]
+                    choice: Choice = Choice(title=label, value=distro.name)
+                    if distro.name == SUGGESTED_DISTRIBUTION:
+                        distros.insert(0, choice)
+                    else:
+                        distros.append(choice)
+                # let the user choose the distro
+                distro = questionary.select(
+                    "Choose a distribution:", choices=distros, style=cli_style).unsafe_ask()
+                # attach distro to profile
+                self.distro = distro
+
         # make sure we have a token for this profile
         if self.secrets.dt2_token is None:
             print()
