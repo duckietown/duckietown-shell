@@ -38,10 +38,10 @@ from .constants import DNAME, KNOWN_DISTRIBUTIONS, SUGGESTED_DISTRIBUTION
 from .constants import DTShellConstants, IGNORE_ENVIRONMENTS, DB_SETTINGS, DB_PROFILES
 from .database import DTShellDatabase
 from .environments import ShellCommandEnvironmentAbs, DEFAULT_COMMAND_ENVIRONMENT
-from .exceptions import UserError, NotFound, CommandNotFound
+from .exceptions import UserError, NotFound, CommandNotFound, CommandsLoadingException
 from .logging import dts_print
 from .profile import ShellProfile
-from .utils import text_justify, text_distribute, cli_style
+from .utils import text_justify, text_distribute, cli_style, indent_block
 
 BILLBOARDS_VERSION: str = "v1"
 
@@ -441,25 +441,17 @@ class DTShell(Cmd):
             self.commands = {}
 
         if self._errors_loading:
-            msg = f"""
-
-
-                    !   Could not load commands.
-
-                        %s
-
-                    !   To recover, you might want to delete the following profile directory
-                    !
-                    !      {DTShellConstants.ROOT}
-                    !
-                    !
-
-                    """ % "\n\n".join(
-                self._errors_loading
-            )
-            time.sleep(1)
+            sep = "-" * 128
+            msg = f"\n\n\n!   Could not load commands. Detailed error messages are printed below.\n" + \
+                  indent_block(
+                      f"\n\n{sep}\n\n\n" +
+                      ("\n\n" + sep + "\n\n\n").join(self._errors_loading) +
+                      f"\n\n{sep}\n\n"
+                  ) + \
+                  f"\n\n!   Could not load commands. Detailed error messages are printed above.\n\n"
             logger.error(msg)
-            time.sleep(3)
+            raise CommandsLoadingException("Some commands could not be loaded. Detailed error messages are "
+                                           "reported above.")
 
     def reload_commands(self, skeleton: bool):
         # remove installed commands
