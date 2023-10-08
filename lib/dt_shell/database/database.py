@@ -43,7 +43,7 @@ SerializableTypes = (SerializedValue, *NATURALLY_SERIALIZABLE)
 
 class DTShellDatabase(Generic[T]):
 
-    _instances: Dict[str, 'DTShellDatabase'] = {}
+    _instances: Dict[Tuple[str, str], 'DTShellDatabase'] = {}
 
     class NotFound(KeyError):
         pass
@@ -59,9 +59,10 @@ class DTShellDatabase(Generic[T]):
 
     @classmethod
     def open(cls, name: str, location: Optional[str] = DATABASES_DIR, readonly: bool = False):
-        if name not in cls._instances:
+        key = (location, name)
+        if key not in cls._instances:
             inst = cls.__new__(cls)
-            cls._instances[name] = inst
+            cls._instances[key] = inst
             # populate instance fields
             inst._name = name
             inst._location = location
@@ -71,7 +72,7 @@ class DTShellDatabase(Generic[T]):
             # load DB from disk
             inst._load()
         # ---
-        return cls._instances[name]
+        return cls._instances[key]
 
     @property
     def name(self) -> str:
