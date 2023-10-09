@@ -40,7 +40,7 @@ shell_requires = [
 
     # duckietown deps
     "dockertown>=0.2.2,<1",
-    "dtproject>=0.0.5,<1",
+    "dtproject>=1.0.4,<2",
     "dt-authentication>=2.1.4,<3",
     'dt-data-api>=1.2.0,<2',
 ]
