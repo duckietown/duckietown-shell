@@ -33,20 +33,24 @@ install_requires = [
     'python-dateutil',
     'whichcraft',
     'termcolor',
-    'PyYAML',
     'docker',
     'docker-compose',
     'six',
     'psutil',
     'future',
-    'duckietown-docker-utils-{}>=6.0.90'.format(distro),
     'zeroconf',
     'requests',
+    'netifaces',
     'pytz',
+    "pip",
+    # force pyyaml away from specific versions: https://github.com/yaml/pyyaml/issues/724
+    "pyyaml!=6.0.0,!=5.4.0,!=5.4.1,<7",
+    # duckietown libraries
+    'duckietown-docker-utils-{}>=6.0.90'.format(distro),
     'dt-authentication-{}'.format(distro),
     'dt-data-api-{}>=1.2.0'.format(distro),
-    "pip",
-    "dockertown>=0.1.1,<=0.1.4"
+    "dockertown>=0.2.2",
+    "dtproject>=0.0.5",
 ]
 
 system_version = tuple(sys.version_info)[:3]

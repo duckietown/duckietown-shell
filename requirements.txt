@@ -4,9 +4,10 @@ ecdsa
 python-dateutil
 whichcraft
 termcolor
-PyYAML
+pyyaml!=6.0.0,!=5.4.0,!=5.4.1,<7
 docker
 docker-compose
+netifaces
 psutil
 six
 ruamel.ordereddict
@@ -17,4 +18,5 @@ zeroconf
 dt-authentication-daffy
 dt-data-api-daffy>=1.1.1
 pytz
-dockertown>=0.1.1,<=0.1.4
+dockertown>=0.2.2
+dtproject>=0.0.5
