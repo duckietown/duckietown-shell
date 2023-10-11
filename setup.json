@@ -1,7 +1,7 @@
 {
   "install_requires": [
     "GitPython",
-    "PyYAML",
+    "pyyaml!=6.0.0,!=5.4.0,!=5.4.1,<7",
     "base58",
     "docker",
     "docker-compose",
@@ -19,7 +19,8 @@
     "termcolor",
     "texttable",
     "whichcraft",
-    "zeroconf"
+    "zeroconf",
+    "netifaces"
   ],
   "tests_require": [],
   "srcdir": "lib",

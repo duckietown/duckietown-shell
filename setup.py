@@ -40,6 +40,7 @@ install_requires = [
     'future',
     'zeroconf',
     'requests',
+    'netifaces',
     'pytz',
     "pip",
     # force pyyaml away from specific versions: https://github.com/yaml/pyyaml/issues/724
