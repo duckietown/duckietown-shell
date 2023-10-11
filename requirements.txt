@@ -4,7 +4,7 @@ ecdsa
 python-dateutil
 whichcraft
 termcolor
-PyYAML
+pyyaml!=6.0.0,!=5.4.0,!=5.4.1,<7
 docker
 docker-compose
 netifaces
