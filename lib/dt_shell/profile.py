@@ -1,3 +1,4 @@
+import copy
 import dataclasses
 import os.path
 import time
@@ -7,14 +8,17 @@ import questionary
 from questionary import Choice
 
 from dt_authentication import DuckietownToken
-from . import logger
+from . import logger, __version__
 from .commands import CommandSet, CommandDescriptor
 from .commands.repository import CommandsRepository
 from .constants import DUCKIETOWN_TOKEN_URL, SHELL_LIB_DIR, DEFAULT_COMMAND_SET_REPOSITORY, \
     DEFAULT_PROFILES_DIR, DB_SECRETS, DB_SECRETS_DOCKER, DB_SETTINGS, DB_USER_COMMAND_SETS_REPOSITORIES, \
-    DB_PROFILES, KNOWN_DISTRIBUTIONS, SUGGESTED_DISTRIBUTION, DB_UPDATES_CHECK
+    DB_PROFILES, KNOWN_DISTRIBUTIONS, SUGGESTED_DISTRIBUTION, DB_UPDATES_CHECK, EMBEDDED_COMMAND_SET_NAME
 from .database.database import DTShellDatabase, NOTSET, DTSerializable
-from .utils import safe_pathname, validator_token, yellow_bold, cli_style
+from .utils import safe_pathname, validator_token, yellow_bold, cli_style, parse_version, render_version, \
+    indent_block
+
+TupleVersion = Tuple[int, int, int]
 
 
 @dataclasses.dataclass
@@ -156,15 +160,8 @@ class ShellProfile:
         # updates check database
         self.updates_check_db: DTShellDatabase[float] = self.database(DB_UPDATES_CHECK)
 
-        # we always start with core commands that are embedded into the shell
-        self.command_sets: List[CommandSet] = [
-            CommandSet(
-                "embedded",
-                os.path.join(SHELL_LIB_DIR, "embedded"),
-                profile=self,
-                leave_alone=True,
-            )
-        ]
+        # this is the order with which command sets are loaded
+        self.command_sets: List[CommandSet] = []
 
         # load command sets
         if "DTSHELL_COMMANDS" in os.environ:
@@ -205,6 +202,46 @@ class ShellProfile:
             # add user defined command sets
             for n, r in self.user_command_sets_repositories:
                 self.command_sets.append(CommandSet(n, os.path.join(profile_command_sets_dir, n), self, r))
+
+        # we always add the embedded command set last so that it can override everything the others do
+        self.command_sets.append(
+            CommandSet(
+                EMBEDDED_COMMAND_SET_NAME,
+                os.path.join(SHELL_LIB_DIR, "embedded"),
+                profile=self,
+                leave_alone=True,
+            )
+        )
+
+        # drop all the command sets that do not support this version of the shell
+        for cs in copy.copy(self.command_sets):
+            vnow: TupleVersion = parse_version(__version__)
+            vmin: Optional[TupleVersion] = cs.configuration.minimum_shell_version()
+            vmax: Optional[TupleVersion] = cs.configuration.maximum_shell_version()
+            # check min
+            if vmin is not None and vnow < vmin:
+                logger.warning(f"\n -- WARNING\n\n" +
+                                indent_block(
+                                   f"Command set '{cs.name}' wants a Duckietown Shell v{render_version(vmin)}"
+                                   f" or newer. We are running v{render_version(vnow)}.\n"
+                                   f"You will need to upgrade your shell to be able to use this command "
+                                   f"set or switch to an older version of this command set.\n"
+                                   f"This command set will now be disabled."
+                                ) +
+                               f"\n\n -- WARNING\n")
+                self.command_sets.remove(cs)
+            # check max
+            if vmax is not None and vnow > vmax:
+                logger.warning(f"\n -- WARNING\n\n" +
+                               indent_block(
+                                   f"Command set '{cs.name}' only supports Duckietown Shell up to "
+                                   f"v{render_version(vmax)}. We are running v{render_version(vnow)}.\n"
+                                   f"You will need to downgrade your shell to be able to use this command "
+                                   f"set or switch to a newer version of this command set.\n"
+                                   f"This command set will now be disabled."
+                               ) +
+                               f"\n\n -- WARNING\n")
+                self.command_sets.remove(cs)
 
     @property
     def commands(self) -> Dict[str, Union[dict, CommandDescriptor]]:

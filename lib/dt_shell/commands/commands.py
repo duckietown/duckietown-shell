@@ -2,7 +2,6 @@ import argparse
 import copy
 import dataclasses
 import glob
-import inspect
 import os
 import time
 import traceback
@@ -210,6 +209,39 @@ class DTCommandSetConfigurationAbs(metaclass=ABCMeta):
         requirements_fpath: str = os.path.join(command_set_metadir, "requirements.txt")
         return requirements_fpath if os.path.exists(requirements_fpath) else None
 
+    @classmethod
+    @abstractmethod
+    def version(cls, **_) -> Tuple[int, int, int]:
+        """
+        Version of this command set in the format (major, minor, patch).
+
+        :return:    A tuple of three integer numbers representing (major, minor, path)
+        """
+        raise NotImplementedError("Subclasses of 'DTCommandSetConfigurationAbs' must implement the function "
+                                  "version().")
+
+    @classmethod
+    @abstractmethod
+    def minimum_shell_version(cls, **_) -> Tuple[int, int, int]:
+        """
+        The minimum version of the shell neeeded for this command set to work properly.
+
+        :return:    A tuple of three integer numbers representing (major, minor, path)
+        """
+        raise NotImplementedError("Subclasses of 'DTCommandSetConfigurationAbs' must implement the function "
+                                  "minimum_shell_version().")
+
+    @classmethod
+    @abstractmethod
+    def maximum_shell_version(cls, **_) -> Tuple[int, int, int]:
+        """
+        The maximum version of the shell neeeded for this command set to work properly.
+
+        :return:    A tuple of three integer numbers representing (major, minor, path)
+        """
+        raise NotImplementedError("Subclasses of 'DTCommandSetConfigurationAbs' must implement the function "
+                                  "maximum_shell_version().")
+
 
 class DTCommandSetConfigurationDefault(DTCommandSetConfigurationAbs):
 
@@ -219,6 +251,18 @@ class DTCommandSetConfigurationDefault(DTCommandSetConfigurationAbs):
         The environment in which commands from this command set will run.
         """
         return Python3Environment()
+
+    @classmethod
+    def version(cls, **_) -> Tuple[int, int, int]:
+        return 0, 0, 0
+
+    @classmethod
+    def minimum_shell_version(cls, **_) -> Tuple[int, int, int]:
+        return 0, 0, 0
+
+    @classmethod
+    def maximum_shell_version(cls, **_) -> Tuple[int, int, int]:
+        return 99, 99, 99
 
 
 @dataclass
