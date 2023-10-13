@@ -34,9 +34,6 @@ class Python3Environment(ShellCommandEnvironmentAbs):
     def execute(self, shell, args: List[str]):
         from .shell import DTShell
         shell: DTShell
-        # ---
-        # re-import commands
-        shell.reload_commands(skeleton=False)
         # run shell
         known_exceptions = (InvalidEnvironment, CommandsLoadingException)
         try:
