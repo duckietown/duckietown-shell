@@ -1,5 +1,6 @@
 import dataclasses
 import os.path
+import time
 from typing import Optional, List, Dict, Union, Iterator, Tuple, Type
 
 import questionary
@@ -11,7 +12,7 @@ from .commands import CommandSet, CommandDescriptor
 from .commands.repository import CommandsRepository
 from .constants import DUCKIETOWN_TOKEN_URL, SHELL_LIB_DIR, DEFAULT_COMMAND_SET_REPOSITORY, \
     DEFAULT_PROFILES_DIR, DB_SECRETS, DB_SECRETS_DOCKER, DB_SETTINGS, DB_USER_COMMAND_SETS_REPOSITORIES, \
-    DB_PROFILES, KNOWN_DISTRIBUTIONS, SUGGESTED_DISTRIBUTION
+    DB_PROFILES, KNOWN_DISTRIBUTIONS, SUGGESTED_DISTRIBUTION, DB_UPDATES_CHECK
 from .database.database import DTShellDatabase, NOTSET, DTSerializable
 from .utils import safe_pathname, validator_token, yellow_bold, cli_style
 
@@ -152,6 +153,9 @@ class ShellProfile:
             if not db.contains(self.name):
                 db.set(self.name, self.path)
 
+        # updates check database
+        self.updates_check_db: DTShellDatabase[float] = self.database(DB_UPDATES_CHECK)
+
         # we always start with core commands that are embedded into the shell
         self.command_sets: List[CommandSet] = [
             CommandSet(
@@ -238,6 +242,19 @@ class ShellProfile:
         if cls is None:
             cls = DTShellDatabase
         return cls.open(name, location=self._databases_location)
+
+    def needs_update(self, key: str, period: float, default: bool = True) -> bool:
+        # read record
+        try:
+            last_time_checked: float = self.updates_check_db.get(key)
+        except DTShellDatabase.NotFound:
+            return default
+        # check time
+        return time.time() - last_time_checked > period
+
+    def mark_updated(self, key: str, when: float = None):
+        # update record
+        self.updates_check_db.set(key, when if when is not None else time.time())
 
     def configure(self):
         # make sure we have a distro for this profile
