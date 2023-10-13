@@ -13,6 +13,8 @@ from os.path import (
 )
 from typing import Type, List
 
+from dt_shell.constants import DTShellConstants
+
 from .. import logger
 from .commands import default_command_configuration, failed_to_load_command, DTCommandConfigurationAbs, \
     DTCommandAbs, CommandSet, DTCommandSetConfigurationAbs, default_commandset_configuration, \
@@ -25,8 +27,9 @@ def import_commandset_configuration(command_set: CommandSet) -> Type[DTCommandSe
     _configuration_file = _join(command_set.path, "__command_set__", "configuration.py")
     # import command set configuration
     if _exists(_configuration_file):
-        logger.debug(f"Importing configuration for command set '{command_set.name}' from "
-                     f"'{_configuration_file}'")
+        if DTShellConstants.VERBOSE:
+            logger.debug(f"Importing configuration for command set '{command_set.name}' from "
+                         f"'{_configuration_file}'")
         _configuration_sel: str = "__command_set__.configuration"
         # we temporarily add the path to the command set to PYTHONPATH
         old: List[str] = copy.deepcopy(sys.path)
@@ -62,8 +65,9 @@ def import_configuration(command_set: CommandSet, selector: str) -> Type[DTComma
         _command_sel: str = _relpath(_command_dir, command_set.path).strip("/").replace("/", ".")
         _configuration_sel: str = f"{_command_sel}.configuration"
         try:
-            logger.debug(f"Importing configuration for command '{_command_sel}' from "
-                         f"'{_configuration_file}'")
+            if DTShellConstants.VERBOSE:
+                logger.debug(f"Importing configuration for command '{_command_sel}' from "
+                             f"'{_configuration_file}'")
             configuration = importlib.import_module(_configuration_sel)
         except ShellNeedsUpdate as e:
             logger.warning(
@@ -96,7 +100,8 @@ def import_command(command_set: CommandSet, fpath: str) -> Type[DTCommandAbs]:
         _command_sel: str = _relpath(_command_dir, command_set.path).strip("/").replace("/", ".")
         _command_sel: str = f"{_command_sel}.command"
         try:
-            logger.debug(f"Importing command '{_command_sel}' from '{_dirname(fpath)}/'")
+            if DTShellConstants.VERBOSE:
+                logger.debug(f"Importing command '{_command_sel}' from '{_dirname(fpath)}/'")
             command = importlib.import_module(_command_sel)
         except ShellNeedsUpdate as e:
             logger.warning(

@@ -34,7 +34,7 @@ from .compatibility.migrations import \
     needs_migrate_token_dt1, migrate_token_dt1, \
     needs_migrate_secrets, migrate_secrets, mark_docker_credentials_migrated, \
     mark_token_dt1_migrated, mark_secrets_migrated, needs_migrations, mark_all_migrated, needs_migrate_distro
-from .constants import DNAME, KNOWN_DISTRIBUTIONS, SUGGESTED_DISTRIBUTION
+from .constants import DNAME, KNOWN_DISTRIBUTIONS, SUGGESTED_DISTRIBUTION, EMBEDDED_COMMAND_SET_NAME
 from .constants import DTShellConstants, IGNORE_ENVIRONMENTS, DB_SETTINGS, DB_PROFILES
 from .database import DTShellDatabase
 from .environments import ShellCommandEnvironmentAbs, DEFAULT_COMMAND_ENVIRONMENT
@@ -197,6 +197,7 @@ class DTShell(Cmd):
         # errors while loading end up in here
         self._errors_loading: List[str] = []
 
+        # add command set path to PYTHONPATH
         for cs in self.command_sets:
             for path in [cs.path, os.path.join(cs.path, "lib")]:
                 # add new path to PYTHONPATH for this session
@@ -622,7 +623,8 @@ class DTShell(Cmd):
         # update all command sets
         for cs in self.command_sets:
             if cs.leave_alone:
-                logger.warning(f"Will not update the command set '{cs.name}', it wants to be left alone.")
+                if not cs.name == EMBEDDED_COMMAND_SET_NAME:
+                    logger.warning(f"Will not update the command set '{cs.name}', it wants to be left alone.")
                 continue
             # update command set
             logger.info(f"Updating the command set '{cs.name}'...")

@@ -153,8 +153,12 @@ def run_cmd(cmd, print_output=False, suppress_errors=False):
     return stdout
 
 
-def parse_version(x):
+def parse_version(x: str):
     return tuple(int(_) for _ in x.split("."))
+
+
+def render_version(t: Tuple[int, int, int]):
+    return ".".join(str(_) for _ in t)
 
 
 def load_class(name: str, module: str, package: Optional[str] = None) -> Any:

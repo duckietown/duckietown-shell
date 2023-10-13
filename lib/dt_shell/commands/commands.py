@@ -202,6 +202,10 @@ class DTCommandSetConfigurationAbs(metaclass=ABCMeta):
         """
         File containing the list of dependency python projects needed by the commands in this command set.
         """
+        # no path => no requirements file
+        if cls.path is None:
+            return None
+        # return the path to the requirements file if it exists
         command_set_metadir: str = os.path.join(os.path.abspath(cls.path), "__command_set__")
         requirements_fpath: str = os.path.join(command_set_metadir, "requirements.txt")
         return requirements_fpath if os.path.exists(requirements_fpath) else None
@@ -249,7 +253,7 @@ class CommandSet:
 
     def __post_init__(self):
         from .importer import import_commandset_configuration
-        # load command configuration
+        # load command set configuration
         self.configuration: Type[DTCommandSetConfigurationAbs] = import_commandset_configuration(self)
         # load commands
         self.commands = self._find_commands()

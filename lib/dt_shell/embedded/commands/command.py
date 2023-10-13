@@ -1,3 +1,5 @@
+from dt_shell.constants import EMBEDDED_COMMAND_SET_NAME
+
 from dt_shell import DTCommandAbs, DTShell
 
 
@@ -8,12 +10,12 @@ class DTCommand(DTCommandAbs):
     def command(shell: DTShell, args):
         # show core commands
         print("\nCore commands:")
-        for cmd in shell.command_set("embedded").commands.keys():
+        for cmd in shell.command_set(EMBEDDED_COMMAND_SET_NAME).commands.keys():
             print("\t%s" % cmd)
 
         # show commands grouped by command sets
         for cs in shell.command_sets:
-            if cs.name == "embedded":
+            if cs.name == EMBEDDED_COMMAND_SET_NAME:
                 continue
             print(f"\nCommand set '{cs.name}':")
             for cmd in cs.commands.keys():
