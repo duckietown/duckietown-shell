@@ -429,6 +429,10 @@ class DTShell(Cmd):
         # rediscover commands
         self.commands = {}
         for cs in self.command_sets:
+            # run command set init script
+            if not skeleton:
+                cs.init()
+
             # load commands from disk
             for cmd, subcmds in cs.commands.items():
                 # noinspection PyTypeChecker

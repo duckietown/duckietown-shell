@@ -16,10 +16,9 @@ from typing import Type, List
 from dt_shell.constants import DTShellConstants
 
 from .. import logger
-from .commands import default_command_configuration, failed_to_load_command, DTCommandConfigurationAbs, \
-    DTCommandAbs, CommandSet, DTCommandSetConfigurationAbs, default_commandset_configuration, \
-    CommandDescriptor
 from ..exceptions import ShellNeedsUpdate, CommandsLoadingException
+from .commands import default_command_configuration, failed_to_load_command, DTCommandConfigurationAbs, \
+    DTCommandAbs, CommandSet, DTCommandSetConfigurationAbs, default_commandset_configuration
 
 
 def import_commandset_configuration(command_set: CommandSet) -> Type[DTCommandSetConfigurationAbs]:
@@ -34,13 +33,16 @@ def import_commandset_configuration(command_set: CommandSet) -> Type[DTCommandSe
         # we temporarily add the path to the command set to PYTHONPATH
         old: List[str] = copy.deepcopy(sys.path)
         sys.path.insert(0, os.path.abspath(command_set.path))
-        # import/refresh the configuration module
-        configuration = importlib.import_module(_configuration_sel)
-        importlib.reload(configuration)
-        # make sure we got the right one
-        assert configuration.__file__ == _configuration_file
-        # restore PYTHONPATH
-        sys.path = old
+        try:
+            # import/refresh the configuration module
+            configuration = importlib.import_module(_configuration_sel)
+            if configuration.__file__ != _configuration_file:
+                importlib.reload(configuration)
+            # make sure we got the right one
+            assert configuration.__file__ == _configuration_file
+        finally:
+            # restore PYTHONPATH
+            sys.path = old
 
         DTCommandSetConfiguration: Type[DTCommandSetConfigurationAbs] = \
             configuration.DTCommandSetConfiguration
@@ -54,6 +56,31 @@ def import_commandset_configuration(command_set: CommandSet) -> Type[DTCommandSe
         return DTCommandSetConfiguration
     else:
         return default_commandset_configuration.DTCommandSetConfiguration
+
+
+def import_commandset_init(command_set: CommandSet):
+    # constants
+    _init_file = _join(command_set.path, "__command_set__", "init.py")
+    # skip if there is no init file for this command set
+    if not _exists(_init_file):
+        return
+    # import command set init
+    if DTShellConstants.VERBOSE:
+        logger.debug(f"Executing init script for command set '{command_set.name}' from '{_init_file}'")
+    _init_sel: str = "__command_set__.init"
+    # we temporarily add the path to the command set to PYTHONPATH
+    old: List[str] = copy.deepcopy(sys.path)
+    sys.path.insert(0, os.path.abspath(command_set.path))
+    # import/refresh the init module
+    try:
+        init = importlib.import_module(_init_sel)
+        if init.__file__ != _init_file:
+            importlib.reload(init)
+        # make sure we got the right one
+        assert init.__file__ == _init_file
+    finally:
+        # restore PYTHONPATH
+        sys.path = old
 
 
 def import_configuration(command_set: CommandSet, selector: str) -> Type[DTCommandConfigurationAbs]:

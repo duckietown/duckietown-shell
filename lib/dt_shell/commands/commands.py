@@ -302,6 +302,11 @@ class CommandSet:
         # load commands
         self.commands = self._find_commands()
 
+    def init(self):
+        from .importer import import_commandset_init
+        # load command set init script
+        import_commandset_init(self)
+
     @property
     def version(self) -> Optional[str]:
         # embedded command set
