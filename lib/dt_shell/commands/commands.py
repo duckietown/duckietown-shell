@@ -161,14 +161,14 @@ class FailedToLoadCommand(NoOpCommand):
 class DTCommandConfigurationAbs(metaclass=ABCMeta):
 
     @classmethod
-    def environment(cls, **kwargs) -> Optional[ShellCommandEnvironmentAbs]:
+    def environment(cls, *args, **kwargs) -> Optional[ShellCommandEnvironmentAbs]:
         """
         The environment in which this command will run.
         """
         return None
 
     @classmethod
-    def parser(cls, **kwargs) -> Optional[argparse.ArgumentParser]:
+    def parser(cls, *args, **kwargs) -> Optional[argparse.ArgumentParser]:
         """
         The parser this command will use.
         """
@@ -190,14 +190,14 @@ class DTCommandSetConfigurationAbs(metaclass=ABCMeta):
     path: str = None
 
     @classmethod
-    def default_environment(cls, **kwargs) -> Optional[ShellCommandEnvironmentAbs]:
+    def default_environment(cls, *args, **kwargs) -> Optional[ShellCommandEnvironmentAbs]:
         """
         The environment in which the commands in this set will run.
         """
         return None
 
     @classmethod
-    def requirements(cls, **_) -> Optional[str]:
+    def requirements(cls, *args, **kwargs) -> Optional[str]:
         """
         File containing the list of dependency python projects needed by the commands in this command set.
         """
@@ -211,7 +211,7 @@ class DTCommandSetConfigurationAbs(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def version(cls, **_) -> Tuple[int, int, int]:
+    def version(cls, *args, **kwargs) -> Tuple[int, int, int]:
         """
         Version of this command set in the format (major, minor, patch).
 
@@ -222,7 +222,7 @@ class DTCommandSetConfigurationAbs(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def minimum_shell_version(cls, **_) -> Tuple[int, int, int]:
+    def minimum_shell_version(cls, *args, **kwargs) -> Tuple[int, int, int]:
         """
         The minimum version of the shell neeeded for this command set to work properly.
 
@@ -233,7 +233,7 @@ class DTCommandSetConfigurationAbs(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def maximum_shell_version(cls, **_) -> Tuple[int, int, int]:
+    def maximum_shell_version(cls, *args, **kwargs) -> Tuple[int, int, int]:
         """
         The maximum version of the shell neeeded for this command set to work properly.
 
@@ -246,22 +246,22 @@ class DTCommandSetConfigurationAbs(metaclass=ABCMeta):
 class DTCommandSetConfigurationDefault(DTCommandSetConfigurationAbs):
 
     @classmethod
-    def default_environment(cls, **kwargs) -> Optional[ShellCommandEnvironmentAbs]:
+    def default_environment(cls, *args, **kwargs) -> Optional[ShellCommandEnvironmentAbs]:
         """
         The environment in which commands from this command set will run.
         """
         return Python3Environment()
 
     @classmethod
-    def version(cls, **_) -> Tuple[int, int, int]:
+    def version(cls, *args, **kwargs) -> Tuple[int, int, int]:
         return 0, 0, 0
 
     @classmethod
-    def minimum_shell_version(cls, **_) -> Tuple[int, int, int]:
+    def minimum_shell_version(cls, *args, **kwargs) -> Tuple[int, int, int]:
         return 0, 0, 0
 
     @classmethod
-    def maximum_shell_version(cls, **_) -> Tuple[int, int, int]:
+    def maximum_shell_version(cls, *args, **kwargs) -> Tuple[int, int, int]:
         return 99, 99, 99
 
 
