@@ -184,6 +184,7 @@ class ShellProfile:
                     leave_alone=True,
                 )
             )
+            # TODO: this is where we update the profile.distro by taking the branch from the repository but only for this session
         else:
             profile_command_sets_dir: str = os.path.join(self.path, "commands")
             # add the default 'duckietown' command set
