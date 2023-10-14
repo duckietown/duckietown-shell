@@ -28,7 +28,6 @@ distro = 'daffy'
 shell_version = get_version(filename='lib/dt_shell/__init__.py')
 
 shell_requires = [
-    "argparse>=1.4.0,<2",
     "termcolor>=2.3.0,<3",
     "requests>=2.31.0,<3",
     # force pyyaml away from specific versions: https://github.com/yaml/pyyaml/issues/724
