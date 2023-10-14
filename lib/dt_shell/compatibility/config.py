@@ -24,14 +24,12 @@ def get_shell_config_default() -> ShellConfig:
     )
 
 
-def read_shell_config() -> ShellConfig:
-    import dt_shell
-    shell: dt_shell.DTShell = dt_shell.shell
-    # ---
+def read_shell_config(shell) -> ShellConfig:
     global _instance
     if _instance is None:
         docker_credentials: dict = {
-            registry: credentials for registry, credentials in shell.profile.secrets.docker_credentials.items()
+            registry: credentials
+            for registry, credentials in shell.profile.secrets.docker_credentials.items()
         }
         _instance = ShellConfig(
             token_dt1=shell.profile.secrets.dt1_token,

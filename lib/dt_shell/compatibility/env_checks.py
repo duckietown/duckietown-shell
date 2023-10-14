@@ -16,3 +16,12 @@
 def check_docker_environment():
     from dt_shell.checks.environment import check_docker_environment
     return check_docker_environment()
+
+
+# used by the following commands files:
+#
+#   - build_utils/command.py
+#   - chalenges/command.py
+#
+def check_package_version(*args, **kwargs):
+    pass
