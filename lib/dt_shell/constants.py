@@ -13,7 +13,7 @@ DEFAULT_ROOT = os.path.expanduser("~/.duckietown/shell/")
 class Distro:
     name: str
     end_of_life: Optional[datetime.date] = None
-    staging: bool = True
+    staging: bool = False
 
     @property
     def end_of_life_fmt(self, fmt: str = "%d %B %Y") -> str:
