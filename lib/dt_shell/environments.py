@@ -10,7 +10,8 @@ from typing import Optional, List, Dict
 from dt_shell_cli.utils import print_debug_info
 
 from . import logger
-from .exceptions import ShellInitException, InvalidEnvironment, CommandsLoadingException, UserError
+from .exceptions import ShellInitException, InvalidEnvironment, CommandsLoadingException, UserError, \
+    UserAborted
 from .constants import SHELL_CLI_LIB_DIR, SHELL_REQUIREMENTS_LIST, DTShellConstants
 from .database.utils import InstalledDependenciesDatabase
 from .logging import dts_print
@@ -52,7 +53,7 @@ class Python3Environment(ShellCommandEnvironmentAbs):
             sys.exit(1)
         except SystemExit:
             raise
-        except KeyboardInterrupt:
+        except UserAborted:
             dts_print("User aborted operation.")
             pass
         except BaseException:

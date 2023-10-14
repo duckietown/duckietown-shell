@@ -45,9 +45,9 @@ def dts():
     from dt_shell.shell import get_cli_options
     from dt_shell.commands import CommandDescriptor
     from dt_shell.environments import ShellCommandEnvironmentAbs
-    from dt_shell.exceptions import CommandNotFound, ShellInitException
+    from dt_shell.exceptions import CommandNotFound, ShellInitException, UserAborted
     from dt_shell.utils import replace_spaces
-    from dt_shell import DTShell, dtslogger, constants
+    from dt_shell import DTShell, dtslogger
 
     # make sure we are not running as sudo
     abort_if_running_with_sudo()
@@ -78,7 +78,7 @@ def dts():
             banner=True,
             billboard=True
         )
-    except KeyboardInterrupt:
+    except UserAborted:
         dts_print("User aborted operation.")
         return
 

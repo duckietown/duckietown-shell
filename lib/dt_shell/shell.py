@@ -33,12 +33,12 @@ from .compatibility.migrations import \
     needs_migrate_docker_credentials, migrate_docker_credentials, \
     needs_migrate_token_dt1, migrate_token_dt1, \
     needs_migrate_secrets, migrate_secrets, mark_docker_credentials_migrated, \
-    mark_token_dt1_migrated, mark_secrets_migrated, needs_migrations, mark_all_migrated, needs_migrate_distro
+    mark_token_dt1_migrated, mark_secrets_migrated, needs_migrations, mark_all_migrated
 from .constants import DNAME, KNOWN_DISTRIBUTIONS, SUGGESTED_DISTRIBUTION, EMBEDDED_COMMAND_SET_NAME
 from .constants import DTShellConstants, IGNORE_ENVIRONMENTS, DB_SETTINGS, DB_PROFILES
 from .database import DTShellDatabase
 from .environments import ShellCommandEnvironmentAbs, DEFAULT_COMMAND_ENVIRONMENT
-from .exceptions import UserError, NotFound, CommandNotFound, CommandsLoadingException
+from .exceptions import UserError, NotFound, CommandNotFound, CommandsLoadingException, UserAborted
 from .logging import dts_print
 from .profile import ShellProfile
 from .utils import text_justify, text_distribute, cli_style, indent_block
@@ -512,7 +512,7 @@ class DTShell(Cmd):
                     klass = import_command(command_set, descriptor.path)
                 except UserError:
                     raise
-                except KeyboardInterrupt:
+                except UserAborted:
                     raise
                 except BaseException:
                     se = traceback.format_exc()

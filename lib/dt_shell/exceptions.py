@@ -21,6 +21,11 @@ class UserError(Exception):
     pass
 
 
+class UserAborted(KeyboardInterrupt):
+    """the user interrupted the execution"""
+    pass
+
+
 class InvalidConfig(Exception):
     pass
 
