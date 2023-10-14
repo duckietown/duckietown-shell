@@ -57,6 +57,11 @@ def dts():
     cli_arguments = sys.argv[1:]
     cli_options, arguments = get_cli_options(cli_arguments)
 
+    # perform complete
+    if cli_options.complete:
+        complete()
+        exit()
+
     # propagate options to the constants
     DTShellConstants.DEBUG = cli_options.debug
     DTShellConstants.VERBOSE = cli_options.verbose
@@ -133,6 +138,35 @@ def dts():
         except ShellInitException:
             logger.error("An error occurred, the reason for the error should be printed above.")
             exit(99)
+
+
+def complete():
+    from dt_shell import DTShell
+
+    try:
+        shell = DTShell(
+            skeleton=True,
+            readonly=True,
+            banner=False,
+            billboard=False
+        )
+    except:
+        exit()
+
+    def do_complete(comp_cword: int, *comp_words: str):
+        comp_line: str = " ".join(comp_words[1:])
+        comp_word: str = comp_words[int(comp_cword)]
+        root_cmd: str = comp_words[1]
+        if root_cmd in shell.commands:
+            complete_fcn = getattr(shell, f"complete_{root_cmd}")
+            return complete_fcn(comp_word, comp_line, 0, 0)
+        else:
+            items = shell.commands.keys()
+            return (item for item in items if item.startswith(comp_word))
+
+    sys.stdout.write(" ".join(do_complete(*sys.argv[2:])))
+    sys.stdout.flush()
+    exit(0)
 
 
 if __name__ == '__main__':

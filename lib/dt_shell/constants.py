@@ -7,6 +7,7 @@ from typing import Optional, List
 DEBUG = False
 DNAME = "Duckietown Shell"
 DEFAULT_ROOT = os.path.expanduser("~/.duckietown/shell/")
+BASH_COMPLETION_DIR = os.path.expanduser("~/.local/share/bash-completion/completions")
 
 
 @dataclasses.dataclass

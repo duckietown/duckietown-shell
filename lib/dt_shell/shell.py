@@ -41,7 +41,7 @@ from .environments import ShellCommandEnvironmentAbs, DEFAULT_COMMAND_ENVIRONMEN
 from .exceptions import UserError, NotFound, CommandNotFound, CommandsLoadingException, UserAborted
 from .logging import dts_print
 from .profile import ShellProfile
-from .utils import text_justify, text_distribute, cli_style, indent_block
+from .utils import text_justify, text_distribute, cli_style, indent_block, ensure_bash_completion_installed
 
 BILLBOARDS_VERSION: str = "v1"
 
@@ -54,6 +54,7 @@ class CLIOptions:
     debug: bool = False
     verbose: bool = False
     quiet: bool = False
+    complete: bool = False
 
 
 def get_cli_options(args: List[str]) -> Tuple[CLIOptions, List[str]]:
@@ -61,8 +62,16 @@ def get_cli_options(args: List[str]) -> Tuple[CLIOptions, List[str]]:
 
     if args and not args[0].startswith("-"):
         return CLIOptions(), args
-    parser = argparse.ArgumentParser()
 
+    # find first non-option word
+    i: int = 0
+    for w in args:
+        if w.startswith("-"):
+            i += 1
+        else:
+            break
+
+    parser = argparse.ArgumentParser()
     parser.add_argument(
         "--debug",
         action="store_true",
@@ -82,9 +91,17 @@ def get_cli_options(args: List[str]) -> Tuple[CLIOptions, List[str]]:
         help="Quiet execution"
     )
 
+    if "--complete" in args[:i]:
+        parser.add_argument(
+            "--complete",
+            action="store_true",
+            default=False,
+            help="Execute command completion",
+        )
+
     parsed, others = parser.parse_known_args(args)
 
-    return CLIOptions(debug=parsed.debug, verbose=parsed.verbose, quiet=parsed.quiet), others
+    return CLIOptions(**parsed.__dict__), others
 
 
 prompt = "dts> "
@@ -179,6 +196,9 @@ class DTShell(Cmd):
         if banner:
             self._show_banner(profile=self._profile)
 
+        # make sure the bash completion script is installed
+        ensure_bash_completion_installed()
+
         # check if we configure the shell by migrating an old profile
         self._attempt_migrations()
 
@@ -237,7 +257,7 @@ class DTShell(Cmd):
 
         # make sure nobody is importing command implementations when in skeleton mode
         if skeleton:
-            #TODO: test this
+            # TODO: test this
             terminate: bool = False
             for subclass in DTCommandAbs.__subclasses__():
                 if subclass in [DTCommandPlaceholder, NoOpCommand]:

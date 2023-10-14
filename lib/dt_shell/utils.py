@@ -1,5 +1,8 @@
 import json
+import os
+import platform
 import re
+import shutil
 import subprocess
 import importlib
 import traceback
@@ -15,6 +18,7 @@ import dt_authentication
 from dt_authentication import DuckietownToken
 
 from dt_shell_cli import logger
+from .constants import BASH_COMPLETION_DIR, SHELL_LIB_DIR, DTShellConstants
 from .exceptions import ShellInitException, RunCommandException
 
 cli_style = Style([
@@ -246,3 +250,27 @@ def pretty_json(data: Any, indent_len: int = 0) -> str:
 def pretty_exc(exc: Exception, indent_len: int = 0) -> str:
     return indent_block(
         ''.join(traceback.TracebackException.from_exception(exc).format()), indent_len=indent_len)
+
+
+def ensure_bash_completion_installed():
+    import dt_shell
+    from dt_shell.database import DTShellDatabase
+    if platform.system() in ["Linux", "Darwin"]:
+        logger.info("Installing bash-completion script...")
+        db: DTShellDatabase = DTShellDatabase.open("bash-completion-install")
+        key: str = f"dts-comletion-{dt_shell.__version__}"
+        if not db.contains(key):
+            src: str = os.path.join(SHELL_LIB_DIR, "assets", "dts-completion.bash")
+            dst: str = os.path.join(BASH_COMPLETION_DIR, "dts")
+            try:
+                shutil.copyfile(src, dst)
+            except Exception:
+                logger.warning("An error occurred while attempting to install the bash-completion script")
+                if DTShellConstants.VERBOSE:
+                    traceback.print_last()
+                    return
+            # mark it as installed in the database
+            db.set(key, True)
+            logger.info("Bash-completion script successfully installed")
+        else:
+            logger.debug("Bash-completion script marked as already installed")
