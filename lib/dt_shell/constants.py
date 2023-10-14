@@ -4,10 +4,6 @@ import datetime
 import os
 from typing import Optional, List
 
-import termcolor
-
-from . import __version__
-
 DEBUG = False
 DNAME = "Duckietown Shell"
 DEFAULT_ROOT = os.path.expanduser("~/.duckietown/shell/")
@@ -17,6 +13,7 @@ DEFAULT_ROOT = os.path.expanduser("~/.duckietown/shell/")
 class Distro:
     name: str
     end_of_life: Optional[datetime.date] = None
+    staging: bool = True
 
     @property
     def end_of_life_fmt(self, fmt: str = "%d %B %Y") -> str:
@@ -45,8 +42,12 @@ IGNORE_ENVIRONMENTS: bool = os.environ.get("IGNORE_ENVIRONMENTS", "0").lower() i
 
 # distributions
 KNOWN_DISTRIBUTIONS: List[Distro] = [
+    # production
     Distro("daffy", end_of_life=datetime.date(2024, 3, 31)),
     Distro("ente"),
+    # staging
+    Distro("daffy-staging", end_of_life=datetime.date(2024, 3, 31), staging=True),
+    Distro("ente-staging", staging=True),
 ]
 SUGGESTED_DISTRIBUTION: str = "ente"
 

@@ -310,6 +310,8 @@ class ShellProfile:
                 print("You need to choose the distribution you want to work with in this profile.")
                 distros: List[Choice] = []
                 for distro in KNOWN_DISTRIBUTIONS:
+                    if distro.staging:
+                        continue
                     eol: str = "" if distro.end_of_life is None else \
                         f"(end of life: {distro.end_of_life_fmt})"
                     label = [("class:choice", distro.name), ("class:disabled", f"  {eol}")]
