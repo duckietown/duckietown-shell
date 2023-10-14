@@ -1,7 +1,7 @@
 import os
 import sys
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 def get_version(filename):
@@ -73,14 +73,7 @@ setup(
         'dt_shell': 'lib/dt_shell',
         'dt_shell_cli': 'lib/dt_shell_cli',
     },
-    packages=[
-        'dt_shell',
-        'dt_shell.checks',
-        'dt_shell.commands',
-        'dt_shell.compatibility',
-        'dt_shell.database',
-        'dt_shell_cli'
-    ],
+    packages=find_packages("lib", exclude=["dt_shell_tests"]),
     # we want the python 2 version to download it, and then exit with an error
     # python_requires='>=3.6',
 
