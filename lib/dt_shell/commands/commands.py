@@ -27,6 +27,7 @@ class DTCommandAbs(metaclass=ABCMeta):
     name: str = None
     level: int = None
     help: str = None
+    parser: Optional[argparse.ArgumentParser] = None
     commands: CommandsTree = None
     descriptor: 'CommandDescriptor' = None
     fake: bool = False

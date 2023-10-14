@@ -535,9 +535,11 @@ class DTShell(Cmd):
                 base = getattr(base, p)
             setattr(base, command, klass)
 
-        # initialize list of subcommands
+        # give command its own info
         klass.name = command
         klass.level = lvl
+        klass.parser = configuration.parser()
+        # initialize list of subcommands
         klass.commands = {}
 
         # attach first-level commands to the shell
