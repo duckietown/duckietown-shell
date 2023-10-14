@@ -53,7 +53,7 @@ class Python3Environment(ShellCommandEnvironmentAbs):
             sys.exit(1)
         except SystemExit:
             raise
-        except UserAborted:
+        except (UserAborted, KeyboardInterrupt):
             dts_print("User aborted operation.")
             pass
         except BaseException:

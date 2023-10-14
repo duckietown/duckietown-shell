@@ -78,7 +78,7 @@ def dts():
             banner=True,
             billboard=True
         )
-    except UserAborted:
+    except (UserAborted, KeyboardInterrupt):
         dts_print("User aborted operation.")
         return
 

@@ -512,7 +512,7 @@ class DTShell(Cmd):
                     klass = import_command(command_set, descriptor.path)
                 except UserError:
                     raise
-                except UserAborted:
+                except (UserAborted, KeyboardInterrupt):
                     raise
                 except BaseException:
                     se = traceback.format_exc()
