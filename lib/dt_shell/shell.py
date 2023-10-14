@@ -145,7 +145,12 @@ class DTShell(Cmd):
     # tree of commands once loaded
     include: types.SimpleNamespace
 
-    def __init__(self, skeleton: bool = False, readonly: bool = False, banner: bool = True, billboard: bool = True):
+    def __init__(self,
+                 skeleton: bool = False,
+                 readonly: bool = False,
+                 banner: bool = True,
+                 billboard: bool = True):
+        # namespace will contain the map to the improted commands
         DTShell.include = types.SimpleNamespace()
         self._event_handlers: Dict[EventType, List[Callable]] = {
             EventType.START: [],
@@ -414,6 +419,7 @@ class DTShell(Cmd):
             migrate: bool = True
             if not asked_confirmation:
                 migrate = _ask_confirmation()
+                # noinspection PyUnusedLocal
                 asked_confirmation = True
             # migrate?
             if migrate:
@@ -514,11 +520,46 @@ class DTShell(Cmd):
                     raise
                 except (UserAborted, KeyboardInterrupt):
                     raise
+                except ModuleNotFoundError:
+                    lines: List[str] = []
+                    cs_path: str = os.path.abspath(os.path.realpath(command_set.path))
+                    # check PYTHONPATH
+                    found: bool = False
+                    lines += ["\tPYTHONPATH: ["]
+                    for p in sys.path:
+                        p_path: str = os.path.abspath(os.path.realpath(p))
+                        if p_path == cs_path:
+                            found = True
+                        lines += [f"\t\t'{p_path}'"]
+                    lines += ["\t]"]
+                    lines += [f"\t- dir[{cs_path}] in PYTHONPATH: {found}"]
+                    # module already loaded?
+                    m: str = ""
+                    for p in selector.split("."):
+                        m = f"{m}.{p}".lstrip(".")
+                        mod = sys.modules.get(m, None)
+                        if mod:
+                            lines.append(f"\t- module[{m}] already loaded: True; {dir(mod)}")
+                        else:
+                            lines.append(f"\t- module[{m}] already loaded: False")
+
+                    # check all __init__ files
+                    fpath: str = os.path.join(cs_path)
+                    for p in selector.split("."):
+                        fpath = os.path.join(fpath, p)
+                        init_fpath = os.path.join(fpath, "__init__.py")
+                        lines.append(f"\t- file[{init_fpath}] exists: {os.path.isfile(init_fpath)}")
+                    # compile details
+                    details: str = "\n".join(lines)
+                    msg = f"The command '{selector.replace('.', '/')}' could not be imported." \
+                          f"\n\n{details}\n\n" \
+                          f"{traceback.format_exc()}"
+                    self._errors_loading.append(msg)
                 except BaseException:
                     se = traceback.format_exc()
                     msg = (
                         f"Cannot load command class {descriptor.selector}.command.DTCommand "
-                        f"(package={package}, command={command}): {se}"
+                        f"(package={package}, command={command}):\n\n{se}"
                     )
                     self._errors_loading.append(msg)
                     return
@@ -544,7 +585,6 @@ class DTShell(Cmd):
 
         # attach first-level commands to the shell
         if lvl == 0:
-            # TODO: this is where we check and make sure we don't replace existing commands with new ones with the same names (useful to avoid old versions of duckietown-shell-commands replace core commands that are now embedded)
             do_command = getattr(klass, "do_command")
             get_command = getattr(klass, "get_command")
             complete_command = getattr(klass, "complete_command")

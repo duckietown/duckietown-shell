@@ -90,7 +90,8 @@ class VirtualPython3Environment(ShellCommandEnvironmentAbs):
         interpreter_fpath: str = os.path.join(venv_dir, "bin", "python3")
 
         # make and configure env path if it does not exist
-        # TODO: this is a place where a --hard-reset flag would ignore the fact that the venv already exists and make a new one
+        # TODO: this is a place where a --hard-reset flag would ignore the fact that the venv already exists
+        #  and make a new one
         if not os.path.exists(interpreter_fpath):
             if venv_leave_alone:
                 msg: str = f"The custom Virtual Environment path '{venv_dir}' was given but no virtual " \

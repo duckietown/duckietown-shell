@@ -1,13 +1,11 @@
 import logging
 import os
 import sys
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 
 # NOTE: DO NOT IMPORT DT_SHELL HERE
 from . import logger
 
-
-# TODO: separate the common part between this file and main.py and avoid duplication of code
 
 def dts():
     # make sure we have not imported dt_shell yet
