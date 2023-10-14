@@ -188,8 +188,7 @@ class ShellProfile:
             profile_command_sets_dir: str = os.path.join(self.path, "commands")
             # add the default 'duckietown' command set
             repository: CommandsRepository = CommandsRepository(
-                **DEFAULT_COMMAND_SET_REPOSITORY,
-                branch=self.distro,
+                **{**DEFAULT_COMMAND_SET_REPOSITORY, "branch": self.distro}
             )
             self.command_sets.append(
                 CommandSet(
