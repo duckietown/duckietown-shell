@@ -35,8 +35,6 @@ class DTShellConstants:
 CHECK_CMDS_UPDATE_MINS = 5
 
 SHELL_LIB_DIR = os.path.dirname(os.path.abspath(__file__))
-SHELL_CLI_LIB_DIR = os.path.dirname(os.path.abspath(__file__))
-
 DEFAULT_PROFILES_DIR = os.path.join(DEFAULT_ROOT, "profiles")
 
 IGNORE_ENVIRONMENTS: bool = os.environ.get("IGNORE_ENVIRONMENTS", "0").lower() in ["1", "y", "yes"]

@@ -12,7 +12,7 @@ from dt_shell_cli.utils import print_debug_info
 from . import logger
 from .exceptions import ShellInitException, InvalidEnvironment, CommandsLoadingException, UserError, \
     UserAborted
-from .constants import SHELL_CLI_LIB_DIR, SHELL_REQUIREMENTS_LIST, DTShellConstants
+from .constants import SHELL_LIB_DIR, SHELL_REQUIREMENTS_LIST, DTShellConstants
 from .database.utils import InstalledDependenciesDatabase
 from .logging import dts_print
 from .utils import pip_install, replace_spaces
@@ -111,7 +111,7 @@ class VirtualPython3Environment(ShellCommandEnvironmentAbs):
                 prompt="dts"
             )
             # install pip
-            get_pip_fpath: str = os.path.join(SHELL_CLI_LIB_DIR, "assets", "get-pip.py")
+            get_pip_fpath: str = os.path.join(SHELL_LIB_DIR, "assets", "get-pip.py")
             assert os.path.exists(get_pip_fpath)
             logger.info(f"Installing pip...")
             try:
