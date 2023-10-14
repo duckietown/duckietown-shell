@@ -10,6 +10,7 @@ __path__ += [COMPATIBILITY_DIR]
 
 from .compatibility import duckietown_tokens
 from .compatibility import OtherVersions
+from .compatibility.env_checks import check_package_version
 # <=== COMPATIBILITY
 
 

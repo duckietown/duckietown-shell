@@ -38,10 +38,6 @@ def apply(shell):
     def get_commands_version() -> str:
         return shell.profile.name
 
-    @property
-    def shell_config() -> ShellConfig:
-        return read_shell_config()
-
     def save_config():
         # TODO: implement this by taking the info from .config._instance and updating shell.secrets...
         pass
@@ -49,6 +45,6 @@ def apply(shell):
     # add methods to the given shell instance
     shell.get_dt1_token = get_dt1_token
     shell.get_commands_version = get_commands_version
-    shell.shell_config = shell_config
+    shell.shell_config = read_shell_config(shell)
     shell.save_config = save_config
     shell.local_commands_info = SimpleNamespace(leave_alone=False)
