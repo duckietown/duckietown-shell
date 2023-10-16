@@ -6,6 +6,7 @@ from typing import Optional, Dict
 # NOTE: DO NOT IMPORT DT_SHELL HERE
 
 from . import logger
+from .utils import print_debug_info
 
 
 def dts():
@@ -41,7 +42,7 @@ def dts():
     from dt_shell.shell import get_cli_options
     from dt_shell.commands import CommandDescriptor
     from dt_shell.environments import ShellCommandEnvironmentAbs
-    from dt_shell.exceptions import CommandNotFound, ShellInitException, UserAborted
+    from dt_shell.exceptions import CommandNotFound, ShellInitException, UserAborted, UserError
     from dt_shell.utils import replace_spaces
     from dt_shell import DTShell, dtslogger
 
@@ -94,6 +95,11 @@ def dts():
     except (UserAborted, KeyboardInterrupt):
         dts_print("User aborted operation.")
         return
+    except UserError as e:
+        msg = str(e)
+        dts_print(msg, "red")
+        print_debug_info()
+        sys.exit(1)
 
     # if we don't have a profile, we bail
     if shell.profile is None:
