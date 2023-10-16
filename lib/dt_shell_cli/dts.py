@@ -1,9 +1,10 @@
 import logging
 import os
 import sys
-from typing import Optional, Dict, List
+from typing import Optional, Dict
 
 # NOTE: DO NOT IMPORT DT_SHELL HERE
+
 from . import logger
 
 
@@ -30,9 +31,6 @@ def dts():
         if not os.path.exists(dt_shell_init) or not os.path.isfile(dt_shell_init):
             logger.fatal(f"The given directory '{dt_shell_dir}' is not a Python package.\n")
             sys.exit(2)
-        # notify user of their choice
-        logger.info(f"Using duckietown-shell library from '{DTSHELL_LIB}' as instructed by the environment "
-                    f"variable DTSHELL_LIB.")
         # give the given path the highest priority
         sys.path.insert(0, DTSHELL_LIB)
 
@@ -47,20 +45,32 @@ def dts():
     from dt_shell.utils import replace_spaces
     from dt_shell import DTShell, dtslogger
 
-    # make sure we are not running as sudo
-    abort_if_running_with_sudo()
-
-    # configure logger
-    setup_logging_color()
-
     # parse shell options (anything between `dts` and the first word that does not start with --)
     cli_arguments = sys.argv[1:]
     cli_options, arguments = get_cli_options(cli_arguments)
 
     # perform complete
     if cli_options.complete:
+        # disable loggers
+        # NOTE: comment these two lines if you want to test what happens when --complete is run. You might
+        #       discover that some things that should not happen in readonly mode do indeed happen.
+        #       See DTSW-4277 for an example.
+        dtslogger.setLevel(logging.CRITICAL + 1)
+        logger.setLevel(logging.CRITICAL + 1)
+        # ---
         complete()
         exit()
+
+    # notify user of their choice
+    if DTSHELL_LIB:
+        logger.info(f"Using duckietown-shell library from '{DTSHELL_LIB}' as instructed by the environment "
+                    f"variable DTSHELL_LIB.")
+
+    # make sure we are not running as sudo
+    abort_if_running_with_sudo()
+
+    # configure logger
+    setup_logging_color()
 
     # propagate options to the constants
     DTShellConstants.DEBUG = cli_options.debug

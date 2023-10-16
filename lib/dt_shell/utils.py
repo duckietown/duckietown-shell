@@ -256,10 +256,10 @@ def ensure_bash_completion_installed():
     import dt_shell
     from dt_shell.database import DTShellDatabase
     if platform.system() in ["Linux", "Darwin"]:
-        logger.info("Installing bash-completion script...")
         db: DTShellDatabase = DTShellDatabase.open("bash-completion-install")
         key: str = f"dts-comletion-{dt_shell.__version__}"
         if not db.contains(key):
+            logger.info("Installing bash-completion script...")
             src: str = os.path.join(SHELL_LIB_DIR, "assets", "dts-completion.bash")
             dst: str = os.path.join(BASH_COMPLETION_DIR, "dts")
             try:

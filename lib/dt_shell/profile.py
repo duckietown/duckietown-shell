@@ -17,6 +17,7 @@ from .constants import DUCKIETOWN_TOKEN_URL, SHELL_LIB_DIR, DEFAULT_COMMAND_SET_
 from .database.database import DTShellDatabase, NOTSET, DTSerializable
 from .utils import safe_pathname, validator_token, yellow_bold, cli_style, parse_version, render_version, \
     indent_block
+from .exceptions import ConfigNotPresent
 
 TupleVersion = Tuple[int, int, int]
 
@@ -293,9 +294,11 @@ class ShellProfile:
         # update record
         self.updates_check_db.set(key, when if when is not None else time.time())
 
-    def configure(self):
+    def configure(self, readonly: bool = False):
         # make sure we have a distro for this profile
         if self.distro is None:
+            if readonly:
+                raise ConfigNotPresent()
             # see if we can find the distro ourselves
             matched: bool = False
             for distro in KNOWN_DISTRIBUTIONS:
@@ -329,6 +332,8 @@ class ShellProfile:
 
         # make sure we have a token for this profile
         if self.secrets.dt2_token is None:
+            if readonly:
+                raise ConfigNotPresent()
             print()
             print(f"The Duckietown Shell needs a Duckietown Token to work properly. "
                   f"Get yours for free at {DUCKIETOWN_TOKEN_URL}")

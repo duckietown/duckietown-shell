@@ -44,6 +44,7 @@ SerializableTypes = (SerializedValue, *NATURALLY_SERIALIZABLE)
 class DTShellDatabase(Generic[T]):
 
     _instances: Dict[Tuple[str, str], 'DTShellDatabase'] = {}
+    global_readonly: bool = False
 
     class NotFound(KeyError):
         pass
@@ -66,7 +67,7 @@ class DTShellDatabase(Generic[T]):
             # populate instance fields
             inst._name = name
             inst._location = location
-            inst._readonly = readonly
+            inst._readonly = readonly or cls.global_readonly
             inst._data = {}
             inst._lock = Semaphore()
             # load DB from disk

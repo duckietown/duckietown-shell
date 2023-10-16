@@ -38,7 +38,8 @@ from .constants import DNAME, KNOWN_DISTRIBUTIONS, SUGGESTED_DISTRIBUTION, EMBED
 from .constants import DTShellConstants, IGNORE_ENVIRONMENTS, DB_SETTINGS, DB_PROFILES
 from .database import DTShellDatabase
 from .environments import ShellCommandEnvironmentAbs, DEFAULT_COMMAND_ENVIRONMENT
-from .exceptions import UserError, NotFound, CommandNotFound, CommandsLoadingException, UserAborted
+from .exceptions import UserError, NotFound, CommandNotFound, CommandsLoadingException, UserAborted, \
+    ConfigNotPresent
 from .logging import dts_print
 from .profile import ShellProfile
 from .utils import text_justify, text_distribute, cli_style, indent_block, ensure_bash_completion_installed
@@ -167,6 +168,9 @@ class DTShell(Cmd):
                  readonly: bool = False,
                  banner: bool = True,
                  billboard: bool = True):
+        # errors while loading end up in here
+        self._errors_loading: List[str] = []
+
         # namespace will contain the map to the improted commands
         DTShell.include = types.SimpleNamespace()
         self._event_handlers: Dict[EventType, List[Callable]] = {
@@ -180,6 +184,9 @@ class DTShell(Cmd):
                 self._on_shutdown_event
             ],
         }
+
+        # set all databases to readonly if needed
+        DTShellDatabase.global_readonly = readonly
 
         # start event
         self._trigger_event(Event(EventType.START, "shell"))
@@ -197,16 +204,21 @@ class DTShell(Cmd):
             self._show_banner(profile=self._profile)
 
         # make sure the bash completion script is installed
-        ensure_bash_completion_installed()
+        if not readonly:
+            ensure_bash_completion_installed()
 
         # check if we configure the shell by migrating an old profile
-        self._attempt_migrations()
+        self._attempt_migrations(readonly)
 
         # make sure the shell is configured
-        self._configure()
+        self._configure(readonly)
 
         # make sure the profile is configured
-        self._profile.configure()
+        self._profile.configure(readonly)
+
+        # in readonly mode we stop right here if we don't have a profile
+        if readonly and self._profile is None:
+            return
 
         # make sure the shell is properly configured
         assert self._profile is not None
@@ -216,11 +228,8 @@ class DTShell(Cmd):
         DTShellConstants.ROOT = self._profile.path
 
         # check for updates
-        if not skeleton and self.settings.check_for_updates:
+        if not readonly and not skeleton and self.settings.check_for_updates:
             check_for_updates()
-
-        # errors while loading end up in here
-        self._errors_loading: List[str] = []
 
         # add command set path to PYTHONPATH
         for cs in self.command_sets:
@@ -232,16 +241,18 @@ class DTShell(Cmd):
 
         # call super constructor
         super(DTShell, self).__init__()
+
         # remove the char `-` from the list of word separators, this allows us to suggest flags
         if self.use_rawinput and self.completekey:
             import readline
             readline.set_completer_delims(readline.get_completer_delims().replace("-", "", 1))
 
         # check for updates (if needed)
-        for cs in self.command_sets:
-            # Do not check it if we are using custom commands (leave-alone)
-            if not cs.leave_alone:
-                cs.update()
+        if not readonly:
+            for cs in self.command_sets:
+                # Do not check it if we are using custom commands (leave-alone)
+                if not cs.leave_alone:
+                    cs.update()
 
         # show billboard (if any)
         if billboard:
@@ -362,10 +373,12 @@ class DTShell(Cmd):
                 logger.error(f"An handler for the event '{event.type.name}' failed its execution. "
                              f"The exception is printed to screen.")
 
-    def _attempt_migrations(self):
+    def _attempt_migrations(self, readonly: bool = False):
         # make sure we need migrations
         if not needs_migrations():
             return
+        elif readonly:
+            raise ConfigNotPresent()
 
         asked_confirmation: bool = False
         # get the name of the old profile
@@ -697,10 +710,12 @@ class DTShell(Cmd):
             cs.update()
             logger.info(f"Command set '{cs.name}' updated!")
 
-    def _configure(self):
+    def _configure(self, readonly: bool = False):
         # make sure a profile exists and is loaded
         new_profile: Optional[str] = None
         if self._profile is None:
+            if readonly:
+                raise ConfigNotPresent()
             print()
             print("You need to choose the distribution you want to work with.")
             distros: List[Choice] = []
@@ -720,6 +735,8 @@ class DTShell(Cmd):
 
         # make a new profile if needed
         if new_profile is not None:
+            if readonly:
+                raise ConfigNotPresent()
             print(f"Setting up a new shell profile '{new_profile}'...")
             self._profile = ShellProfile(name=new_profile)
             # set the new profile as the profile to load at the next launch
