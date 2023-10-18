@@ -6,7 +6,6 @@ from typing import Optional, Dict
 # NOTE: DO NOT IMPORT DT_SHELL HERE
 
 from . import logger
-from .utils import print_debug_info
 
 
 def dts():
@@ -96,6 +95,8 @@ def dts():
         dts_print("User aborted operation.")
         return
     except UserError as e:
+        from .utils import print_debug_info
+
         msg = str(e)
         dts_print(msg, "red")
         print_debug_info()
