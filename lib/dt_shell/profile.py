@@ -13,7 +13,8 @@ from .commands import CommandSet, CommandDescriptor
 from .commands.repository import CommandsRepository
 from .constants import DUCKIETOWN_TOKEN_URL, SHELL_LIB_DIR, DEFAULT_COMMAND_SET_REPOSITORY, \
     DEFAULT_PROFILES_DIR, DB_SECRETS, DB_SECRETS_DOCKER, DB_SETTINGS, DB_USER_COMMAND_SETS_REPOSITORIES, \
-    DB_PROFILES, KNOWN_DISTRIBUTIONS, SUGGESTED_DISTRIBUTION, DB_UPDATES_CHECK, EMBEDDED_COMMAND_SET_NAME
+    DB_PROFILES, KNOWN_DISTRIBUTIONS, SUGGESTED_DISTRIBUTION, DB_UPDATES_CHECK, EMBEDDED_COMMAND_SET_NAME, \
+    Distro
 from .database.database import DTShellDatabase, NOTSET, DTSerializable
 from .utils import safe_pathname, validator_token, yellow_bold, cli_style, parse_version, render_version, \
     indent_block
@@ -190,7 +191,7 @@ class ShellProfile:
             profile_command_sets_dir: str = os.path.join(self.path, "commands")
             # add the default 'duckietown' command set
             repository: CommandsRepository = CommandsRepository(
-                **{**DEFAULT_COMMAND_SET_REPOSITORY, "branch": self.distro}
+                **{**DEFAULT_COMMAND_SET_REPOSITORY, "branch": self.distro.branch}
             )
             self.command_sets.append(
                 CommandSet(
@@ -269,11 +270,21 @@ class ShellProfile:
         return ShellProfileSecrets.load(location=self._databases_location)
 
     @property
-    def distro(self) -> Optional[str]:
-        return self.settings.distro
+    def distro(self) -> Optional[Distro]:
+        if self.settings.distro is None:
+            return None
+        if self.settings.distro not in KNOWN_DISTRIBUTIONS:
+            logger.warning(f"Your profile is set to use the distribution '{self.settings.distro}' but this "
+                           f"is not in the list of known distributions. Known distributions are "
+                           f"{list(KNOWN_DISTRIBUTIONS.keys())}")
+            return None
+        return KNOWN_DISTRIBUTIONS[self.settings.distro]
 
     @distro.setter
-    def distro(self, value: str):
+    def distro(self, value: Union[str, Distro]):
+        if isinstance(value, Distro):
+            value = value.name
+        assert value in KNOWN_DISTRIBUTIONS
         self.settings.distro = value
 
     def database(self, name: str, cls: Optional[Type[DTShellDatabase]] = None) -> DTShellDatabase:
@@ -301,7 +312,7 @@ class ShellProfile:
                 raise ConfigNotPresent()
             # see if we can find the distro ourselves
             matched: bool = False
-            for distro in KNOWN_DISTRIBUTIONS:
+            for distro in KNOWN_DISTRIBUTIONS.values():
                 if distro.name == self.name:
                     logger.info(f"Automatically selecting distribution '{distro.name}' as it matches "
                                 f"the profile name")
@@ -313,7 +324,7 @@ class ShellProfile:
                 print()
                 print("You need to choose the distribution you want to work with in this profile.")
                 distros: List[Choice] = []
-                for distro in KNOWN_DISTRIBUTIONS:
+                for distro in KNOWN_DISTRIBUTIONS.values():
                     if distro.staging:
                         continue
                     eol: str = "" if distro.end_of_life is None else \
@@ -325,10 +336,10 @@ class ShellProfile:
                     else:
                         distros.append(choice)
                 # let the user choose the distro
-                distro = questionary.select(
+                chosen_distro: str = questionary.select(
                     "Choose a distribution:", choices=distros, style=cli_style).unsafe_ask()
                 # attach distro to profile
-                self.distro = distro
+                self.distro = chosen_distro
 
         # make sure we have a token for this profile
         if self.secrets.dt2_token is None:

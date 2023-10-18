@@ -21,14 +21,14 @@ class DTCommand(DTCommandAbs):
             profile: ShellProfile = ShellProfile(profile_name, readonly=True)
             # find distro
             distro: Optional[Distro] = None
-            for d in KNOWN_DISTRIBUTIONS:
-                if d.name == profile.distro:
+            for d in KNOWN_DISTRIBUTIONS.values():
+                if d.name == profile.distro.name:
                     distro = d
                     break
             # add to table
             data.append([
                 profile_name,
-                profile.distro,
+                profile.distro.name,
                 ("Yes" if distro.staging else "No") if distro else "NA"
             ])
         # render table

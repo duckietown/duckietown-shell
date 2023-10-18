@@ -2,7 +2,7 @@
 import dataclasses
 import datetime
 import os
-from typing import Optional, List
+from typing import Optional, Dict
 
 DEBUG = False
 DNAME = "Duckietown Shell"
@@ -13,14 +13,23 @@ BASH_COMPLETION_DIR = os.path.expanduser("~/.local/share/bash-completion/complet
 @dataclasses.dataclass
 class Distro:
     name: str
+    branch: str = None
     end_of_life: Optional[datetime.date] = None
     staging: bool = False
+
+    def __post_init__(self):
+        # if the branch is not given then it takes the distro name
+        if self.branch is None:
+            self.branch = self.name
 
     @property
     def end_of_life_fmt(self, fmt: str = "%d %B %Y") -> str:
         if self.end_of_life is None:
             return ""
         return self.end_of_life.strftime(fmt)
+
+    def as_dict(self) -> dict:
+        return dataclasses.asdict(self)
 
 
 class DTShellConstants:
@@ -40,17 +49,17 @@ DEFAULT_PROFILES_DIR = os.path.join(DEFAULT_ROOT, "profiles")
 IGNORE_ENVIRONMENTS: bool = os.environ.get("IGNORE_ENVIRONMENTS", "0").lower() in ["1", "y", "yes"]
 
 # distributions
-KNOWN_DISTRIBUTIONS: List[Distro] = [
-    # production
-    Distro("daffy", end_of_life=datetime.date(2024, 3, 31)),
-    Distro("ente"),
-    # staging
-    Distro("daffy-staging", end_of_life=datetime.date(2024, 3, 31), staging=True),
-    Distro("ente-staging", staging=True),
+KNOWN_DISTRIBUTIONS: Dict[str, Distro] = {
+    # daffy
+    "daffy": Distro("daffy", "daffy", end_of_life=datetime.date(2024, 3, 31)),
+    "daffy-staging": Distro("daffy", "daffy-staging", end_of_life=datetime.date(2024, 3, 31), staging=True),
+    # ente
+    "ente": Distro("ente", "ente"),
+    "ente-staging": Distro("ente", "ente-staging", staging=True),
     # temporary
     # TODO: remove
-    Distro("v6", staging=True),
-]
+    "v6": Distro("v6", "v6", staging=True),
+}
 SUGGESTED_DISTRIBUTION: str = "ente"
 
 # command set
