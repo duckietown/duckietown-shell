@@ -7,8 +7,6 @@ from abc import ABCMeta, abstractmethod
 from traceback import format_exc
 from typing import Optional, List, Dict
 
-from dt_shell_cli.utils import print_debug_info
-
 from . import logger
 from .exceptions import ShellInitException, InvalidEnvironment, CommandsLoadingException, UserError, \
     UserAborted
@@ -33,6 +31,7 @@ class Python3Environment(ShellCommandEnvironmentAbs):
     """
 
     def execute(self, shell, args: List[str]):
+        from dt_shell_cli.utils import print_debug_info
         from .shell import DTShell
         shell: DTShell
         # run shell

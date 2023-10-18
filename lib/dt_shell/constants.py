@@ -47,6 +47,9 @@ KNOWN_DISTRIBUTIONS: List[Distro] = [
     # staging
     Distro("daffy-staging", end_of_life=datetime.date(2024, 3, 31), staging=True),
     Distro("ente-staging", staging=True),
+    # temporary
+    # TODO: remove
+    Distro("v6", staging=True),
 ]
 SUGGESTED_DISTRIBUTION: str = "ente"
 
