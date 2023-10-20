@@ -1,26 +1,31 @@
+import json
+import traceback
 from abc import abstractmethod
 from threading import Thread
 
-import dt_shell
+import requests
+from dt_shell.database import DTShellDatabase
+
 from dt_shell_cli import logger
-from .constants import DTShellConstants
-from .shell import Event
+from .constants import DTShellConstants, DTHUB_URL, DB_BILLBOARDS
+from .shell import Event, DTShell
 
 
 class Task(Thread):
 
-    def __init__(self, name: str, killable: bool = False, **kwargs):
+    def __init__(self, shell: DTShell, name: str, killable: bool = False, **kwargs):
         super(Task, self).__init__(daemon=True, **kwargs)
         # arguments
+        self._shell: DTShell = shell
         self._name: str = name
         self._killable: bool = killable
         # internal state
-        self._started: bool = False
-        self._finished: bool = False
+        self._has_started: bool = False
+        self._has_finished: bool = False
         # register shutdown handlers
         self._requested_shutdown: bool = False
-        dt_shell.shell.on_keyboard_interrupt(self._shutdown)
-        dt_shell.shell.on_shutdown(self._shutdown)
+        self._shell.on_keyboard_interrupt(self._shutdown)
+        self._shell.on_shutdown(self._shutdown)
 
     @property
     def name(self) -> str:
@@ -32,21 +37,21 @@ class Task(Thread):
 
     @property
     def started(self) -> bool:
-        return self._started
+        return self._has_started
 
     @property
     def finished(self) -> bool:
-        return self._finished
+        return self._has_finished
 
     def run(self) -> None:
         # mark as started
         if DTShellConstants.VERBOSE:
             logger.debug(f"Task '{self._name}' started!")
-        self._started = True
+        self._has_started = True
         # execute task job
         self.execute()
         # mark as finished
-        self._finished = True
+        self._has_finished = True
         if DTShellConstants.VERBOSE:
             logger.debug(f"Task '{self._name}' finished!")
 
@@ -70,5 +75,37 @@ class Task(Thread):
         pass
 
     @abstractmethod
+    def shutdown(self, event: Event):
+        pass
+
+
+class UpdateBillboardsTask(Task):
+
+    def __init__(self, shell, **kwargs):
+        super(UpdateBillboardsTask, self).__init__(shell, name="billboards-updater", **kwargs)
+        self._db: DTShellDatabase = DTShellDatabase.open(DB_BILLBOARDS)
+
+    def execute(self):
+        url: str = f"{DTHUB_URL}/api/v1/shell/billboards"
+        # reach out to the HUB and grub the new billboards
+        try:
+            response: dict = requests.get(url).json()
+        except KeyboardInterrupt:
+            return
+        except:
+            logger.warning("An error occurred while updating the billboards")
+            logger.debug(traceback.format_exc())
+            return
+        # check response
+        if response.get("success", False) is not True:
+            logger.warning("An error occurred while updating the billboards")
+            logger.debug("HUB response:\n" + json.dumps(response, indent=4, sort_keys=True))
+            return
+        # update local database
+        self._db.clear()
+        self._db.update(response.get("result", {}))
+        self._shell.mark_updated("billboards")
+        logger.debug("Billboards updated!")
+
     def shutdown(self, event: Event):
         pass

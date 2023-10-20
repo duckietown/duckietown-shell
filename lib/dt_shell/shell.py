@@ -34,7 +34,8 @@ from .compatibility.migrations import \
     needs_migrate_token_dt1, migrate_token_dt1, \
     needs_migrate_secrets, migrate_secrets, mark_docker_credentials_migrated, \
     mark_token_dt1_migrated, mark_secrets_migrated, needs_migrations, mark_all_migrated
-from .constants import DNAME, KNOWN_DISTRIBUTIONS, SUGGESTED_DISTRIBUTION, EMBEDDED_COMMAND_SET_NAME
+from .constants import DNAME, KNOWN_DISTRIBUTIONS, SUGGESTED_DISTRIBUTION, EMBEDDED_COMMAND_SET_NAME, \
+    DB_BILLBOARDS, DB_UPDATES_CHECK, CHECK_BILLBOARD_UPDATE_SECS
 from .constants import DTShellConstants, IGNORE_ENVIRONMENTS, DB_SETTINGS, DB_PROFILES
 from .database import DTShellDatabase
 from .environments import ShellCommandEnvironmentAbs, DEFAULT_COMMAND_ENVIRONMENT
@@ -132,6 +133,15 @@ class ShellSettings(DTShellDatabase):
         assert isinstance(value, str)
         self.set("profile", value)
 
+    @property
+    def show_billboards(self) -> bool:
+        return self.get("show_billboards", True)
+
+    @show_billboards.setter
+    def show_billboards(self, value: bool):
+        assert isinstance(value, bool)
+        self.set("show_billboards", value)
+
 
 class EventType(Enum):
     START = "start"
@@ -171,10 +181,15 @@ class DTShell(Cmd):
         # errors while loading end up in here
         self._errors_loading: List[str] = []
 
+        # updates check database
+        self.updates_check_db: DTShellDatabase[float] = DTShellDatabase.open(DB_UPDATES_CHECK)
+
         # namespace will contain the map to the improted commands
         DTShell.include = types.SimpleNamespace()
         self._event_handlers: Dict[EventType, List[Callable]] = {
-            EventType.START: [],
+            EventType.START: [
+                self._run_background_tasks
+            ],
             EventType.PRE_COMMAND_IMPORT: [],
             EventType.POST_COMMAND_IMPORT: [],
             EventType.KEYBOARD_INTERRUPT: [
@@ -199,9 +214,14 @@ class DTShell(Cmd):
         self._profile: ShellProfile = ShellProfile(self.settings.profile, readonly=readonly) \
             if self.settings.profile else None
 
+        # get billboard to show (if any)
+        bboard: Optional[str] = None
+        if billboard and self.settings.show_billboards:
+            bboard = self.get_billboard()
+
         # print banner
         if banner:
-            self._show_banner(profile=self._profile)
+            self._show_banner(profile=self._profile, billboard=bboard)
 
         # make sure the bash completion script is installed
         if not readonly:
@@ -253,12 +273,6 @@ class DTShell(Cmd):
                 # Do not check it if we are using custom commands (leave-alone)
                 if not cs.leave_alone:
                     cs.update()
-
-        # show billboard (if any)
-        if billboard:
-            bboard: Optional[str] = self.get_billboard()
-            if bboard:
-                print(bboard)
 
         # pre-import event
         self._trigger_event(Event(EventType.PRE_COMMAND_IMPORT, "shell"))
@@ -356,6 +370,26 @@ class DTShell(Cmd):
 
     def on_keyboard_interrupt(self, handler: Callable[[Event], None]):
         self.on_event(EventType.KEYBOARD_INTERRUPT, handler)
+
+    def needs_update(self, key: str, period: float, default: bool = True) -> bool:
+        # read record
+        try:
+            last_time_checked: float = self.updates_check_db.get(key)
+        except DTShellDatabase.NotFound:
+            return default
+        # check time
+        return time.time() - last_time_checked > period
+
+    def mark_updated(self, key: str, when: float = None):
+        # update record
+        self.updates_check_db.set(key, when if when is not None else time.time())
+
+    def _run_background_tasks(self, event: Event):
+        if event.type is EventType.START:
+            # update billboards
+            if self.needs_update("billboards", CHECK_BILLBOARD_UPDATE_SECS):
+                from .tasks import UpdateBillboardsTask
+                UpdateBillboardsTask(self).start()
 
     def _on_keyboard_interrupt_event(self, event: Event):
         pass
@@ -678,25 +712,19 @@ class DTShell(Cmd):
 
     @staticmethod
     def get_billboard() -> Optional[str]:
-        # find billboards directory
-        dts_dir: str = os.path.expanduser(DTShellConstants.ROOT)
-        billboard_dir: str = os.path.join(dts_dir, "billboards", BILLBOARDS_VERSION)
-        if (not os.path.exists(billboard_dir)) or (not os.path.isdir(billboard_dir)):
-            return None
-        # get all sources of ads from the billboards directory
-        sources: List[str] = os.listdir(billboard_dir)
-        if len(sources) <= 0:
+        # get billboards from the local database
+        db: DTShellDatabase = DTShellDatabase.open(DB_BILLBOARDS)
+        # collect billboards names based on priority
+        names: List[str] = []
+        for name, billboard in db.items():
+            names.extend([name] * (billboard["priority"] + 1))
+        # no billboards?
+        if not names:
             return None
         # pick one source at random
-        source: str = random.choice(sources)
-        try:
-            with open(os.path.join(billboard_dir, source), "rt") as fin:
-                content: str = fin.read()
-        except:
-            logger.debug("Error occurred while loading billboard. Skipping...")
-            return None
+        name: str = random.choice(names)
         # ---
-        return content
+        return db.get(name).get("content", None)
 
     def update_commands(self):
         # update all command sets
@@ -719,7 +747,7 @@ class DTShell(Cmd):
             print()
             print("You need to choose the distribution you want to work with.")
             distros: List[Choice] = []
-            for distro in KNOWN_DISTRIBUTIONS:
+            for distro in KNOWN_DISTRIBUTIONS.values():
                 if distro.staging:
                     continue
                 eol: str = "" if distro.end_of_life is None else f"(end of life: {distro.end_of_life_fmt})"
@@ -744,7 +772,7 @@ class DTShell(Cmd):
             # configure profile
             self._profile.configure()
 
-    def _show_banner(self, profile: Optional[ShellProfile]):
+    def _show_banner(self, profile: Optional[ShellProfile], billboard: Optional[str]):
         width: int = 120
         if profile is None:
             # first launch -> bigger banner
@@ -774,3 +802,8 @@ class DTShell(Cmd):
         print(txt.rstrip())
         print()
         print("+" + "-" * (width - 2) + "+")
+        # print billboard (if given)
+        if billboard:
+            print("💬", billboard.strip())
+            print("+" + "-" * (width - 2) + "+")
+

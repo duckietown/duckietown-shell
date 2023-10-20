@@ -123,6 +123,20 @@ class DTShellDatabase(Generic[T]):
             data: dict = copy.copy(self._data)
         return iter(data.items())
 
+    def clear(self):
+        """
+        Removes all the records from the database.
+        """
+        self._data.clear()
+        self._write()
+
+    def update(self, d: dict):
+        """
+        Update this database with the records from the given database.
+        """
+        self._data.update(d)
+        self._write()
+
     def _load(self):
         if not self._readonly:
             # make files if they don't exist

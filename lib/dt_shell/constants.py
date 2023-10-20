@@ -8,6 +8,7 @@ DEBUG = False
 DNAME = "Duckietown Shell"
 DEFAULT_ROOT = os.path.expanduser("~/.duckietown/shell/")
 BASH_COMPLETION_DIR = os.path.expanduser("~/.local/share/bash-completion/completions")
+DTHUB_URL = os.environ.get("DTHUB_URL", "https://hub.duckietown.com")
 
 
 @dataclasses.dataclass
@@ -42,6 +43,7 @@ class DTShellConstants:
 
 # commands update
 CHECK_CMDS_UPDATE_MINS = 5
+CHECK_BILLBOARD_UPDATE_SECS = 60 * 60 * 24   # every 24 hours
 
 SHELL_LIB_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_PROFILES_DIR = os.path.join(DEFAULT_ROOT, "profiles")
@@ -87,3 +89,4 @@ DB_INSTALLED_DEPENDENCIES: str = "installed_dependencies"
 DB_USER_COMMAND_SETS_REPOSITORIES: str = "user_command_sets_repositories"
 DB_MIGRATIONS: str = "migrations"
 DB_UPDATES_CHECK: str = "updates_check"
+DB_BILLBOARDS: str = "billboards"
