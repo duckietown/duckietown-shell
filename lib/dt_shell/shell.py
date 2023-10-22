@@ -282,7 +282,6 @@ class DTShell(Cmd):
 
         # make sure nobody is importing command implementations when in skeleton mode
         if skeleton:
-            # TODO: test this
             terminate: bool = False
             for subclass in DTCommandAbs.__subclasses__():
                 if subclass in [DTCommandPlaceholder, NoOpCommand]:
