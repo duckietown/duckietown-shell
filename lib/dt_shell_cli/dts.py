@@ -35,6 +35,7 @@ def dts():
         sys.path.insert(0, DTSHELL_LIB)
 
     # import dt_shell
+    import dt_shell
     from dt_shell.constants import DTShellConstants
     from dt_shell.logging import setup_logging_color, dts_print
     from dt_shell.checks.environment import abort_if_running_with_sudo
@@ -61,21 +62,23 @@ def dts():
         complete()
         exit()
 
-    # notify user of their choice
+    # propagate options to the constants
+    DTShellConstants.DEBUG = cli_options.debug
+    DTShellConstants.VERBOSE = cli_options.verbose
+    DTShellConstants.QUIET = cli_options.quiet
+
+    # notify user of their choices
     if DTSHELL_LIB:
         logger.info(f"Using duckietown-shell library from '{DTSHELL_LIB}' as instructed by the environment "
                     f"variable DTSHELL_LIB.")
+    if DTShellConstants.VERBOSE:
+        logger.info(f"Using duckietown-shell library from '{dt_shell.__file__}'")
 
     # make sure we are not running as sudo
     abort_if_running_with_sudo()
 
     # configure logger
     setup_logging_color()
-
-    # propagate options to the constants
-    DTShellConstants.DEBUG = cli_options.debug
-    DTShellConstants.VERBOSE = cli_options.verbose
-    DTShellConstants.QUIET = cli_options.quiet
 
     # process options here
     if cli_options.debug:
