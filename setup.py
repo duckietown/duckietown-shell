@@ -87,7 +87,16 @@ setup(
     # without this, the stuff is included but not installed
     include_package_data=True,
     package_data={
-        'dt_shell': ['embedded/*/*', 'assets/*'],
+        'dt_shell': [
+            'embedded/*',
+            'embedded/*/*',
+            'embedded/*/*/*',
+            'embedded/*/*/*/*',
+            'assets/*',
+            'assets/*/*',
+            'assets/*/*/*',
+            'assets/*/*/*/*',
+        ],
         'dt_shell_cli': [],
     },
 
