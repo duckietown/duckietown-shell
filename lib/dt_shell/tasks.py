@@ -95,11 +95,15 @@ class UpdateBillboardsTask(Task):
         except:
             logger.warning("An error occurred while updating the billboards")
             logger.debug(traceback.format_exc())
+            # mark as updated so we don't retry right away
+            self._shell.mark_updated("billboards")
             return
         # check response
         if response.get("success", False) is not True:
             logger.warning("An error occurred while updating the billboards")
             logger.debug("HUB response:\n" + json.dumps(response, indent=4, sort_keys=True))
+            # mark as updated so we don't retry right away
+            self._shell.mark_updated("billboards")
             return
         # update local database
         self._db.clear()
