@@ -102,6 +102,12 @@ class DTShellDatabase(Generic[T]):
             else:
                 return default
 
+    def delete(self, key: Key):
+        key = self._key(key)
+        with self._lock:
+            self._data.pop(key, None)
+        self._write()
+
     def set(self, key: Key, value: T):
         key = self._key(key)
         with self._lock:
