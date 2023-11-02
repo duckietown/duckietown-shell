@@ -186,21 +186,24 @@ class ShellProfile:
                     leave_alone=True,
                 )
             )
-            # TODO: this is where we update the profile.distro by taking the branch from the repository but only for this session
+            # TODO: this is where we update the profile.distro by taking the branch from the repository but
+            #  only for this session
         else:
             profile_command_sets_dir: str = os.path.join(self.path, "commands")
             # add the default 'duckietown' command set
-            repository: CommandsRepository = CommandsRepository(
-                **{**DEFAULT_COMMAND_SET_REPOSITORY, "branch": self.distro.branch}
-            )
-            self.command_sets.append(
-                CommandSet(
-                    "duckietown",
-                    os.path.join(profile_command_sets_dir, "duckietown"),
-                    profile=self,
-                    repository=repository,
+            if self.distro is not None:
+                repository: CommandsRepository = CommandsRepository(
+                    **{**DEFAULT_COMMAND_SET_REPOSITORY, "branch": self.distro.branch}
                 )
-            )
+                self.command_sets.append(
+                    CommandSet(
+                        "duckietown",
+                        os.path.join(profile_command_sets_dir, "duckietown"),
+                        profile=self,
+                        repository=repository,
+                    )
+                )
+
             # add user defined command sets
             for n, r in self.user_command_sets_repositories:
                 self.command_sets.append(CommandSet(n, os.path.join(profile_command_sets_dir, n), self, r))
@@ -312,12 +315,12 @@ class ShellProfile:
                 raise ConfigNotPresent()
             # see if we can find the distro ourselves
             matched: bool = False
-            for distro in KNOWN_DISTRIBUTIONS.values():
-                if distro.name == self.name:
-                    logger.info(f"Automatically selecting distribution '{distro.name}' as it matches "
-                                f"the profile name")
-                    self.distro = self.name
+            for d in KNOWN_DISTRIBUTIONS.keys():
+                if d == self.name:
+                    logger.info(f"Automatically selecting distribution '{d}' as it matches the profile name")
+                    self.distro = d
                     matched = True
+                    break
 
             # if we don't have a match, we ask the user to pick a distribution
             if not matched:
