@@ -49,9 +49,13 @@ class Task(Thread):
             logger.debug(f"Task '{self._name}' started!")
         self._has_started = True
         # execute task job
-        self.execute()
-        # mark as finished
-        self._has_finished = True
+        try:
+            self.execute()
+        except KeyboardInterrupt:
+            logger.debug(f"Task '{self._name}' interrupted by SIGINT!")
+        finally:
+            # mark as finished
+            self._has_finished = True
         if DTShellConstants.VERBOSE:
             logger.debug(f"Task '{self._name}' finished!")
 
@@ -90,8 +94,6 @@ class UpdateBillboardsTask(Task):
         # reach out to the HUB and grub the new billboards
         try:
             response: dict = requests.get(url).json()
-        except KeyboardInterrupt:
-            return
         except:
             logger.warning("An error occurred while updating the billboards")
             logger.debug(traceback.format_exc())

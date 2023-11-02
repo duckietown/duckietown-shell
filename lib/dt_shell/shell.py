@@ -184,8 +184,10 @@ class DTShell(Cmd):
         # updates check database
         self.updates_check_db: DTShellDatabase[float] = DTShellDatabase.open(DB_UPDATES_CHECK)
 
-        # namespace will contain the map to the improted commands
+        # namespace will contain the map to the loaded commands
         DTShell.include = types.SimpleNamespace()
+
+        # event handlers
         self._event_handlers: Dict[EventType, List[Callable]] = {
             EventType.START: [
                 self._run_background_tasks
