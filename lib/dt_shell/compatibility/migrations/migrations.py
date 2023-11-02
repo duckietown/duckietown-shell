@@ -101,7 +101,7 @@ def migrate_distro(dryrun: bool = False) -> Optional[str]:
             return None
         # get distro
         distro: str = config.get("duckietown_version", None)
-        known_distros: List[str] = [d.name for d in KNOWN_DISTRIBUTIONS]
+        known_distros: List[str] = [d.name for d in KNOWN_DISTRIBUTIONS.values()]
         if distro not in known_distros:
             return None
         # ---
@@ -139,6 +139,9 @@ def migrate_secrets(profile):
         # secrets dirs
         old_secrets_dir: str = os.path.join(OLD_ROOT, "secrets")
         new_secrets_dir: str = os.path.join(profile.path, "secrets")
+        # skip if the old profile does not have a secrets dir
+        if not os.path.exists(old_secrets_dir):
+            return
         # copy all files
         _copy_and_overwrite(old_secrets_dir, new_secrets_dir)
     finally:
