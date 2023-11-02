@@ -55,7 +55,5 @@ def print_debug_info() -> None:
     fn = os.path.expanduser(fn)
     with open(fn, "w") as f:
         f.write(versions)
-    msg = f"""\
-To report a bug, please also include the contents of {fn}
-"""
-    dts_print(msg, "red")
+    msg = f"To report a bug, please also include the contents of {fn}"
+    dts_print(msg, "yellow")
