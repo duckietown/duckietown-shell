@@ -308,7 +308,8 @@ class ShellProfile:
         # update record
         self.updates_check_db.set(key, when if when is not None else time.time())
 
-    def configure(self, readonly: bool = False):
+    def configure(self, readonly: bool = False) -> bool:
+        modified_config: bool = False
         # make sure we have a distro for this profile
         if self.distro is None:
             if readonly:
@@ -343,6 +344,7 @@ class ShellProfile:
                     "Choose a distribution:", choices=distros, style=cli_style).unsafe_ask()
                 # attach distro to profile
                 self.distro = chosen_distro
+            modified_config = True
 
         # make sure we have a token for this profile
         if self.secrets.dt2_token is None:
@@ -358,3 +360,6 @@ class ShellProfile:
             print(f"Token verified successfully. Your ID is: {yellow_bold(token.uid)}")
             # store token
             self.secrets.dt2_token = token_str
+            modified_config = True
+        # ---
+        return modified_config

@@ -121,8 +121,11 @@ def dts():
         inpt: str = cmdline.strip()
         if e.last_matched is None:
             if len(inpt) <= 0:
+                # no input, but we only complain if the experience was not interactive
+                if shell.performed_migrations or shell.configured_shell or shell.configured_profile:
+                    exit(0)
                 # no input
-                # TODO: suggest possible commands as well
+                # TODO: maybe suggest possible commands?
                 dts_print("Use the syntax\n\n"
                           "\t\tdts [options] command [subcommand1 [subcommand2] ...] [arguments]\n",
                           color="red")
