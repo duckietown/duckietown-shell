@@ -19,6 +19,7 @@ from typing import List, Optional, Tuple, Union, Type, Dict, Callable
 from typing import Mapping, Sequence
 
 import questionary
+from dt_authentication import DuckietownToken
 from pyfiglet import Figlet
 from questionary import Choice
 from termcolor import termcolor
@@ -36,7 +37,7 @@ from .compatibility.migrations import \
     mark_token_dt1_migrated, mark_secrets_migrated, needs_migrations, mark_all_migrated
 from .constants import DNAME, KNOWN_DISTRIBUTIONS, SUGGESTED_DISTRIBUTION, EMBEDDED_COMMAND_SET_NAME, \
     DB_BILLBOARDS, DB_UPDATES_CHECK, CHECK_BILLBOARD_UPDATE_SECS
-from .constants import DTShellConstants, IGNORE_ENVIRONMENTS, DB_SETTINGS, DB_PROFILES
+from .constants import DTShellConstants, IGNORE_ENVIRONMENTS, DB_SETTINGS, DB_PROFILES, CHECK_SHELL_TOKEN_SECS
 from .database import DTShellDatabase
 from .environments import ShellCommandEnvironmentAbs, DEFAULT_COMMAND_ENVIRONMENT
 from .exceptions import UserError, NotFound, CommandNotFound, CommandsLoadingException, UserAborted, \
@@ -203,9 +204,6 @@ class DTShell(Cmd):
         # set all databases to readonly if needed
         DTShellDatabase.global_readonly = readonly
 
-        # start event
-        self._trigger_event(Event(EventType.START, "shell"))
-
         # open databases
         self._db_profiles: DTShellDatabase = DTShellDatabase.open(DB_PROFILES, readonly=readonly)
         self._db_settings: ShellSettings = ShellSettings.open(DB_SETTINGS, readonly=readonly)
@@ -213,6 +211,13 @@ class DTShell(Cmd):
         # load current profile
         self._profile: ShellProfile = ShellProfile(self.settings.profile, readonly=readonly) \
             if self.settings.profile else None
+
+        # check shell token
+        if not skeleton and not readonly:
+            self._check_shell_token()
+
+        # start event
+        self._trigger_event(Event(EventType.START, "shell"))
 
         # get billboard to show (if any)
         bboard: Optional[str] = None
@@ -389,6 +394,11 @@ class DTShell(Cmd):
             if self.needs_update("billboards", CHECK_BILLBOARD_UPDATE_SECS):
                 from .tasks import UpdateBillboardsTask
                 UpdateBillboardsTask(self).start()
+            # update shell token
+            if self.profile is not None:
+                if self.profile.needs_update("shell-token", CHECK_SHELL_TOKEN_SECS):
+                    from .tasks import ShellTokenTask
+                    ShellTokenTask(self).start()
 
     def _on_keyboard_interrupt_event(self, event: Event):
         pass
@@ -806,3 +816,35 @@ class DTShell(Cmd):
             print("💬", billboard.strip())
             print("+" + "-" * (width - 2) + "+")
 
+    def _check_shell_token(self, fix_if_needed: bool = True):
+        profile: ShellProfile = self.profile
+        if profile is None:
+            return
+        # we have a profile, check if we have a token
+        db: DTShellDatabase = profile.database("shell-token")
+        token_str: str = db.get("token", None)
+        if token_str is None:
+            return
+        # parse token
+        try:
+            token: Optional[DuckietownToken] = DuckietownToken.from_string(token_str)
+        except:
+            logger.debug(traceback.format_exc())
+            # drop token, the background task will create a new one later
+            if token_str is not None:
+                db.delete("token")
+            return
+        # check scope
+        if not token.grants(action="run", resource="shell"):
+            if fix_if_needed and profile.needs_update("shell-token", CHECK_SHELL_TOKEN_SECS):
+                from .tasks import ShellTokenTask
+                logger.info("Checking permissions...")
+                try:
+                    ShellTokenTask(self).execute()
+                    self._check_shell_token(fix_if_needed=False)
+                except:
+                    return
+            raise UserError("Your account does not seem to have access to the capability needed to run the "
+                            "Duckietown shell. If you believe this is a mistake, please, reach out to "
+                            "the Duckietown technical support via Slack or via "
+                            "https://duckietown.com/contact/.")

@@ -9,6 +9,7 @@ DNAME = "Duckietown Shell"
 DEFAULT_ROOT = os.path.expanduser("~/.duckietown/shell/")
 BASH_COMPLETION_DIR = os.path.expanduser("~/.local/share/bash-completion/completions")
 DTHUB_URL = os.environ.get("DTHUB_URL", "https://hub.duckietown.com")
+AUTH_URL = os.environ.get("DTAUTH_URL", "https://auth.duckietown.com")
 
 
 @dataclasses.dataclass
@@ -44,6 +45,7 @@ class DTShellConstants:
 # commands update
 CHECK_CMDS_UPDATE_MINS = 5
 CHECK_BILLBOARD_UPDATE_SECS = 60 * 60 * 24   # every 24 hours
+CHECK_SHELL_TOKEN_SECS = 60 * 15   # every 15 minutes
 
 SHELL_LIB_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_PROFILES_DIR = os.path.join(DEFAULT_ROOT, "profiles")
