@@ -22,7 +22,7 @@ class DTCommand(DTCommandAbs):
         # ask the user for a distribution to use
         dtslogger.info("In order to make a new profile, you need to choose a distribution first.")
         distros: List[Choice] = []
-        for distro in KNOWN_DISTRIBUTIONS:
+        for distro in KNOWN_DISTRIBUTIONS.values():
             # filter by staging VS production
             if parsed.staging != distro.staging:
                 continue
