@@ -43,7 +43,7 @@ def dts():
     from dt_shell.commands import CommandDescriptor
     from dt_shell.environments import ShellCommandEnvironmentAbs
     from dt_shell.exceptions import CommandNotFound, ShellInitException, UserAborted, UserError
-    from dt_shell.utils import replace_spaces
+    from dt_shell.utils import replace_spaces, print_debug_info
     from dt_shell import DTShell, dtslogger
 
     # parse shell options (anything between `dts` and the first word that does not start with --)
@@ -98,8 +98,6 @@ def dts():
         dts_print("User aborted operation.")
         return
     except UserError as e:
-        from .utils import print_debug_info
-
         msg = str(e)
         dts_print(msg, "red")
         print_debug_info()

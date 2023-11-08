@@ -15,7 +15,7 @@ from .exceptions import ShellInitException, InvalidEnvironment, CommandsLoadingE
 from .constants import SHELL_LIB_DIR, SHELL_REQUIREMENTS_LIST, DTShellConstants
 from .database.utils import InstalledDependenciesDatabase
 from .logging import dts_print
-from .utils import pip_install, replace_spaces
+from .utils import pip_install, replace_spaces, print_debug_info
 
 
 class ShellCommandEnvironmentAbs(metaclass=ABCMeta):
@@ -42,15 +42,11 @@ class Python3Environment(ShellCommandEnvironmentAbs):
             cmdline = " ".join(args)
             shell.onecmd(cmdline)
         except UserError as e:
-            # TODO: move debug_info to dt_shell module so that we can import globally and avoid circular import
-            from dt_shell_cli.utils import print_debug_info
             msg = str(e)
             dts_print(msg, "red")
             print_debug_info()
             sys.exit(1)
         except known_exceptions as e:
-            # TODO: move debug_info to dt_shell module so that we can import globally and avoid circular import
-            from dt_shell_cli.utils import print_debug_info
             msg = str(e)
             dts_print(msg, "red")
             print_debug_info()
@@ -61,8 +57,6 @@ class Python3Environment(ShellCommandEnvironmentAbs):
             dts_print("User aborted operation.")
             pass
         except BaseException:
-            # TODO: move debug_info to dt_shell module so that we can import globally and avoid circular import
-            from dt_shell_cli.utils import print_debug_info
             msg = format_exc()
             dts_print(msg, "red", attrs=["bold"])
             print_debug_info()
