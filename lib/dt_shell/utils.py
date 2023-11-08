@@ -22,7 +22,6 @@ from dt_authentication import DuckietownToken
 
 from dt_shell_cli import logger
 from . import __version__
-from .logging import dts_print
 from .constants import BASH_COMPLETION_DIR, SHELL_LIB_DIR, DTShellConstants
 from .exceptions import ShellInitException, RunCommandException
 
@@ -283,6 +282,7 @@ def ensure_bash_completion_installed():
 
 
 def print_debug_info() -> None:
+    from .logging import dts_print
     from .checks.packages import _get_installed_distributions
 
     v = DebugInfo.name2versions
