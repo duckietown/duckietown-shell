@@ -17,7 +17,7 @@ from .constants import DUCKIETOWN_TOKEN_URL, SHELL_LIB_DIR, DEFAULT_COMMAND_SET_
     Distro
 from .database.database import DTShellDatabase, NOTSET, DTSerializable
 from .utils import safe_pathname, validator_token, yellow_bold, cli_style, parse_version, render_version, \
-    indent_block
+    indent_block, DebugInfo
 from .exceptions import ConfigNotPresent
 
 TupleVersion = Tuple[int, int, int]
@@ -217,6 +217,10 @@ class ShellProfile:
                 leave_alone=True,
             )
         )
+
+        # add command set versions to debugging data
+        for cs in self.command_sets:
+            DebugInfo.name2versions[f"command_set/{cs.name}"] = cs.version
 
         # drop all the command sets that do not support this version of the shell
         for cs in copy.copy(self.command_sets):
