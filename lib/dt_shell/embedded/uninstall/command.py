@@ -2,11 +2,11 @@ from dt_shell import DTCommandAbs, DTShell
 
 
 class DTCommand(DTCommandAbs):
-    help = "Uninstalls a new command set."
+    help = "Uninstalls a command set."
 
     @staticmethod
     def command(shell: DTShell, args):
-        # TODO: here we uninstall a new command set
+        # TODO: here we uninstall a command set
         return True
 
     @staticmethod
