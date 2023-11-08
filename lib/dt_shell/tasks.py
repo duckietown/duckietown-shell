@@ -4,6 +4,9 @@ from abc import abstractmethod
 from threading import Thread
 
 import requests
+from dt_shell.utils import DebugInfo
+
+import dockertown
 from dt_shell.database import DTShellDatabase
 
 from dt_shell_cli import logger
@@ -112,6 +115,33 @@ class UpdateBillboardsTask(Task):
         self._db.update(response.get("result", {}))
         self._shell.mark_updated("billboards")
         logger.debug("Billboards updated!")
+
+    def shutdown(self, event: Event):
+        pass
+
+
+class CollectDockerVersionTask(Task):
+
+    def __init__(self, shell, **kwargs):
+        super(CollectDockerVersionTask, self).__init__(shell, name="docker-version-probe", killable=True,
+                                                       **kwargs)
+        self._db: DTShellDatabase = DTShellDatabase.open(DB_BILLBOARDS)
+
+    def execute(self):
+        try:
+            # create docker client
+            docker = dockertown.DockerClient()
+            # get versions
+            versions: dict = docker.version()
+            DebugInfo.name2versions["docker/client"] = versions["Client"]["Version"]
+            DebugInfo.name2versions["docker/server"] = versions["Server"]["Version"]
+            DebugInfo.name2versions["docker/client/api"] = versions["Client"]["ApiVersion"]
+            DebugInfo.name2versions["docker/server/api"] = versions["Server"]["ApiVersion"]
+        except:
+            DebugInfo.name2versions["docker/client"] = "(error)"
+            DebugInfo.name2versions["docker/server"] = "(error)"
+            DebugInfo.name2versions["docker/client/api"] = "(error)"
+            DebugInfo.name2versions["docker/server/api"] = "(error)"
 
     def shutdown(self, event: Event):
         pass

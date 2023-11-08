@@ -178,6 +178,12 @@ class DTShell(Cmd):
                  readonly: bool = False,
                  banner: bool = True,
                  billboard: bool = True):
+        # arguments
+        self._skeleton: bool = skeleton
+        self._readonly: bool = readonly
+        self._banner: bool = banner
+        self._billboard: bool = billboard
+
         # errors while loading end up in here
         self._errors_loading: List[str] = []
 
@@ -364,7 +370,7 @@ class DTShell(Cmd):
         self._event_handlers[event].append(handler)
 
     def on_start(self, handler: Callable[[Event], None]):
-        self.on_event(EventType.SHUTDOWN, handler)
+        self.on_event(EventType.START, handler)
 
     def on_shutdown(self, handler: Callable[[Event], None]):
         self.on_event(EventType.SHUTDOWN, handler)
@@ -386,11 +392,17 @@ class DTShell(Cmd):
         self.updates_check_db.set(key, when if when is not None else time.time())
 
     def _run_background_tasks(self, event: Event):
+        # we don't run background tasks in skeleton mode
+        if self._readonly or self._skeleton:
+            return
         if event.type is EventType.START:
             # update billboards
             if self.needs_update("billboards", CHECK_BILLBOARD_UPDATE_SECS):
                 from .tasks import UpdateBillboardsTask
                 UpdateBillboardsTask(self).start()
+            # get docker versions
+            from .tasks import CollectDockerVersionTask
+            CollectDockerVersionTask(self).start()
 
     def _on_keyboard_interrupt_event(self, event: Event):
         pass
