@@ -4,7 +4,7 @@ import subprocess
 import sys
 from typing import List, Optional
 
-from whichcraft import which
+from shutil import which
 
 from ..exceptions import InvalidEnvironment, UserError
 from .. import logger
