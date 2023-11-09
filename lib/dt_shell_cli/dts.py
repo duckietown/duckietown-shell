@@ -1,7 +1,7 @@
 import logging
 import os
 import sys
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 
 # NOTE: DO NOT IMPORT DT_SHELL HERE
 
@@ -162,6 +162,19 @@ def dts():
 
 
 def complete():
+    """
+    NOTE: If you want to test the autocomplete output, use the following command:
+        .
+            dts --complete <idx> dts <word1> <word2> ...
+        .
+        where <idx> is the index corresponding to the word we want to complete.
+        For example, pressing <Tab> on the partial command "dts devel bu" would generate the
+        command
+        .
+            dts --complete 2 dts devel bu
+        .
+        which, if run, would print the string "bump build" for BASH to break at the space.
+    """
     from dt_shell import DTShell
 
     try:
@@ -174,9 +187,15 @@ def complete():
     except:
         exit()
 
-    def do_complete(comp_cword: int, *comp_words: str):
+    def do_complete(comp_cword: str, *comp_words: str):
+        comp_cword: int = int(comp_cword)
+        comp_words: List[str] = list(comp_words)
+        # add empty word if the pointer is past the last word (we are list all possible next words)
+        if comp_cword == len(comp_words):
+            comp_words.append("")
+        # ---
         comp_line: str = " ".join(comp_words[1:])
-        comp_word: str = comp_words[int(comp_cword)]
+        comp_word: str = comp_words[comp_cword]
         root_cmd: str = comp_words[1]
         if root_cmd in shell.commands:
             complete_fcn = getattr(shell, f"complete_{root_cmd}")

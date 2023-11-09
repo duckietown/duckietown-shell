@@ -1,16 +1,17 @@
-import argparse
-import copy
-import dataclasses
-import glob
 import os
 import time
+import copy
+import glob
 import traceback
+import argparse
+import dataclasses
 from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass
 from types import SimpleNamespace
 from typing import Dict, Type, Union, Optional, Mapping, Tuple, List, Any
 
 from .repository import CommandsRepository
+from .autocomplete import ArgumentParserCompleter
 from .. import __version__, logger
 from ..constants import CHECK_CMDS_UPDATE_MINS, DB_COMMAND_SET_UPDATES_CHECK, DTShellConstants, \
     EMBEDDED_COMMAND_SET_NAME
@@ -84,6 +85,17 @@ class DTCommandAbs(metaclass=ABCMeta):
             else:
                 return cls.descriptor, args
 
+    @classmethod
+    def _complete(cls, shell, word, line) -> List[str]:
+        # start with user suggestions (i.e., implemented via DTCommand.complete())
+        suggestions: List[str] = cls.complete(shell, word, line)
+        if cls.parser is not None:
+            completer: ArgumentParserCompleter = ArgumentParserCompleter(cls.parser)
+            # add parser suggestions
+            suggestions.extend(completer.get_completions(line))
+        # ---
+        return suggestions
+
     @staticmethod
     def do_command(cls, shell, line):
         cls: Type[DTCommandAbs]
@@ -98,36 +110,60 @@ class DTCommandAbs(metaclass=ABCMeta):
             return descriptor.command.command(shell, args)
 
     @staticmethod
-    def complete_command(cls, shell, word, line, start_index, end_index):
+    def complete_command(cls, shell, word, line, start_index, end_index) -> List[str]:
         cls: Type[DTCommandAbs]
         word: str
         line: str
         start_index: int
         end_index: int
         # ---
-        # print('[%s](%s)@(%s, %s)' % (word, line, cls.name, cls.__class__))
-        word = word.strip()
-        line = line.strip()
-        # add aliases
+        # TODO: add aliases
         subcmds = cls.commands.keys()
         parts = [p.strip() for p in line.split(" ")]
-        #
-        partial_word = len(word) != 0
+        partial_word: bool = len(word) != 0
+        # NOTE: DEBUG only
+        # logger.info(
+        #     f"""
+        #     line: |{line}|
+        #     word: |{word}|
+        #     start_index: {start_index}
+        #     end_index: {end_index}
+        #     partial_word: |{partial_word}|
+        #     command: |{cls.name}|
+        #     subcmds: |{subcmds}|
+        #     parts: {parts}
+        #     """
+        # )
+        # first word must match this command name
         if parts[0] == cls.name:
-            if len(parts) == 1 or (len(parts) == 2 and partial_word):
+            # either there is only one word to complete or a full word and a partial word
+            if len(parts) in [1, 2]:
+                # strip this command name from the line
+                nline: str = " ".join(parts[1:]) if len(parts) > 1 else line
+                # collect all matching suggestions returned by the method DTCommand.complete()
                 static_comp = [
-                    k for k in cls.complete(shell, word, line) if (not partial_word or k.startswith(word))
+                    k for k in cls._complete(shell, word, nline) if (not partial_word or k.startswith(word))
                 ]
+                # add all subcommands whose name match the word
                 comp_subcmds = static_comp + [k for k in subcmds if (not partial_word or k.startswith(word))]
-                # print '!T'
                 return comp_subcmds
-            if len(parts) > 1 and parts[1] in cls.commands.keys():
+            # if we have that the first word matches the name of a subcommand, we pass the ball downstream
+            if len(parts) > 1 and parts[1] in subcmds:
                 child = parts[1]
-                nline = " ".join(parts[1:])
-                # print '!C'
+                nline: str = " ".join(parts[1:])
+                # let the child command autocomplete
                 return DTCommandAbs.complete_command(
                     cls.commands[child], shell, word, nline, start_index, end_index
                 )
+            # we have a more complex partial line
+            if len(parts) >= 2:
+                # strip this command name from the line
+                nline: str = " ".join(parts[1:])
+                # collect all matching suggestions returned by the method DTCommand.complete()
+                static_comp = [
+                    k for k in cls._complete(shell, word, nline)
+                ]
+                return static_comp
         # ---
         return []
 

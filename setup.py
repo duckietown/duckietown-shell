@@ -36,6 +36,7 @@ shell_requires = [
     # CLI utils
     "pyfiglet>=0.8.0,<1",
     "questionary>=2.0.1,<3",
+    "argcomplete>=3.1.4,<4",
 
     # duckietown deps
     "dockertown>=0.2.2,<1",
