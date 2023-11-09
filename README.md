@@ -175,13 +175,13 @@ Instructions will guide you and you will be prompted for the token.
 
 If you already know the token, then you can use:
 
-    $ dts tok set dt1-YOUR-TOKEN
+    $ dts tok set dt2-YOUR-TOKEN
     
 ### Verifying that a token is valid
 
 To verify that a token is valid, you can use:
 
-    $ dts tok verify dt1-TOKEN-TO-VERIFY
+    $ dts tok verify dt2-TOKEN-TO-VERIFY
     
 This exits with 0 if the token is valid, and writes on standard output the following json:
 

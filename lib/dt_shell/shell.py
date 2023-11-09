@@ -470,7 +470,7 @@ class DTShell(Cmd):
         assert self.profile is not None
 
         # try to migrate dt1 token
-        if needs_migrate_token_dt1():
+        if "1" in self.profile.distro.tokens_supported and needs_migrate_token_dt1():
             migrate: bool = True
             if not asked_confirmation:
                 migrate = _ask_confirmation()

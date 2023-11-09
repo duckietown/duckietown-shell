@@ -53,7 +53,7 @@ Enter token: """.format(
         # make sure this token is of a version we support
         tokens_supported: List[str] = shell.profile.distro.tokens_supported
         if token.version not in tokens_supported:
-            dtslogger.error(f"Tokens version '{token.version}' not supported by this profile's distro. "
+            dtslogger.error(f"Token version '{token.version}' not supported by this profile's distro. "
                             f"Only versions supported are {', '.join(tokens_supported)}.")
             return False
 

@@ -357,11 +357,19 @@ class ShellProfile:
             print()
             print(f"The Duckietown Shell needs a Duckietown Token to work properly. "
                   f"Get yours for free at {DUCKIETOWN_TOKEN_URL}")
-            # let the user insert the token
-            token_str: str = questionary.password("Enter your token:", validate=validator_token).unsafe_ask()
-            token: DuckietownToken = DuckietownToken.from_string(token_str)
-            # TODO: here we make sure this is a dt2 token (dt1 can be used otherwise)
-            print(f"Token verified successfully. Your ID is: {yellow_bold(token.uid)}")
+            while True:
+                # let the user insert the token
+                token_str: str = questionary.password("Enter your token:", validate=validator_token).unsafe_ask()
+                token: DuckietownToken = DuckietownToken.from_string(token_str)
+                # make sure this token is supported by this profile distro
+                tokens_supported: List[str] = self.distro.tokens_supported
+                if token.version not in tokens_supported:
+                    print(f"Token version '{token.version}' not supported by this profile's distro. "
+                          f"Only versions supported are {', '.join(tokens_supported)}.")
+                    continue
+                else:
+                    print(f"Token verified successfully. Your ID is: {yellow_bold(token.uid)}")
+                    break
             # store token
             self.secrets.dt2_token = token_str
             modified_config = True
