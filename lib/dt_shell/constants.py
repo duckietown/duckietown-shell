@@ -2,7 +2,7 @@
 import dataclasses
 import datetime
 import os
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 
 DEBUG = False
 DNAME = "Duckietown Shell"
@@ -17,6 +17,7 @@ class Distro:
     branch: str = None
     end_of_life: Optional[datetime.date] = None
     staging: bool = False
+    tokens_supported: List[str] = dataclasses.field(default_factory=list)
 
     def __post_init__(self):
         # if the branch is not given then it takes the distro name
@@ -53,14 +54,31 @@ IGNORE_ENVIRONMENTS: bool = os.environ.get("IGNORE_ENVIRONMENTS", "0").lower() i
 # distributions
 KNOWN_DISTRIBUTIONS: Dict[str, Distro] = {
     # daffy
-    "daffy": Distro("daffy", "daffy", end_of_life=datetime.date(2024, 3, 31)),
-    "daffy-staging": Distro("daffy", "daffy-staging", end_of_life=datetime.date(2024, 3, 31), staging=True),
+    "daffy": Distro(
+        "daffy",
+        "daffy",
+        end_of_life=datetime.date(2024, 3, 31),
+        tokens_supported=["1", "2"]
+    ),
+    "daffy-staging": Distro(
+        "daffy",
+        "daffy-staging",
+        end_of_life=datetime.date(2024, 3, 31),
+        staging=True,
+        tokens_supported=["1", "2"]
+    ),
     # ente
-    "ente": Distro("ente", "ente"),
-    "ente-staging": Distro("ente", "ente-staging", staging=True),
-    # temporary
-    # TODO: remove
-    "v6": Distro("v6", "v6", staging=True),
+    "ente": Distro(
+        "ente",
+        "ente",
+        tokens_supported=["2"]
+    ),
+    "ente-staging": Distro(
+        "ente",
+        "ente-staging",
+        staging=True,
+        tokens_supported=["2"]
+    ),
 }
 SUGGESTED_DISTRIBUTION: str = "ente"
 
