@@ -204,8 +204,10 @@ def complete():
             items = shell.commands.keys()
             return (item for item in items if item.startswith(comp_word))
 
-    sys.stdout.write(" ".join(do_complete(*sys.argv[2:])))
-    sys.stdout.flush()
+    suggestions: List[str] = do_complete(*sys.argv[2:])
+    if suggestions:
+        sys.stdout.write(" ".join(suggestions))
+        sys.stdout.flush()
     exit(0)
 
 
