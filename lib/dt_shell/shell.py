@@ -755,6 +755,7 @@ class DTShell(Cmd):
                 continue
             # update command set
             logger.info(f"Updating the command set '{cs.name}'...")
+            self.profile.events.new(f"shell/commandset/update/{cs.name}")
             cs.update()
             logger.info(f"Command set '{cs.name}' updated!")
 

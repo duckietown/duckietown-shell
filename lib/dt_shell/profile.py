@@ -16,6 +16,7 @@ from .constants import DUCKIETOWN_TOKEN_URL, SHELL_LIB_DIR, DEFAULT_COMMAND_SET_
     DB_PROFILES, KNOWN_DISTRIBUTIONS, SUGGESTED_DISTRIBUTION, DB_UPDATES_CHECK, EMBEDDED_COMMAND_SET_NAME, \
     Distro
 from .database.database import DTShellDatabase, NOTSET, DTSerializable
+from .statistics import ShellProfileEventsDatabase
 from .utils import safe_pathname, validator_token, yellow_bold, cli_style, parse_version, render_version, \
     indent_block, DebugInfo
 from .exceptions import ConfigNotPresent
@@ -275,6 +276,10 @@ class ShellProfile:
     @property
     def secrets(self) -> ShellProfileSecrets:
         return ShellProfileSecrets.load(location=self._databases_location)
+
+    @property
+    def events(self) -> ShellProfileEventsDatabase:
+        return ShellProfileEventsDatabase.load(location=self._databases_location)
 
     @property
     def distro(self) -> Optional[Distro]:

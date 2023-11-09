@@ -164,9 +164,9 @@ class DTShellDatabase(Generic[T]):
         # complete data with other metadata
         with self._lock:
             content = {**EMPTY_DB, "data": {**self._data}}
-        # write to disk
-        with open(self.yaml, "wt") as fout:
-            yaml.safe_dump(content, fout, indent=4)
+            # write to disk
+            with open(self.yaml, "wt") as fout:
+                yaml.safe_dump(content, fout, indent=4)
 
     @staticmethod
     def _serialize(v: object) -> SerializedValue:

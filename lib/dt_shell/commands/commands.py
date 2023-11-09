@@ -106,6 +106,8 @@ class DTCommandAbs(metaclass=ABCMeta):
         # find the subcommand to execute
         descriptor, args = DTCommandAbs.get_command(cls, shell, line)
         if descriptor is not None and not descriptor.command.fake:
+            # annotate event
+            shell.profile.events.new(f"shell/command/execute", {"command": descriptor.selector})
             # run command implementation
             return descriptor.command.command(shell, args)
 

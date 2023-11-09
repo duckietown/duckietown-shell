@@ -97,6 +97,7 @@ class UpdateBillboardsTask(Task):
         # reach out to the HUB and grub the new billboards
         try:
             response: dict = requests.get(url).json()
+            self._shell.profile.events.new(f"shell/billboards/update")
         except:
             logger.warning("An error occurred while updating the billboards")
             logger.debug(traceback.format_exc())
