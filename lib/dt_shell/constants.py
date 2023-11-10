@@ -71,13 +71,15 @@ KNOWN_DISTRIBUTIONS: Dict[str, Distro] = {
     "ente": Distro(
         "ente",
         "ente",
-        tokens_supported=["2"]
+        # TODO: dt1 tokens are just temporary here, drop them before releasing v6
+        tokens_supported=["1", "2"]
     ),
     "ente-staging": Distro(
         "ente",
         "ente-staging",
         staging=True,
-        tokens_supported=["2"]
+        # TODO: dt1 tokens are just temporary here, drop them before releasing v6
+        tokens_supported=["1", "2"]
     ),
 }
 SUGGESTED_DISTRIBUTION: str = "ente"
