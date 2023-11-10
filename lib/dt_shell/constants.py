@@ -58,28 +58,28 @@ KNOWN_DISTRIBUTIONS: Dict[str, Distro] = {
         "daffy",
         "daffy",
         end_of_life=datetime.date(2024, 3, 31),
-        tokens_supported=["1", "2"]
+        tokens_supported=["dt1", "dt2"]
     ),
     "daffy-staging": Distro(
         "daffy",
         "daffy-staging",
         end_of_life=datetime.date(2024, 3, 31),
         staging=True,
-        tokens_supported=["1", "2"]
+        tokens_supported=["dt1", "dt2"]
     ),
     # ente
     "ente": Distro(
         "ente",
         "ente",
         # TODO: dt1 tokens are just temporary here, drop them before releasing v6
-        tokens_supported=["1", "2"]
+        tokens_supported=["dt1", "dt2"]
     ),
     "ente-staging": Distro(
         "ente",
         "ente-staging",
         staging=True,
         # TODO: dt1 tokens are just temporary here, drop them before releasing v6
-        tokens_supported=["1", "2"]
+        tokens_supported=["dt1", "dt2"]
     ),
 }
 SUGGESTED_DISTRIBUTION: str = "ente"
