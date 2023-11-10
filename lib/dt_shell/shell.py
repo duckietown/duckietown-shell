@@ -462,6 +462,8 @@ class DTShell(Cmd):
             # make new profile
             logger.info(f"Migrating profile '{distro}'...")
             self._profile = ShellProfile(name=distro)
+            # set profile distro
+            self._profile.distro = distro
             # set the new profile as the profile to load at the next launch
             self.settings.profile = distro
             modified_config = True
@@ -470,7 +472,7 @@ class DTShell(Cmd):
         assert self.profile is not None
 
         # try to migrate dt1 token
-        if "1" in self.profile.distro.tokens_supported and needs_migrate_token_dt1():
+        if "dt1" in self.profile.distro.tokens_supported and needs_migrate_token_dt1():
             migrate: bool = True
             if not asked_confirmation:
                 migrate = _ask_confirmation()

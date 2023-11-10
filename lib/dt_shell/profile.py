@@ -70,7 +70,9 @@ class ShellProfileSecrets(DTShellDatabase):
 
     @property
     def dt_token(self) -> Optional[str]:
-        return self.dt2_token
+        # TODO: move this to dt2 before releasing v6
+        # TODO: perhaps each distro can define a preferred token version and that one will be proxied here
+        return self.dt1_token
 
     @dt_token.setter
     def dt_token(self, value: str):
@@ -356,7 +358,7 @@ class ShellProfile:
             modified_config = True
 
         # make sure we have a token for this profile
-        if self.secrets.dt2_token is None:
+        if self.secrets.dt_token is None:
             if readonly:
                 raise ConfigNotPresent()
             print()
@@ -376,7 +378,7 @@ class ShellProfile:
                     print(f"Token verified successfully. Your ID is: {yellow_bold(token.uid)}")
                     break
             # store token
-            self.secrets.dt2_token = token_str
+            self.secrets.dt_token = token_str
             modified_config = True
         # ---
         return modified_config
