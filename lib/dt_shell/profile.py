@@ -76,7 +76,9 @@ class ShellProfileSecrets(DTShellDatabase):
 
     @dt_token.setter
     def dt_token(self, value: str):
-        self.dt2_token = value
+        # TODO: move this to dt2 before releasing v6
+        # TODO: perhaps each distro can define a preferred token version and that one will be proxied here
+        self.dt1_token = value
 
     @property
     def dt1_token(self) -> Optional[str]:
