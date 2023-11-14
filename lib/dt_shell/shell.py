@@ -57,6 +57,7 @@ class CLIOptions:
     verbose: bool = False
     quiet: bool = False
     complete: bool = False
+    profile: Optional[str] = None
 
 
 def get_cli_options(args: List[str]) -> Tuple[CLIOptions, List[str]]:
@@ -70,6 +71,8 @@ def get_cli_options(args: List[str]) -> Tuple[CLIOptions, List[str]]:
     for w in args:
         if w.startswith("-"):
             i += 1
+            if w == "--profile":
+                i += 1
         else:
             break
 
@@ -91,6 +94,12 @@ def get_cli_options(args: List[str]) -> Tuple[CLIOptions, List[str]]:
         action="store_true",
         default=False,
         help="Quiet execution"
+    )
+    parser.add_argument(
+        "--profile",
+        type=str,
+        default=None,
+        help="Select specific profile just for this session"
     )
 
     if "--complete" in args[:i]:
@@ -177,7 +186,9 @@ class DTShell(Cmd):
                  skeleton: bool = False,
                  readonly: bool = False,
                  banner: bool = True,
-                 billboard: bool = True):
+                 billboard: bool = True,
+                 profile: Optional[str] = None
+                 ):
         # arguments
         self._skeleton: bool = skeleton
         self._readonly: bool = readonly
@@ -217,6 +228,14 @@ class DTShell(Cmd):
         # open databases
         self._db_profiles: DTShellDatabase = DTShellDatabase.open(DB_PROFILES, readonly=readonly)
         self._db_settings: ShellSettings = ShellSettings.open(DB_SETTINGS, readonly=readonly)
+
+        # custom profile
+        if profile is not None:
+            if profile not in self._db_profiles.keys():
+                raise UserError(f"The profile '{profile}' does not exist.")
+            logger.info(f"Using profile '{profile}' as prescribed by the option --profile")
+            with self.settings.in_memory():
+                self.settings.profile = profile
 
         # load current profile
         self._profile: ShellProfile = ShellProfile(self.settings.profile, readonly=readonly) \

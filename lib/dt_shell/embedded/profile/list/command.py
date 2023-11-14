@@ -15,7 +15,7 @@ class DTCommand(DTCommandAbs):
         # get list of existing profiles
         profiles: Set[str] = set(shell.profiles.keys())
         # make a table
-        header = ["Distribution", "Staging"]
+        header = ["Profile", "Distribution", "Staging"]
         data = []
         for profile_name in sorted(profiles):
             profile: ShellProfile = ShellProfile(profile_name, readonly=True)
@@ -25,8 +25,11 @@ class DTCommand(DTCommandAbs):
                 if d.name == profile.distro.name:
                     distro = d
                     break
+            # current?
+            current: str = ">>" if shell.profile.name == profile_name else ""
             # add to table
             data.append([
+                current,
                 profile_name,
                 profile.distro.name,
                 ("Yes" if distro.staging else "No") if distro else "NA"

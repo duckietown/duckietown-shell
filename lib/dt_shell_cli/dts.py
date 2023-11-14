@@ -92,7 +92,8 @@ def dts():
             skeleton=True,
             readonly=False,
             banner=True,
-            billboard=True
+            billboard=True,
+            profile=cli_options.profile
         )
     except (UserAborted, KeyboardInterrupt):
         dts_print("User aborted operation.")

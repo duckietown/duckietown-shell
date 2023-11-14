@@ -52,6 +52,7 @@ def main() -> None:
             readonly=False,
             banner=False,
             billboard=False,
+            profile=cli_options.profile
         )
     except CommandsLoadingException as e:
         dts_print("FATAL: " + str(e))
