@@ -1,4 +1,5 @@
 import dataclasses
+import os
 import time
 from typing import Iterator
 
@@ -24,6 +25,10 @@ class ShellProfileEventsDatabase(DTShellDatabase[dict]):
     def load(cls, location: str):
         return ShellProfileEventsDatabase.open(DB_STATISTICS_EVENTS, location=location)
 
+    @property
+    def in_memory(self) -> bool:
+        return os.environ.get("DTSHELL_DISABLE_STATS", "0").lower() in ["1", "yes", "true"]
+
     def get(self, *_, **__):
         raise NotImplementedError("Use the method ShellProfileEventsDatabase.events() instead.")
 
@@ -39,5 +44,6 @@ class ShellProfileEventsDatabase(DTShellDatabase[dict]):
         now: float = time.time()
         key: str = str(now)
         value: dict = {"name": name, "time": when or now, "payload": payload or {}}
-        super(ShellProfileEventsDatabase, self).set(key, value)
+        if not self.in_memory:
+            super(ShellProfileEventsDatabase, self).set(key, value)
         return StatsEvent(**value, __db__=self, __key__=key)
