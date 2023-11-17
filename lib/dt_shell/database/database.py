@@ -102,6 +102,10 @@ class DTShellDatabase(Generic[T]):
             # code to release resource
             self._in_memory = False
 
+    @property
+    def size(self) -> int:
+        return len(self._data)
+
     def contains(self, key: Key) -> bool:
         key = self._key(key)
         return key in self._data

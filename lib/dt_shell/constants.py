@@ -46,6 +46,7 @@ class DTShellConstants:
 # commands update
 CHECK_CMDS_UPDATE_MINS = 5
 CHECK_BILLBOARD_UPDATE_SECS = 60 * 60 * 24   # every 24 hours
+PUSH_USER_EVENTS_TO_HUB_SECS = 60 * 60 * 1   # every 1 hour
 
 SHELL_LIB_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_PROFILES_DIR = os.path.join(DEFAULT_ROOT, "profiles")

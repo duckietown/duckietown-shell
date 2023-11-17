@@ -1,7 +1,7 @@
 import dataclasses
 import os
 import time
-from typing import Iterator
+from typing import Iterator, Optional
 
 from .constants import DB_STATISTICS_EVENTS
 from .database import DTShellDatabase
@@ -14,6 +14,13 @@ class StatsEvent:
     payload: dict
     __db__: 'ShellProfileEventsDatabase'
     __key__: str
+    # optional
+    format: int = 1
+    labels: Optional[dict] = None
+
+    @property
+    def time_millis(self) -> int:
+        return int(self.time * 1000)
 
     def delete(self):
         self.__db__.delete(self.__key__)
@@ -40,10 +47,17 @@ class ShellProfileEventsDatabase(DTShellDatabase[dict]):
             value: dict = super(ShellProfileEventsDatabase, self).get(key)
             yield StatsEvent(**value, __db__=self, __key__=key)
 
-    def new(self, name: str, payload: dict = None, when: float = None) -> StatsEvent:
+    def new(self, name: str, payload: dict = None, when: float = None, format: int = 1,
+            labels: dict = None) -> StatsEvent:
         now: float = time.time()
         key: str = str(now)
-        value: dict = {"name": name, "time": when or now, "payload": payload or {}}
+        value: dict = {
+            "name": name,
+            "time": when or now,
+            "payload": payload or {},
+            "format": format,
+            "labels": labels
+        }
         if not self.in_memory:
             super(ShellProfileEventsDatabase, self).set(key, value)
         return StatsEvent(**value, __db__=self, __key__=key)

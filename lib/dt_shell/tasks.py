@@ -2,6 +2,7 @@ import json
 import traceback
 from abc import abstractmethod
 from threading import Thread
+from typing import Optional
 
 import requests
 from dt_shell.utils import DebugInfo
@@ -11,7 +12,9 @@ from dt_shell.database import DTShellDatabase
 
 from dt_shell_cli import logger
 from .constants import DTShellConstants, DTHUB_URL, DB_BILLBOARDS
+from .hub import HUBApiError, hub_api_post
 from .shell import Event, DTShell
+from .statistics import ShellProfileEventsDatabase
 
 
 class Task(Thread):
@@ -146,3 +149,46 @@ class CollectDockerVersionTask(Task):
 
     def shutdown(self, event: Event):
         pass
+
+
+class UploadStatisticsTask(Task):
+
+    def __init__(self, shell, **kwargs):
+        super(UploadStatisticsTask, self).__init__(shell, name="stats-uploader", killable=True, **kwargs)
+        self._db: ShellProfileEventsDatabase = shell.profile.events
+        self._token: Optional[str] = shell.profile.secrets.dt_token
+
+    def execute(self):
+        if self._token is None:
+            return
+        # push events
+        for evt in self._db.events():
+            try:
+                data: dict = {
+                    "key": evt.name,
+                    "format": evt.format,
+                    "payload": evt.payload,
+                    "stamp": evt.time_millis
+                }
+                if evt.labels:
+                    data["labels"] = evt.labels
+                hub_api_post("statistics/user/event", data)
+                evt.delete()
+                if DTShellConstants.VERBOSE:
+                    logger.debug(f"Event '{evt.__key__}' pushed to the HUB")
+            except HUBApiError as e:
+                if e.code == 409:
+                    # duplicated stats points
+                    evt.delete()
+                    continue
+                if DTShellConstants.VERBOSE:
+                    logger.debug(e.human)
+            except:
+                if DTShellConstants.VERBOSE:
+                    logger.debug(traceback.format_exc())
+        # mark as done
+        self._shell.mark_done("upload_events")
+
+    def shutdown(self, event: Event):
+        pass
+

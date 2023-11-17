@@ -35,7 +35,7 @@ from .compatibility.migrations import \
     needs_migrate_secrets, migrate_secrets, mark_docker_credentials_migrated, \
     mark_token_dt1_migrated, mark_secrets_migrated, needs_migrations, mark_all_migrated
 from .constants import DNAME, KNOWN_DISTRIBUTIONS, SUGGESTED_DISTRIBUTION, EMBEDDED_COMMAND_SET_NAME, \
-    DB_BILLBOARDS, DB_UPDATES_CHECK, CHECK_BILLBOARD_UPDATE_SECS
+    DB_BILLBOARDS, DB_UPDATES_CHECK, CHECK_BILLBOARD_UPDATE_SECS, PUSH_USER_EVENTS_TO_HUB_SECS
 from .constants import DTShellConstants, IGNORE_ENVIRONMENTS, DB_SETTINGS, DB_PROFILES
 from .database import DTShellDatabase
 from .environments import ShellCommandEnvironmentAbs, DEFAULT_COMMAND_ENVIRONMENT
@@ -226,9 +226,6 @@ class DTShell(Cmd):
         # set all databases to readonly if needed
         DTShellDatabase.global_readonly = readonly
 
-        # start event
-        self._trigger_event(Event(EventType.START, "shell"))
-
         # open databases
         self._db_profiles: DTShellDatabase = DTShellDatabase.open(DB_PROFILES, readonly=readonly)
         self._db_settings: ShellSettings = ShellSettings.open(DB_SETTINGS, readonly=readonly)
@@ -244,6 +241,9 @@ class DTShell(Cmd):
         # load current profile
         self._profile: ShellProfile = ShellProfile(self.settings.profile, readonly=readonly) \
             if self.settings.profile else None
+
+        # start event
+        self._trigger_event(Event(EventType.START, "shell"))
 
         # get billboard to show (if any)
         bboard: Optional[str] = None
@@ -410,9 +410,15 @@ class DTShell(Cmd):
         # check time
         return time.time() - last_time_checked > period
 
+    def is_time(self, key: str, period: float, default: bool = True) -> bool:
+        return self.needs_update(key=key, period=period, default=default)
+
     def mark_updated(self, key: str, when: float = None):
         # update record
         self.updates_check_db.set(key, when if when is not None else time.time())
+
+    def mark_done(self, key: str, when: float = None):
+        self.mark_updated(key=key, when=when)
 
     def _run_background_tasks(self, event: Event):
         # we don't run background tasks in skeleton mode
@@ -426,6 +432,10 @@ class DTShell(Cmd):
             # get docker versions
             from .tasks import CollectDockerVersionTask
             CollectDockerVersionTask(self).start()
+            # push user events to the hub
+            if self.is_time("upload_events", PUSH_USER_EVENTS_TO_HUB_SECS):
+                from .tasks import UploadStatisticsTask
+                UploadStatisticsTask(self).start()
 
     def _on_keyboard_interrupt_event(self, event: Event):
         pass
