@@ -384,7 +384,7 @@ class ShellProfile:
                 tokens_supported: List[str] = self.distro.tokens_supported
                 if token.version not in tokens_supported:
                     print(f"Token version '{token.version}' not supported by this profile's distro. "
-                          f"Only versions supported are {', '.join(tokens_supported)}.")
+                          f"Only versions supported are {tokens_supported}.")
                     continue
                 else:
                     print(f"Token verified successfully. Your ID is: {yellow_bold(token.uid)}")

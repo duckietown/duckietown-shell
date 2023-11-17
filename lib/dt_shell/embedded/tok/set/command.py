@@ -54,11 +54,11 @@ Enter token: """.format(
         tokens_supported: List[str] = shell.profile.distro.tokens_supported
         if token.version not in tokens_supported:
             dtslogger.error(f"Token version '{token.version}' not supported by this profile's distro. "
-                            f"Only versions supported are {', '.join(tokens_supported)}.")
+                            f"Only versions supported are {tokens_supported}.")
             return False
 
         # update the profile token
-        shell.profile.secrets.dt2_token = s
+        shell.profile.secrets.dt_token = s
 
 
 def dark(x):
