@@ -70,15 +70,25 @@ class ShellProfileSecrets(DTShellDatabase):
 
     @property
     def dt_token(self) -> Optional[str]:
-        # TODO: move this to dt2 before releasing v6
-        # TODO: perhaps each distro can define a preferred token version and that one will be proxied here
-        return self.dt1_token
+        from dt_shell import shell
+        preferred: str = shell.profile.distro.token_preferred
+        if preferred == "dt1":
+            return self.dt1_token
+        elif preferred == "dt2":
+            return self.dt2_token
+        else:
+            raise ValueError(f"Token version '{preferred}' not supported")
 
     @dt_token.setter
     def dt_token(self, value: str):
-        # TODO: move this to dt2 before releasing v6
-        # TODO: perhaps each distro can define a preferred token version and that one will be proxied here
-        self.dt1_token = value
+        from dt_shell import shell
+        preferred: str = shell.profile.distro.token_preferred
+        if preferred == "dt1":
+            self.dt1_token = value
+        elif preferred == "dt2":
+            self.dt2_token = value
+        else:
+            raise ValueError(f"Token version '{preferred}' not supported")
 
     @property
     def dt1_token(self) -> Optional[str]:

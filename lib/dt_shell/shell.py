@@ -189,6 +189,10 @@ class DTShell(Cmd):
                  billboard: bool = True,
                  profile: Optional[str] = None
                  ):
+        # populate singleton
+        import dt_shell
+        dt_shell.shell = self
+
         # arguments
         self._skeleton: bool = skeleton
         self._readonly: bool = readonly
