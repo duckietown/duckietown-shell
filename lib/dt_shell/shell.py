@@ -745,7 +745,7 @@ class DTShell(Cmd):
 
     def get_command(self, line) -> CommandDescriptor:
         """
-        Interpret the argument and looks for the command that would be executed by the function onemcd(line).
+        Interpret the argument and looks for the command that would be executed by the function onecmd(line).
 
         """
         cmd, arg, line = self.parseline(line)

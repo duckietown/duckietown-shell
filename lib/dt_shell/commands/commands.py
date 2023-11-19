@@ -20,7 +20,6 @@ from ..exceptions import UserError, InvalidRemote, CommandsLoadingException, Com
 from ..utils import run_cmd, undo_replace_spaces
 from ..typing import DTShell
 
-
 CommandName = str
 CommandsTree = Dict[CommandName, Union[Mapping[CommandName, dict], Type['DTCommandAbs']]]
 
@@ -37,10 +36,37 @@ class DTCommandAbs(metaclass=ABCMeta):
     @staticmethod
     @abstractmethod
     def command(shell: DTShell, args: List[str]):
+        """
+        This function will be invoked when the user presses [Return] and runs the command.
+
+        Parameters
+        ----------
+        shell : DTShell
+            The instance of DTShell hosting this command.
+        args : list
+            A list of arguments passed to the command.
+        """
         pass
 
     @staticmethod
     def complete(shell: DTShell, word: str, line: str):
+        """
+        This function will be invoked when the user presses the [Tab] key for auto completion.
+
+        Parameters
+        ----------
+        shell : DTShell
+            The instance of DTShell hosting this command.
+        word : str
+            The right-most word typed in the terminal
+            (usually the string the user is trying to auto-complete).
+
+        Returns
+        -------
+        list
+            A list of strings. Each string is a suggestion for the user
+            to auto-complete the command.
+        """
         return []
 
     @staticmethod
