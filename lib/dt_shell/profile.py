@@ -378,7 +378,8 @@ class ShellProfile:
                   f"Get yours for free at {DUCKIETOWN_TOKEN_URL}")
             while True:
                 # let the user insert the token
-                token_str: str = questionary.password("Enter your token:", validate=validator_token).unsafe_ask()
+                token_str: str = questionary.password("Enter your token:", validate=validator_token)\
+                    .unsafe_ask()
                 token: DuckietownToken = DuckietownToken.from_string(token_str)
                 # make sure this token is supported by this profile distro
                 tokens_supported: List[str] = self.distro.tokens_supported

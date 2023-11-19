@@ -9,7 +9,6 @@ import logging
 
 from dt_shell_cli import logger
 
-import dt_shell
 from dt_shell import DTShell, dtslogger, CommandsLoadingException
 from dt_shell.shell import get_cli_options
 from dt_shell.logging import setup_logging_color, dts_print
