@@ -128,7 +128,10 @@ class DTCommandAbs(metaclass=ABCMeta):
         descriptor, args = cls.get_command(shell, line)
         if descriptor is not None and not descriptor.command.fake:
             # annotate event
-            shell.profile.events.new(f"shell/command/execute", {"command": descriptor.selector})
+            shell.profile.events.new(
+                "shell/command/execute",
+                {"command_set": descriptor.command_set.as_dict(), "command": descriptor.selector}
+            )
             # run command implementation
             return descriptor.command.command(shell, args)
 
@@ -322,6 +325,7 @@ class CommandDescriptor:
     name: str
     path: str
     selector: str
+    command_set: 'CommandSet'
     configuration: Type[DTCommandConfigurationAbs]
     environment: Optional[ShellCommandEnvironmentAbs] = None
     command: Type[DTCommandAbs] = None
@@ -387,6 +391,15 @@ class CommandSet:
             stdout: str = run_cmd(["git", "-C", self.path, "rev-parse", "HEAD"])
             # noinspection PyTypeChecker
             return next(filter(len, stdout.split("\n")))
+
+    def as_dict(self) -> dict:
+        return {
+            "name": self.name,
+            "version": self.version,
+            "closest_version": self.closest_version,
+            "local_sha": self.local_sha,
+            "repository": self.repository.as_dict() if self.repository is not None else None
+        }
 
     def refresh(self):
         # reload commands
@@ -555,6 +568,7 @@ class CommandSet:
                 name=name,
                 path=path,
                 selector=selector,
+                command_set=self,
                 configuration=DTCommandConfigurationDefault,
                 environment=None
             )

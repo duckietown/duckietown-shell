@@ -21,6 +21,15 @@ class CommandsRepository:
     def remoteurl(self) -> str:
         return f"https://github.com/{self.username}/{self.project}"
 
+    def as_dict(self) -> dict:
+        return {
+            "username": self.username,
+            "project": self.project,
+            "branch": self.branch,
+            "location": self.location,
+            "url": self.remoteurl,
+        }
+
     def remote_sha(self) -> Optional[str]:
         # Get the remote sha from GitHub
         logger.info("Fetching remote SHA from github.com ...")
