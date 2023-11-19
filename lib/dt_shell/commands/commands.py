@@ -1,23 +1,24 @@
-import argparse
-import copy
-import dataclasses
-import glob
 import os
 import time
+import copy
+import glob
 import traceback
+import argparse
+import dataclasses
 from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass
 from types import SimpleNamespace
 from typing import Dict, Type, Union, Optional, Mapping, Tuple, List, Any
 
 from .repository import CommandsRepository
+from .autocomplete import ArgumentParserCompleter
 from .. import __version__, logger
 from ..constants import CHECK_CMDS_UPDATE_MINS, DB_COMMAND_SET_UPDATES_CHECK, DTShellConstants, \
     EMBEDDED_COMMAND_SET_NAME
 from ..environments import ShellCommandEnvironmentAbs, Python3Environment
 from ..exceptions import UserError, InvalidRemote, CommandsLoadingException, CommandNotFound
 from ..utils import run_cmd, undo_replace_spaces
-from shell import DTShell
+from ..typing import DTShell
 
 CommandName = str
 CommandsTree = Dict[CommandName, Union[Mapping[CommandName, dict], Type['DTCommandAbs']]]
@@ -34,7 +35,7 @@ class DTCommandAbs(metaclass=ABCMeta):
 
     @staticmethod
     @abstractmethod
-    def command(shell, args):
+    def command(shell: DTShell, args: List[str]):
         """
         This function will be invoked when the user presses [Return] and runs the command.
 
@@ -48,7 +49,7 @@ class DTCommandAbs(metaclass=ABCMeta):
         pass
 
     @staticmethod
-    def complete(shell, word, line):
+    def complete(shell: DTShell, word: str, line: str):
         """
         This function will be invoked when the user presses the [Tab] key for auto completion.
 
@@ -69,7 +70,7 @@ class DTCommandAbs(metaclass=ABCMeta):
         return []
 
     @staticmethod
-    def fail(msg):
+    def fail(msg: str):
         raise Exception(msg)
 
     @classmethod
@@ -80,11 +81,8 @@ class DTCommandAbs(metaclass=ABCMeta):
             return []
         return cls.descriptor.configuration.aliases()
 
-    @staticmethod
-    def get_command(cls, shell, line) -> Tuple['CommandDescriptor', List[str]]:
-        cls: Type[DTCommandAbs]
-        line: str
-        # ---
+    @classmethod
+    def get_command(cls, shell: DTShell, line: str) -> Tuple['CommandDescriptor', List[str]]:
         # print('>[%s]@(%s, %s)' % (line, cls.name, cls.__class__))
         line = line.strip()
         parts = [p.strip() for p in line.split(" ")]
@@ -100,7 +98,7 @@ class DTCommandAbs(metaclass=ABCMeta):
                     subcmds.update({k: subcmd for k in subcmd.aliases()})
                 # if we have a match we keep looking down recursively
                 if word in subcmds:
-                    return subcmds[word].get_command(subcmds[word], shell, " ".join(parts[1:]))
+                    return subcmds[word].get_command(shell, " ".join(parts[1:]))
                 else:
                     raise CommandNotFound(last_matched=cls, remaining=parts)
             else:
@@ -111,57 +109,82 @@ class DTCommandAbs(metaclass=ABCMeta):
             else:
                 return cls.descriptor, args
 
-    @staticmethod
-    def do_command(cls, shell, line):
-        cls: Type[DTCommandAbs]
-        line: str
+    @classmethod
+    def _complete(cls, shell: DTShell, word: str, line: str) -> List[str]:
+        # start with user suggestions (i.e., implemented via DTCommand.complete())
+        suggestions: List[str] = cls.complete(shell, word, line)
+        if cls.parser is not None:
+            completer: ArgumentParserCompleter = ArgumentParserCompleter(cls.parser)
+            # add parser suggestions
+            suggestions.extend(completer.get_completions(line))
         # ---
+        return suggestions
+
+    @classmethod
+    def do_command(cls, shell: DTShell, line: str):
         descriptor: Optional[CommandDescriptor]
         args: List[str]
         # find the subcommand to execute
-        descriptor, args = DTCommandAbs.get_command(cls, shell, line)
+        descriptor, args = cls.get_command(shell, line)
         if descriptor is not None and not descriptor.command.fake:
+            # annotate event
+            shell.profile.events.new(f"shell/command/execute", {"command": descriptor.selector})
             # run command implementation
             return descriptor.command.command(shell, args)
 
-    @staticmethod
-    def complete_command(cls, shell, word, line, start_index, end_index):
-        cls: Type[DTCommandAbs]
-        word: str
-        line: str
-        start_index: int
-        end_index: int
-        # ---
-        # print('[%s](%s)@(%s, %s)' % (word, line, cls.name, cls.__class__))
-        word = word.strip()
-        line = line.strip()
-        # add aliases
+    @classmethod
+    def complete_command(cls, shell: DTShell, word: str, line: str, start_index: int, end_index: int) \
+            -> List[str]:
+        # TODO: add aliases
         subcmds = cls.commands.keys()
         parts = [p.strip() for p in line.split(" ")]
-        #
-        partial_word = len(word) != 0
+        partial_word: bool = len(word) != 0
+        # NOTE: DEBUG only
+        # logger.info(
+        #     f"""
+        #     line: |{line}|
+        #     word: |{word}|
+        #     start_index: {start_index}
+        #     end_index: {end_index}
+        #     partial_word: |{partial_word}|
+        #     command: |{cls.name}|
+        #     subcmds: |{subcmds}|
+        #     parts: {parts}
+        #     """
+        # )
+        # first word must match this command name
         if parts[0] == cls.name:
-            if len(parts) == 1 or (len(parts) == 2 and partial_word):
+            # either there is only one word to complete or a full word and a partial word
+            if len(parts) in [1, 2]:
+                # strip this command name from the line
+                nline: str = " ".join(parts[1:]) if len(parts) > 1 else line
+                # collect all matching suggestions returned by the method DTCommand.complete()
                 static_comp = [
-                    k for k in cls.complete(shell, word, line) if (not partial_word or k.startswith(word))
+                    k for k in cls._complete(shell, word, nline) if (not partial_word or k.startswith(word))
                 ]
+                # add all subcommands whose name match the word
                 comp_subcmds = static_comp + [k for k in subcmds if (not partial_word or k.startswith(word))]
-                # print '!T'
                 return comp_subcmds
-            if len(parts) > 1 and parts[1] in cls.commands.keys():
+            # if we have that the first word matches the name of a subcommand, we pass the ball downstream
+            if len(parts) > 1 and parts[1] in subcmds:
                 child = parts[1]
-                nline = " ".join(parts[1:])
-                # print '!C'
-                return DTCommandAbs.complete_command(
-                    cls.commands[child], shell, word, nline, start_index, end_index
-                )
+                nline: str = " ".join(parts[1:])
+                # let the child command autocomplete
+                return cls.commands[child].complete_command(shell, word, nline, start_index, end_index)
+            # we have a more complex partial line
+            if len(parts) >= 2:
+                # strip this command name from the line
+                nline: str = " ".join(parts[1:])
+                # collect all matching suggestions returned by the method DTCommand.complete()
+                static_comp = [
+                    k for k in cls._complete(shell, word, nline)
+                ]
+                return static_comp
         # ---
         return []
 
-    @staticmethod
-    def help_command(cls, shell):
-        cls: Type[DTCommandAbs]
-        # ---
+    @classmethod
+    def help_command(cls, shell: DTShell):
         msg = cls.help if (cls.level == 0 and cls.help is not None) else str(shell.nohelp % cls.name)
         print(msg)
 
@@ -170,19 +193,19 @@ class DTCommandPlaceholder(DTCommandAbs):
     fake = True
 
     @staticmethod
-    def command(shell, args):
+    def command(shell: DTShell, args: List[str]):
         return
 
 
 class NoOpCommand(DTCommandAbs):
     @staticmethod
-    def command(shell, args, **kwargs):
+    def command(shell: DTShell, args: List[str], **kwargs):
         pass
 
 
 class FailedToLoadCommand(NoOpCommand):
     @staticmethod
-    def command(shell, args, **kwargs):
+    def command(shell: DTShell, args: List[str], **kwargs):
         logger.warning("This command was not loaded")
 
 
@@ -224,6 +247,7 @@ class DTCommandSetConfigurationAbs(metaclass=ABCMeta):
         """
         return None
 
+    # noinspection PyUnusedLocal
     @classmethod
     def requirements(cls, *args, **kwargs) -> Optional[str]:
         """
@@ -502,7 +526,8 @@ class CommandSet:
             # ---
             return False
 
-    def _find_commands(self, lvl=0, all_commands=False, selector: str = "", path: Optional[str] = None) \
+    def _find_commands(self, lvl: int = 0, all_commands: bool = False, selector: str = "",
+                       path: Optional[str] = None) \
             -> Union[None, Dict[str, Union[dict, CommandDescriptor]], CommandDescriptor]:
         path: str = path or self.path
         entries = glob.glob(os.path.join(path, "*"))

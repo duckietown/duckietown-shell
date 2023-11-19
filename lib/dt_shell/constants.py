@@ -2,7 +2,7 @@
 import dataclasses
 import datetime
 import os
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 
 DEBUG = False
 DNAME = "Duckietown Shell"
@@ -17,6 +17,8 @@ class Distro:
     branch: str = None
     end_of_life: Optional[datetime.date] = None
     staging: bool = False
+    tokens_supported: List[str] = dataclasses.field(default_factory=list)
+    token_preferred: Optional[str] = None
 
     def __post_init__(self):
         # if the branch is not given then it takes the distro name
@@ -44,6 +46,7 @@ class DTShellConstants:
 # commands update
 CHECK_CMDS_UPDATE_MINS = 5
 CHECK_BILLBOARD_UPDATE_SECS = 60 * 60 * 24   # every 24 hours
+PUSH_USER_EVENTS_TO_HUB_SECS = 60 * 60 * 1   # every 1 hour
 
 SHELL_LIB_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_PROFILES_DIR = os.path.join(DEFAULT_ROOT, "profiles")
@@ -53,14 +56,35 @@ IGNORE_ENVIRONMENTS: bool = os.environ.get("IGNORE_ENVIRONMENTS", "0").lower() i
 # distributions
 KNOWN_DISTRIBUTIONS: Dict[str, Distro] = {
     # daffy
-    "daffy": Distro("daffy", "daffy", end_of_life=datetime.date(2024, 3, 31)),
-    "daffy-staging": Distro("daffy", "daffy-staging", end_of_life=datetime.date(2024, 3, 31), staging=True),
+    "daffy": Distro(
+        "daffy",
+        "daffy",
+        end_of_life=datetime.date(2024, 3, 31),
+        tokens_supported=["dt1", "dt2"],
+        token_preferred="dt1"
+    ),
+    "daffy-staging": Distro(
+        "daffy",
+        "daffy-staging",
+        end_of_life=datetime.date(2024, 3, 31),
+        staging=True,
+        tokens_supported=["dt1", "dt2"],
+        token_preferred="dt1"
+    ),
     # ente
-    "ente": Distro("ente", "ente"),
-    "ente-staging": Distro("ente", "ente-staging", staging=True),
-    # temporary
-    # TODO: remove
-    "v6": Distro("v6", "v6", staging=True),
+    "ente": Distro(
+        "ente",
+        "ente",
+        tokens_supported=["dt2"],
+        token_preferred="dt2"
+    ),
+    "ente-staging": Distro(
+        "ente",
+        "ente-staging",
+        staging=True,
+        tokens_supported=["dt2"],
+        token_preferred="dt2"
+    ),
 }
 SUGGESTED_DISTRIBUTION: str = "ente"
 
@@ -90,3 +114,4 @@ DB_USER_COMMAND_SETS_REPOSITORIES: str = "user_command_sets_repositories"
 DB_MIGRATIONS: str = "migrations"
 DB_UPDATES_CHECK: str = "updates_check"
 DB_BILLBOARDS: str = "billboards"
+DB_STATISTICS_EVENTS: str = "stats_events"

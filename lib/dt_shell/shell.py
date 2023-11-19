@@ -35,7 +35,7 @@ from .compatibility.migrations import \
     needs_migrate_secrets, migrate_secrets, mark_docker_credentials_migrated, \
     mark_token_dt1_migrated, mark_secrets_migrated, needs_migrations, mark_all_migrated
 from .constants import DNAME, KNOWN_DISTRIBUTIONS, SUGGESTED_DISTRIBUTION, EMBEDDED_COMMAND_SET_NAME, \
-    DB_BILLBOARDS, DB_UPDATES_CHECK, CHECK_BILLBOARD_UPDATE_SECS
+    DB_BILLBOARDS, DB_UPDATES_CHECK, CHECK_BILLBOARD_UPDATE_SECS, PUSH_USER_EVENTS_TO_HUB_SECS
 from .constants import DTShellConstants, IGNORE_ENVIRONMENTS, DB_SETTINGS, DB_PROFILES
 from .database import DTShellDatabase
 from .environments import ShellCommandEnvironmentAbs, DEFAULT_COMMAND_ENVIRONMENT
@@ -57,6 +57,7 @@ class CLIOptions:
     verbose: bool = False
     quiet: bool = False
     complete: bool = False
+    profile: Optional[str] = None
 
 
 def get_cli_options(args: List[str]) -> Tuple[CLIOptions, List[str]]:
@@ -70,6 +71,8 @@ def get_cli_options(args: List[str]) -> Tuple[CLIOptions, List[str]]:
     for w in args:
         if w.startswith("-"):
             i += 1
+            if w == "--profile":
+                i += 1
         else:
             break
 
@@ -91,6 +94,12 @@ def get_cli_options(args: List[str]) -> Tuple[CLIOptions, List[str]]:
         action="store_true",
         default=False,
         help="Quiet execution"
+    )
+    parser.add_argument(
+        "--profile",
+        type=str,
+        default=None,
+        help="Select specific profile just for this session"
     )
 
     if "--complete" in args[:i]:
@@ -177,15 +186,29 @@ class DTShell(Cmd):
                  skeleton: bool = False,
                  readonly: bool = False,
                  banner: bool = True,
-                 billboard: bool = True):
+                 billboard: bool = True,
+                 profile: Optional[str] = None
+                 ):
+        # populate singleton
+        import dt_shell
+        dt_shell.shell = self
+
+        # arguments
+        self._skeleton: bool = skeleton
+        self._readonly: bool = readonly
+        self._banner: bool = banner
+        self._billboard: bool = billboard
+
         # errors while loading end up in here
         self._errors_loading: List[str] = []
 
         # updates check database
         self.updates_check_db: DTShellDatabase[float] = DTShellDatabase.open(DB_UPDATES_CHECK)
 
-        # namespace will contain the map to the improted commands
+        # namespace will contain the map to the loaded commands
         DTShell.include = types.SimpleNamespace()
+
+        # event handlers
         self._event_handlers: Dict[EventType, List[Callable]] = {
             EventType.START: [
                 self._run_background_tasks
@@ -203,16 +226,24 @@ class DTShell(Cmd):
         # set all databases to readonly if needed
         DTShellDatabase.global_readonly = readonly
 
-        # start event
-        self._trigger_event(Event(EventType.START, "shell"))
-
         # open databases
         self._db_profiles: DTShellDatabase = DTShellDatabase.open(DB_PROFILES, readonly=readonly)
         self._db_settings: ShellSettings = ShellSettings.open(DB_SETTINGS, readonly=readonly)
 
+        # custom profile
+        if profile is not None:
+            if profile not in self._db_profiles.keys():
+                raise UserError(f"The profile '{profile}' does not exist.")
+            logger.info(f"Using profile '{profile}' as prescribed by the option --profile")
+            with self.settings.in_memory():
+                self.settings.profile = profile
+
         # load current profile
         self._profile: ShellProfile = ShellProfile(self.settings.profile, readonly=readonly) \
             if self.settings.profile else None
+
+        # start event
+        self._trigger_event(Event(EventType.START, "shell"))
 
         # get billboard to show (if any)
         bboard: Optional[str] = None
@@ -228,13 +259,13 @@ class DTShell(Cmd):
             ensure_bash_completion_installed()
 
         # check if we configure the shell by migrating an old profile
-        self._attempt_migrations(readonly)
+        self.performed_migrations: bool = self._attempt_migrations(readonly)
 
         # make sure the shell is configured
-        self._configure(readonly)
+        self.configured_shell: bool = self._configure(readonly)
 
         # make sure the profile is configured
-        self._profile.configure(readonly)
+        self.configured_profile: bool = self._profile.configure(readonly)
 
         # in readonly mode we stop right here if we don't have a profile
         if readonly and self._profile is None:
@@ -362,7 +393,7 @@ class DTShell(Cmd):
         self._event_handlers[event].append(handler)
 
     def on_start(self, handler: Callable[[Event], None]):
-        self.on_event(EventType.SHUTDOWN, handler)
+        self.on_event(EventType.START, handler)
 
     def on_shutdown(self, handler: Callable[[Event], None]):
         self.on_event(EventType.SHUTDOWN, handler)
@@ -379,16 +410,32 @@ class DTShell(Cmd):
         # check time
         return time.time() - last_time_checked > period
 
+    def is_time(self, key: str, period: float, default: bool = True) -> bool:
+        return self.needs_update(key=key, period=period, default=default)
+
     def mark_updated(self, key: str, when: float = None):
         # update record
         self.updates_check_db.set(key, when if when is not None else time.time())
 
+    def mark_done(self, key: str, when: float = None):
+        self.mark_updated(key=key, when=when)
+
     def _run_background_tasks(self, event: Event):
+        # we don't run background tasks in skeleton mode
+        if self._readonly or self._skeleton:
+            return
         if event.type is EventType.START:
             # update billboards
             if self.needs_update("billboards", CHECK_BILLBOARD_UPDATE_SECS):
                 from .tasks import UpdateBillboardsTask
                 UpdateBillboardsTask(self).start()
+            # get docker versions
+            from .tasks import CollectDockerVersionTask
+            CollectDockerVersionTask(self).start()
+            # push user events to the hub
+            if self.is_time("upload_events", PUSH_USER_EVENTS_TO_HUB_SECS):
+                from .tasks import UploadStatisticsTask
+                UploadStatisticsTask(self).start()
 
     def _on_keyboard_interrupt_event(self, event: Event):
         pass
@@ -406,10 +453,11 @@ class DTShell(Cmd):
                 logger.error(f"An handler for the event '{event.type.name}' failed its execution. "
                              f"The exception is printed to screen.")
 
-    def _attempt_migrations(self, readonly: bool = False):
+    def _attempt_migrations(self, readonly: bool = False) -> bool:
+        modified_config: bool = False
         # make sure we need migrations
         if not needs_migrations():
-            return
+            return modified_config
         elif readonly:
             raise ConfigNotPresent()
 
@@ -420,7 +468,7 @@ class DTShell(Cmd):
         if distro is None:
             # we mark everything as migrated, so we don't ask again
             mark_all_migrated()
-            return
+            return modified_config
 
         def _ask_confirmation() -> bool:
             print(f"The Duckietown shell now uses a new profile format. "
@@ -438,23 +486,26 @@ class DTShell(Cmd):
             granted: bool = _ask_confirmation()
             asked_confirmation = True
             if not granted:
-                print("A fresh start, we can work with that.")
+                print("Nothing is better than a fresh start!")
                 # we mark everything as migrated, so we don't ask again
                 mark_all_migrated()
-                return
+                return modified_config
             # we are migrating
             distro: str = migrate_distro(dryrun=True)
             # make new profile
             logger.info(f"Migrating profile '{distro}'...")
             self._profile = ShellProfile(name=distro)
+            # set profile distro
+            self._profile.distro = distro
             # set the new profile as the profile to load at the next launch
             self.settings.profile = distro
+            modified_config = True
 
         # by now we must have a profile
         assert self.profile is not None
 
         # try to migrate dt1 token
-        if needs_migrate_token_dt1():
+        if "dt1" in self.profile.distro.tokens_supported and needs_migrate_token_dt1():
             migrate: bool = True
             if not asked_confirmation:
                 migrate = _ask_confirmation()
@@ -466,6 +517,7 @@ class DTShell(Cmd):
                     logger.info(f"Migrated: Tokens")
                 # mark it as migrated, so we don't ask again
                 mark_token_dt1_migrated()
+            modified_config = True
 
         # try to migrate docker credentials
         if needs_migrate_docker_credentials():
@@ -479,6 +531,7 @@ class DTShell(Cmd):
                 logger.info(f"Migrated: {no_migrated} Docker credentials")
                 # mark it as migrated, so we don't ask again
                 mark_docker_credentials_migrated()
+            modified_config = True
 
         # try to migrate secrets
         if needs_migrate_secrets():
@@ -493,9 +546,12 @@ class DTShell(Cmd):
                 logger.info(f"Migrated: Other secrets")
                 # mark it as migrated, so we don't ask again
                 mark_secrets_migrated()
+            modified_config = True
 
         # complete profile configuration
-        self.profile.configure()
+        modified_profile: bool = self.profile.configure()
+        modified_config = modified_config or modified_profile
+        return modified_config
 
     def load_commands(self, skeleton: bool):
         # rediscover commands
@@ -656,10 +712,10 @@ class DTShell(Cmd):
             complete_command = getattr(klass, "complete_command")
             help_command = getattr(klass, "help_command")
             # wrap [klass, function] around a lambda function
-            do_command_lam = lambda s, w: do_command(klass, s, w)
-            get_command_lam = lambda s, w: get_command(klass, s, w)
-            complete_command_lam = lambda s, w, l, i, _: complete_command(klass, s, w, l, i, _)
-            help_command_lam = lambda s: help_command(klass, s)
+            do_command_lam = lambda s, w: do_command(s, w)
+            get_command_lam = lambda s, w: get_command(s, w)
+            complete_command_lam = lambda s, w, l, i, _: complete_command(s, w, l, i, _)
+            help_command_lam = lambda s: help_command(s)
             # add functions do_* and complete_* to the shell
             for command_name in [command] + configuration.aliases():
                 if DTShellConstants.VERBOSE:
@@ -734,10 +790,12 @@ class DTShell(Cmd):
                 continue
             # update command set
             logger.info(f"Updating the command set '{cs.name}'...")
+            self.profile.events.new(f"shell/commandset/update/{cs.name}")
             cs.update()
             logger.info(f"Command set '{cs.name}' updated!")
 
-    def _configure(self, readonly: bool = False):
+    def _configure(self, readonly: bool = False) -> bool:
+        modified_config: bool = False
         # make sure a profile exists and is loaded
         new_profile: Optional[str] = None
         if self._profile is None:
@@ -759,6 +817,7 @@ class DTShell(Cmd):
             # let the user choose the distro
             new_profile = questionary.select(
                 "Choose a distribution:", choices=distros, style=cli_style).unsafe_ask()
+            modified_config = True
 
         # make a new profile if needed
         if new_profile is not None:
@@ -769,7 +828,10 @@ class DTShell(Cmd):
             # set the new profile as the profile to load at the next launch
             self.settings.profile = new_profile
             # configure profile
-            self._profile.configure()
+            modified_profile: bool = self._profile.configure()
+            modified_config = modified_config or modified_profile
+        # ---
+        return modified_config
 
     def _show_banner(self, profile: Optional[ShellProfile], billboard: Optional[str]):
         width: int = 120

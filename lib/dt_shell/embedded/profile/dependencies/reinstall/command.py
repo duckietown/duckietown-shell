@@ -1,5 +1,5 @@
 import sys
-from typing import Optional
+from typing import Optional, List
 
 from dt_shell import DTCommandAbs, DTShell, dtslogger
 from dt_shell.constants import SHELL_REQUIREMENTS_LIST
@@ -10,7 +10,7 @@ from dt_shell.utils import pip_install
 class DTCommand(DTCommandAbs):
 
     @staticmethod
-    def command(shell: DTShell, args):
+    def command(shell: DTShell, args: List[str]):
         # install dependencies
         cache: InstalledDependenciesDatabase = InstalledDependenciesDatabase.load(shell.profile)
         # - shell

@@ -12,7 +12,7 @@ class DTCommand(DTCommandAbs):
     help = 'Switch to a different profile'
 
     @staticmethod
-    def command(shell: DTShell, args):
+    def command(shell: DTShell, args: List[str]):
         # parse arguments
         parsed: argparse.Namespace = DTCommand.parser.parse_args(args)
         # get list of existing profiles
@@ -52,5 +52,5 @@ class DTCommand(DTCommandAbs):
         dtslogger.info(f"Active profile is now set to '{new_profile}'")
 
     @staticmethod
-    def complete(shell, word, line):
+    def complete(shell: DTShell, word: str, line: str) -> List[str]:
         return []

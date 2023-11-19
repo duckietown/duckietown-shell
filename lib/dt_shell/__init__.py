@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import logging
-from typing import Optional
 import pathlib
 
 # ===> COMPATIBILITY
@@ -36,6 +35,7 @@ from .shell import DTShell
 
 from .commands import DTCommandAbs, DTCommandPlaceholder
 from .exceptions import *
+from typing import Optional
 
 # singleton
 shell: Optional[DTShell] = None

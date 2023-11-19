@@ -26,7 +26,7 @@ def apply(shell):
         var = "token_dt1"
         from_env = os.environ.get(var, None)
         if from_env:
-            msg = f"Using token from environment variable {var} instead of config."
+            msg = f"Using token from environment variable {var} instead of profile secrets."
             print(msg)
             return from_env
         if shell.profile.secrets.dt1_token is None:

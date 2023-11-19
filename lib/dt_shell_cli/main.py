@@ -1,6 +1,6 @@
 import os
 import sys
-
+from typing import Optional
 
 # add the content of the environment variable EXTRA_PYTHONPATH to the current path
 sys.path.extend(os.environ.get("EXTRA_PYTHONPATH", "").split(":"))
@@ -9,7 +9,6 @@ import logging
 
 from dt_shell_cli import logger
 
-import dt_shell
 from dt_shell import DTShell, dtslogger, CommandsLoadingException
 from dt_shell.shell import get_cli_options
 from dt_shell.logging import setup_logging_color, dts_print
@@ -46,20 +45,21 @@ def main() -> None:
     logger.setLevel(logging.WARNING)
 
     # instantiate shell
+    shell: Optional[DTShell] = None
     try:
         shell = DTShell(
             skeleton=False,
             readonly=False,
             banner=False,
             billboard=False,
+            profile=cli_options.profile
         )
     except CommandsLoadingException as e:
         dts_print("FATAL: " + str(e))
         exit(90)
-
-    # populate singleton
-    # noinspection PyUnboundLocalVariable
-    dt_shell.shell = shell
+    except Exception as e:
+        dts_print("FATAL: " + str(e))
+        exit(91)
 
     # run command in this interpreter
     Python3Environment().execute(shell, arguments)

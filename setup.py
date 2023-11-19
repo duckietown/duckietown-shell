@@ -34,16 +34,16 @@ shell_requires = [
     "pyyaml!=6.0.0,!=5.4.0,!=5.4.1,<7",
 
     # CLI utils
-    # TODO: clear this
-    # "pyfiglet>=1.0.2,<2",
     "pyfiglet>=0.8.0,<1",
     "questionary>=2.0.1,<3",
+    "argcomplete>=3.1.4,<4",
 
     # duckietown deps
     "dockertown>=0.2.2,<1",
     "dtproject>=1.0.4,<2",
     "dt-authentication>=2.1.4,<3",
-    'dt-data-api>=1.2.0,<2',
+    # TODO: this cannot be released until DCSS is released on the HUB
+    'dt-data-api>=2.0.0,<3',
 ]
 
 compatibility_requires = [

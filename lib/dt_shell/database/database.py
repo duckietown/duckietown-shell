@@ -1,13 +1,13 @@
 import copy
 import os.path
 from abc import abstractmethod, ABC
+from contextlib import contextmanager
 from threading import Semaphore
-from typing import Union, TypeVar, Generic, Tuple, Optional, Dict, Iterator
+from typing import Union, TypeVar, Generic, Tuple, Optional, Dict, Iterator, ContextManager
 
 import yaml
 
 from ..utils import safe_pathname
-
 
 SerializedValue = Union[int, float, str, bytes, dict, list]
 T = TypeVar('T', bound=SerializedValue)
@@ -54,7 +54,9 @@ class DTShellDatabase(Generic[T]):
         self._location: str = ""
         self._readonly: bool = False
         self._data: dict = {}
+        self._ephemeral: dict = {}
         self._lock: Semaphore = Semaphore()
+        self._in_memory: bool = False
         # ---
         raise RuntimeError(f'Call {self.__class__.__name__}.open() instead')
 
@@ -69,7 +71,9 @@ class DTShellDatabase(Generic[T]):
             inst._location = location
             inst._readonly = readonly or cls.global_readonly
             inst._data = {}
+            inst._ephemeral = {}
             inst._lock = Semaphore()
+            inst._in_memory = False
             # load DB from disk
             inst._load()
         # ---
@@ -88,12 +92,30 @@ class DTShellDatabase(Generic[T]):
         # ---
         return yaml_fpath
 
+    @contextmanager
+    def in_memory(self) -> ContextManager:
+        # code to acquire resource
+        self._in_memory = True
+        try:
+            yield self
+        finally:
+            # code to release resource
+            self._in_memory = False
+
+    @property
+    def size(self) -> int:
+        return len(self._data)
+
     def contains(self, key: Key) -> bool:
         key = self._key(key)
         return key in self._data
 
     def get(self, key: Key, default: Optional[T] = NOTSET) -> T:
         key = self._key(key)
+        # in memory?
+        if key in self._ephemeral:
+            return self._ephemeral[key]
+        # read from persistent data
         try:
             return self._data[key]
         except KeyError:
@@ -102,10 +124,25 @@ class DTShellDatabase(Generic[T]):
             else:
                 return default
 
+    def delete(self, key: Key):
+        key = self._key(key)
+        # in memory?
+        self._ephemeral.pop(key, None)
+        # persistent data
+        with self._lock:
+            self._data.pop(key, None)
+        self._write()
+
     def set(self, key: Key, value: T):
         key = self._key(key)
         with self._lock:
-            self._data[key] = value
+            # in memory?
+            if self._in_memory:
+                self._ephemeral[key] = value
+            else:
+                self._data[key] = value
+                self._ephemeral.pop(key, None)
+            # ---
         self._write()
 
     def keys(self) -> Iterator[Key]:
@@ -158,9 +195,9 @@ class DTShellDatabase(Generic[T]):
         # complete data with other metadata
         with self._lock:
             content = {**EMPTY_DB, "data": {**self._data}}
-        # write to disk
-        with open(self.yaml, "wt") as fout:
-            yaml.safe_dump(content, fout, indent=4)
+            # write to disk
+            with open(self.yaml, "wt") as fout:
+                yaml.safe_dump(content, fout, indent=4)
 
     @staticmethod
     def _serialize(v: object) -> SerializedValue:

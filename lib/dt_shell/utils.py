@@ -1,10 +1,13 @@
-import json
 import os
+import sys
 import platform
 import re
 import shutil
 import subprocess
 import importlib
+import locale
+import json
+import yaml
 import traceback
 from math import floor
 from traceback import format_exc
@@ -18,21 +21,23 @@ import dt_authentication
 from dt_authentication import DuckietownToken
 
 from dt_shell_cli import logger
+from . import __version__
 from .constants import BASH_COMPLETION_DIR, SHELL_LIB_DIR, DTShellConstants
 from .exceptions import ShellInitException, RunCommandException
 
+
 cli_style = Style([
-    ('qmark', 'fg:#673ab7 bold'),       # token in front of the question
-    ('question', 'bold'),               # question text
-    ('choice', 'fg:#fec20b bold'),      # a possible choice in select
-    ('answer', 'fg:#fec20b bold'),      # submitted answer text behind the question
-    ('pointer', 'fg:#673ab7 bold'),     # pointer used in select and checkbox prompts
-    ('highlighted', 'fg:#673ab7 bold'), # pointed-at choice in select and checkbox prompts
-    ('selected', 'fg:#cc5454'),         # style for a selected item of a checkbox
-    ('separator', 'fg:#cc5454'),        # separator in lists
-    ('instruction', ''),                # user instructions for select, rawselect, checkbox
-    ('text', ''),                       # plain text
-    ('disabled', 'fg:#bbbbbb italic')   # disabled choices for select and checkbox prompts
+    ('qmark', 'fg:#673ab7 bold'),        # token in front of the question
+    ('question', 'bold'),                # question text
+    ('choice', 'fg:#fec20b bold'),       # a possible choice in select
+    ('answer', 'fg:#fec20b bold'),       # submitted answer text behind the question
+    ('pointer', 'fg:#673ab7 bold'),      # pointer used in select and checkbox prompts
+    ('highlighted', 'fg:#673ab7 bold'),  # pointed-at choice in select and checkbox prompts
+    ('selected', 'fg:#cc5454'),          # style for a selected item of a checkbox
+    ('separator', 'fg:#cc5454'),         # separator in lists
+    ('instruction', ''),                 # user instructions for select, rawselect, checkbox
+    ('text', ''),                        # plain text
+    ('disabled', 'fg:#bbbbbb italic')    # disabled choices for select and checkbox prompts
 ])
 
 
@@ -274,3 +279,41 @@ def ensure_bash_completion_installed():
             logger.info("Bash-completion script successfully installed")
         else:
             logger.debug("Bash-completion script marked as already installed")
+
+
+def print_debug_info() -> None:
+    from .logging import dts_print
+    from .checks.packages import _get_installed_distributions
+
+    v = DebugInfo.name2versions
+    v["python"] = sys.version
+    v["duckietown-shell"] = __version__
+
+    v["encodings"] = {
+        "stdout": sys.stdout.encoding,
+        "stderr": sys.stderr.encoding,
+        "locale": locale.getpreferredencoding(),
+    }
+
+    try:
+        installed = _get_installed_distributions()
+        pkgs = {_.project_name: _.version for _ in installed}
+        for pkg_name, pkg_version in pkgs.items():
+            include = (
+                    ("duckietown" in pkg_name)
+                    or ("dt-" in pkg_name)
+                    or ("-z" in pkg_name)
+                    or ("aido" in pkg_name)
+            )
+            if include:
+                v[pkg_name] = pkg_version
+    except ImportError:
+        logger.warning('Please update "pip" to have better debug info.')
+
+    versions = yaml.dump(v, default_flow_style=False)
+    fn = "~/shell-debug-info.txt"
+    fn = os.path.expanduser(fn)
+    with open(fn, "w") as f:
+        f.write(versions)
+    msg = f"To report a bug, please also include the contents of {fn}"
+    dts_print(msg, "yellow")

@@ -16,8 +16,9 @@ from .constants import DUCKIETOWN_TOKEN_URL, SHELL_LIB_DIR, DEFAULT_COMMAND_SET_
     DB_PROFILES, KNOWN_DISTRIBUTIONS, SUGGESTED_DISTRIBUTION, DB_UPDATES_CHECK, EMBEDDED_COMMAND_SET_NAME, \
     Distro
 from .database.database import DTShellDatabase, NOTSET, DTSerializable
+from .statistics import ShellProfileEventsDatabase
 from .utils import safe_pathname, validator_token, yellow_bold, cli_style, parse_version, render_version, \
-    indent_block
+    indent_block, DebugInfo
 from .exceptions import ConfigNotPresent
 
 TupleVersion = Tuple[int, int, int]
@@ -69,11 +70,25 @@ class ShellProfileSecrets(DTShellDatabase):
 
     @property
     def dt_token(self) -> Optional[str]:
-        return self.dt2_token
+        from dt_shell import shell
+        preferred: str = shell.profile.distro.token_preferred
+        if preferred == "dt1":
+            return self.dt1_token
+        elif preferred == "dt2":
+            return self.dt2_token
+        else:
+            raise ValueError(f"Token version '{preferred}' not supported")
 
     @dt_token.setter
     def dt_token(self, value: str):
-        self.dt2_token = value
+        from dt_shell import shell
+        preferred: str = shell.profile.distro.token_preferred
+        if preferred == "dt1":
+            self.dt1_token = value
+        elif preferred == "dt2":
+            self.dt2_token = value
+        else:
+            raise ValueError(f"Token version '{preferred}' not supported")
 
     @property
     def dt1_token(self) -> Optional[str]:
@@ -186,21 +201,24 @@ class ShellProfile:
                     leave_alone=True,
                 )
             )
-            # TODO: this is where we update the profile.distro by taking the branch from the repository but only for this session
+            # TODO: this is where we update the profile.distro by taking the branch from the repository but
+            #  only for this session
         else:
             profile_command_sets_dir: str = os.path.join(self.path, "commands")
             # add the default 'duckietown' command set
-            repository: CommandsRepository = CommandsRepository(
-                **{**DEFAULT_COMMAND_SET_REPOSITORY, "branch": self.distro.branch}
-            )
-            self.command_sets.append(
-                CommandSet(
-                    "duckietown",
-                    os.path.join(profile_command_sets_dir, "duckietown"),
-                    profile=self,
-                    repository=repository,
+            if self.distro is not None:
+                repository: CommandsRepository = CommandsRepository(
+                    **{**DEFAULT_COMMAND_SET_REPOSITORY, "branch": self.distro.branch}
                 )
-            )
+                self.command_sets.append(
+                    CommandSet(
+                        "duckietown",
+                        os.path.join(profile_command_sets_dir, "duckietown"),
+                        profile=self,
+                        repository=repository,
+                    )
+                )
+
             # add user defined command sets
             for n, r in self.user_command_sets_repositories:
                 self.command_sets.append(CommandSet(n, os.path.join(profile_command_sets_dir, n), self, r))
@@ -214,6 +232,10 @@ class ShellProfile:
                 leave_alone=True,
             )
         )
+
+        # add command set versions to debugging data
+        for cs in self.command_sets:
+            DebugInfo.name2versions[f"command_set/{cs.name}"] = cs.version
 
         # drop all the command sets that do not support this version of the shell
         for cs in copy.copy(self.command_sets):
@@ -270,6 +292,10 @@ class ShellProfile:
         return ShellProfileSecrets.load(location=self._databases_location)
 
     @property
+    def events(self) -> ShellProfileEventsDatabase:
+        return ShellProfileEventsDatabase.load(location=self._databases_location)
+
+    @property
     def distro(self) -> Optional[Distro]:
         if self.settings.distro is None:
             return None
@@ -305,19 +331,20 @@ class ShellProfile:
         # update record
         self.updates_check_db.set(key, when if when is not None else time.time())
 
-    def configure(self, readonly: bool = False):
+    def configure(self, readonly: bool = False) -> bool:
+        modified_config: bool = False
         # make sure we have a distro for this profile
         if self.distro is None:
             if readonly:
                 raise ConfigNotPresent()
             # see if we can find the distro ourselves
             matched: bool = False
-            for distro in KNOWN_DISTRIBUTIONS.values():
-                if distro.name == self.name:
-                    logger.info(f"Automatically selecting distribution '{distro.name}' as it matches "
-                                f"the profile name")
-                    self.distro = self.name
+            for d in KNOWN_DISTRIBUTIONS.keys():
+                if d == self.name:
+                    logger.info(f"Automatically selecting distribution '{d}' as it matches the profile name")
+                    self.distro = d
                     matched = True
+                    break
 
             # if we don't have a match, we ask the user to pick a distribution
             if not matched:
@@ -340,18 +367,31 @@ class ShellProfile:
                     "Choose a distribution:", choices=distros, style=cli_style).unsafe_ask()
                 # attach distro to profile
                 self.distro = chosen_distro
+            modified_config = True
 
         # make sure we have a token for this profile
-        if self.secrets.dt2_token is None:
+        if self.secrets.dt_token is None:
             if readonly:
                 raise ConfigNotPresent()
             print()
             print(f"The Duckietown Shell needs a Duckietown Token to work properly. "
                   f"Get yours for free at {DUCKIETOWN_TOKEN_URL}")
-            # let the user insert the token
-            token_str: str = questionary.password("Enter your token:", validate=validator_token).unsafe_ask()
-            token: DuckietownToken = DuckietownToken.from_string(token_str)
-            # TODO: here we make sure this is a dt2 token (dt1 can be used otherwise)
-            print(f"Token verified successfully. Your ID is: {yellow_bold(token.uid)}")
+            while True:
+                # let the user insert the token
+                token_str: str = questionary.password("Enter your token:", validate=validator_token)\
+                    .unsafe_ask()
+                token: DuckietownToken = DuckietownToken.from_string(token_str)
+                # make sure this token is supported by this profile distro
+                tokens_supported: List[str] = self.distro.tokens_supported
+                if token.version not in tokens_supported:
+                    print(f"Token version '{token.version}' not supported by this profile's distro. "
+                          f"Only versions supported are {tokens_supported}.")
+                    continue
+                else:
+                    print(f"Token verified successfully. Your ID is: {yellow_bold(token.uid)}")
+                    break
             # store token
-            self.secrets.dt2_token = token_str
+            self.secrets.dt_token = token_str
+            modified_config = True
+        # ---
+        return modified_config

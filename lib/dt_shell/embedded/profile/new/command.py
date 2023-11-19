@@ -14,7 +14,7 @@ class DTCommand(DTCommandAbs):
     help = 'Create new profile'
 
     @staticmethod
-    def command(shell: DTShell, args):
+    def command(shell: DTShell, args: List[str]):
         # parse arguments
         parsed: argparse.Namespace = DTCommand.parser.parse_args(args)
         # get list of existing profiles
@@ -22,7 +22,7 @@ class DTCommand(DTCommandAbs):
         # ask the user for a distribution to use
         dtslogger.info("In order to make a new profile, you need to choose a distribution first.")
         distros: List[Choice] = []
-        for distro in KNOWN_DISTRIBUTIONS:
+        for distro in KNOWN_DISTRIBUTIONS.values():
             # filter by staging VS production
             if parsed.staging != distro.staging:
                 continue
@@ -61,5 +61,5 @@ class DTCommand(DTCommandAbs):
         profile.configure()
 
     @staticmethod
-    def complete(shell, word, line):
+    def complete(shell: DTShell, word: str, line: str) -> List[str]:
         return []
