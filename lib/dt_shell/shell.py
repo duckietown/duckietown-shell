@@ -712,10 +712,10 @@ class DTShell(Cmd):
             complete_command = getattr(klass, "complete_command")
             help_command = getattr(klass, "help_command")
             # wrap [klass, function] around a lambda function
-            do_command_lam = lambda s, w: do_command(klass, s, w)
-            get_command_lam = lambda s, w: get_command(klass, s, w)
-            complete_command_lam = lambda s, w, l, i, _: complete_command(klass, s, w, l, i, _)
-            help_command_lam = lambda s: help_command(klass, s)
+            do_command_lam = lambda s, w: do_command(s, w)
+            get_command_lam = lambda s, w: get_command(s, w)
+            complete_command_lam = lambda s, w, l, i, _: complete_command(s, w, l, i, _)
+            help_command_lam = lambda s: help_command(s)
             # add functions do_* and complete_* to the shell
             for command_name in [command] + configuration.aliases():
                 if DTShellConstants.VERBOSE:

@@ -1,3 +1,5 @@
+from typing import List
+
 import yaml
 
 from dt_shell import __version__, DTCommandAbs, DTShell
@@ -7,7 +9,7 @@ class DTCommand(DTCommandAbs):
     help = "Prints out the version of the shell and returns."
 
     @staticmethod
-    def command(shell: DTShell, args):
+    def command(shell: DTShell, args: List[str]):
         # noinspection PyDictCreation
         versions: dict = {}
         # shell version

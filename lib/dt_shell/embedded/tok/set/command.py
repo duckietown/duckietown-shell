@@ -11,7 +11,7 @@ from dt_shell import DTShell
 
 class DTCommand(DTCommandAbs):
     @staticmethod
-    def command(shell: DTShell, args):
+    def command(shell: DTShell, args: List[str]):
         link = "https://hub.duckietown.com/token"
         example = "dt2-7vEuJsaxeXXXXX-43dzqWFnWd8KBa1yev1g3UKnzVxZkkTbfSJnxzuJjWaANeMf4y6XSXBWTpJ7vWXXXX"
         msg = """

@@ -1,6 +1,7 @@
 import builtins
 import json
 import sys
+from typing import List
 
 from dt_authentication import DuckietownToken, InvalidToken
 from dt_shell import DTCommandAbs, DTShell, dtslogger
@@ -8,7 +9,7 @@ from dt_shell import DTCommandAbs, DTShell, dtslogger
 
 class DTCommand(DTCommandAbs):
     @staticmethod
-    def command(shell: DTShell, args):
+    def command(shell: DTShell, args: List[str]):
         try:
             if args:
                 token_s = args[0]

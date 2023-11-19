@@ -1,5 +1,4 @@
-import argparse
-from typing import Optional, Set
+from typing import Optional, Set, List
 
 from dt_shell import DTCommandAbs, DTShell
 from dt_shell.constants import Distro, KNOWN_DISTRIBUTIONS
@@ -11,7 +10,7 @@ class DTCommand(DTCommandAbs):
     help = 'List all known profiles'
 
     @staticmethod
-    def command(shell: DTShell, args):
+    def command(shell: DTShell, args: List[str]):
         # get list of existing profiles
         profiles: Set[str] = set(shell.profiles.keys())
         # make a table
@@ -40,5 +39,5 @@ class DTCommand(DTCommandAbs):
         print()
 
     @staticmethod
-    def complete(shell, word, line):
+    def complete(shell: DTShell, word: str, line: str) -> List[str]:
         return []

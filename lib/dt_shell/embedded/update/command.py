@@ -1,3 +1,5 @@
+from typing import List
+
 from dt_shell import DTCommandAbs
 
 
@@ -9,5 +11,5 @@ from dt_shell import DTShell
 class DTCommand(DTCommandAbs):
 
     @staticmethod
-    def command(shell: DTShell, args):
+    def command(shell: DTShell, args: List[str]):
         shell.update_commands()
