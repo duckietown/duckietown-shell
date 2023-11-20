@@ -7,7 +7,6 @@ from abc import ABCMeta, abstractmethod
 from traceback import format_exc
 from typing import Optional, List, Dict
 
-from dtproject.exceptions import DTProjectNotFound
 
 from . import logger
 from .exceptions import ShellInitException, InvalidEnvironment, CommandsLoadingException, UserError, \
@@ -34,6 +33,7 @@ class Python3Environment(ShellCommandEnvironmentAbs):
 
     def execute(self, shell, args: List[str]):
         from .shell import DTShell
+        from dtproject.exceptions import DTProjectNotFound
         shell: DTShell
         # run shell
         known_exceptions = (InvalidEnvironment, CommandsLoadingException, DTProjectNotFound)

@@ -290,6 +290,16 @@ class DTShell(Cmd):
                 sys.path.insert(0, path)
                 logger.debug(f"Path '{path}' added to PYTHONPATH")
 
+        # add custom PYTHONPATH
+        if "DTSHELL_PYTHONPATH" in os.environ:
+            for path in os.environ["DTSHELL_PYTHONPATH"].split(":")[::-1]:
+                # add new path to PYTHONPATH for this session
+                path: str = os.path.abspath(path)
+                if path in sys.path:
+                    sys.path.remove(path)
+                sys.path.insert(0, path)
+                logger.info(f"Path '{path}' added to PYTHONPATH from DTSHELL_PYTHONPATH")
+
         # call super constructor
         super(DTShell, self).__init__()
 
