@@ -40,7 +40,7 @@ shell_requires = [
 
     # duckietown deps
     "dockertown>=0.2.2,<1",
-    "dtproject>=1.0.4,<2",
+    "dtproject>=1.0.6,<2",
     "dt-authentication>=2.1.4,<3",
     # TODO: this cannot be released until DCSS is released on the HUB
     'dt-data-api>=2.0.0,<3',
