@@ -5,6 +5,6 @@ pyfiglet>=0.8.0,<1
 questionary>=2.0.1,<3
 argcomplete>=3.1.4,<4
 dockertown>=0.2.2,<1
-dtproject>=1.0.4,<2
+dtproject>=1.0.6,<2
 dt-authentication>=2.1.4,<3
 dt-data-api>=2.0.0,<3
