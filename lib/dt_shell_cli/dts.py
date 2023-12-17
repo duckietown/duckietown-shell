@@ -81,9 +81,9 @@ def dts():
     setup_logging_color()
 
     # process options here
-    if cli_options.debug:
+    if DTShellConstants.DEBUG:
         dtslogger.setLevel(logging.DEBUG)
-    if cli_options.verbose:
+    if DTShellConstants.VERBOSE:
         logger.setLevel(logging.DEBUG)
 
     # load shell skeleton

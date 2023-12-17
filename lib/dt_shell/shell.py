@@ -43,7 +43,8 @@ from .exceptions import UserError, NotFound, CommandNotFound, CommandsLoadingExc
     ConfigNotPresent
 from .logging import dts_print
 from .profile import ShellProfile
-from .utils import text_justify, text_distribute, cli_style, indent_block, ensure_bash_completion_installed
+from .utils import text_justify, text_distribute, cli_style, indent_block, ensure_bash_completion_installed, \
+    env_option
 
 BILLBOARDS_VERSION: str = "v1"
 
@@ -53,18 +54,19 @@ CommandsTree = Dict[CommandName, Union[None, Mapping[CommandName, dict], Command
 
 @dataclass
 class CLIOptions:
-    debug: bool = False
-    verbose: bool = False
-    quiet: bool = False
+    debug: bool = env_option("DTSHELL_DEBUG", False)
+    verbose: bool = env_option("DTSHELL_VERBOSE", False)
+    quiet: bool = env_option("DTSHELL_QUIET", False)
     complete: bool = False
     profile: Optional[str] = None
 
 
 def get_cli_options(args: List[str]) -> Tuple[CLIOptions, List[str]]:
     """Returns cli options plus other arguments for the commands."""
+    default_opts: CLIOptions = CLIOptions()
 
     if args and not args[0].startswith("-"):
-        return CLIOptions(), args
+        return default_opts, args
 
     # find first non-option word
     i: int = 0
@@ -80,19 +82,19 @@ def get_cli_options(args: List[str]) -> Tuple[CLIOptions, List[str]]:
     parser.add_argument(
         "--debug",
         action="store_true",
-        default=False,
+        default=default_opts.debug,
         help="More debug information"
     )
     parser.add_argument(
         "-vv", "--verbose",
         action="store_true",
-        default=False,
+        default=default_opts.verbose,
         help="More debug information from the shell"
     )
     parser.add_argument(
         "-q", "--quiet",
         action="store_true",
-        default=False,
+        default=default_opts.quiet,
         help="Quiet execution"
     )
     parser.add_argument(

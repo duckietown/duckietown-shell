@@ -25,6 +25,8 @@ from . import __version__
 from .constants import BASH_COMPLETION_DIR, SHELL_LIB_DIR, DTShellConstants
 from .exceptions import ShellInitException, RunCommandException
 
+NOTSET = object()
+
 
 cli_style = Style([
     ('qmark', 'fg:#673ab7 bold'),        # token in front of the question
@@ -317,3 +319,16 @@ def print_debug_info() -> None:
         f.write(versions)
     msg = f"To report a bug, please also include the contents of {fn}"
     dts_print(msg, "yellow")
+
+
+def env_option(key: str, default: Any = NOTSET, true_choices: List[str] = None) -> Optional[Any]:
+    if default in [NOTSET, True, False]:
+        # boolean options
+        true_choices = true_choices or ["1", "true", "yes"]
+        default = "1" if default is True else "0"
+        return os.environ.get(key, default).lower().strip() in true_choices
+    else:
+        # non-boolean options
+        if true_choices is not None:
+            raise ValueError("You cannot use 'default' and 'true_choices' at the same time.")
+        return os.environ.get(key, default)
