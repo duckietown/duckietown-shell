@@ -796,9 +796,10 @@ class DTShell(Cmd):
     def update_commands(self):
         # update all command sets
         for cs in self.command_sets:
+            if cs.name == EMBEDDED_COMMAND_SET_NAME:
+                continue
             if cs.leave_alone:
-                if not cs.name == EMBEDDED_COMMAND_SET_NAME:
-                    logger.warning(f"Will not update the command set '{cs.name}', it wants to be left alone.")
+                logger.warning(f"Will not update the command set '{cs.name}', it wants to be left alone.")
                 continue
             # update command set
             logger.info(f"Updating the command set '{cs.name}'...")

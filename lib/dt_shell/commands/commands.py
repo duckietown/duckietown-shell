@@ -514,6 +514,8 @@ class CommandSet:
             th = {2: "nd", 3: "rd", 4: "th"}
             for trial in range(3):
                 try:
+                    run_cmd(["git", "-C", self.path, "fetch", "origin", self.repository.branch])
+                    run_cmd(["git", "-C", self.path, "reset", "--hard", f"origin/{self.repository.branch}"])
                     run_cmd(["git", "-C", self.path, "pull", "--recurse-submodules", "origin",
                              self.repository.branch])
                     logger.info(f"Command set '{self.name}' successfully updated!")
