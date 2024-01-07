@@ -39,8 +39,13 @@ def apply(shell):
         return shell.profile.name
 
     def save_config():
-        # TODO: implement this by taking the info from .config._instance and updating shell.secrets...
-        pass
+        from dt_shell.profile import GenericCredentials
+        for registry, credentials in shell.shell_config.docker_credentials.items():
+            cred: GenericCredentials = GenericCredentials(
+                username=credentials["username"],
+                password=credentials["secret"],
+            )
+            shell.profile.secrets.docker_credentials.set(registry, cred)
 
     # add methods to the given shell instance
     shell.get_dt1_token = get_dt1_token
