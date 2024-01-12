@@ -61,10 +61,12 @@ class DTShellDatabase(Generic[T]):
         raise RuntimeError(f'Call {self.__class__.__name__}.open() instead')
 
     @classmethod
-    def open(cls, name: str, location: Optional[str] = DATABASES_DIR, readonly: bool = False):
+    def open(cls, name: str, location: Optional[str] = DATABASES_DIR, readonly: bool = False,
+             init_args: dict = None) -> 'DTShellDatabase':
         key = (location, name)
         if key not in cls._instances:
-            inst = cls.__new__(cls)
+            # noinspection PyArgumentList
+            inst = cls.__new__(cls, **(init_args or {}))
             cls._instances[key] = inst
             # populate instance fields
             inst._name = name
@@ -74,6 +76,9 @@ class DTShellDatabase(Generic[T]):
             inst._ephemeral = {}
             inst._lock = Semaphore()
             inst._in_memory = False
+            # set custom init args
+            for k, v in (init_args or {}).items():
+                setattr(inst, k, v)
             # load DB from disk
             inst._load()
         # ---

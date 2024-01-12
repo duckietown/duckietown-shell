@@ -64,14 +64,18 @@ class DockerCredentials(DTShellDatabase[dict]):
 
 class ShellProfileSecrets(DTShellDatabase):
 
+    def __new__(cls, *args, **kwargs):
+        inst = super().__new__(cls)
+        inst._profile = kwargs["profile"]
+        return inst
+
     @classmethod
-    def load(cls, location: str):
-        return ShellProfileSecrets.open(DB_SECRETS, location=location)
+    def load(cls, profile: 'ShellProfile', location: str):
+        return ShellProfileSecrets.open(DB_SECRETS, location=location, init_args={"profile": profile})
 
     @property
     def dt_token(self) -> Optional[str]:
-        from dt_shell import shell
-        preferred: str = shell.profile.distro.token_preferred
+        preferred: str = self._profile.distro.token_preferred
         if preferred == "dt1":
             return self.dt1_token
         elif preferred == "dt2":
@@ -81,8 +85,7 @@ class ShellProfileSecrets(DTShellDatabase):
 
     @dt_token.setter
     def dt_token(self, value: str):
-        from dt_shell import shell
-        preferred: str = shell.profile.distro.token_preferred
+        preferred: str = self._profile.distro.token_preferred
         if preferred == "dt1":
             self.dt1_token = value
         elif preferred == "dt2":
@@ -154,7 +157,9 @@ class ShellProfile:
     command_sets: List[CommandSet] = dataclasses.field(default_factory=list)
     readonly: bool = False
 
-    def __post_init__(self):
+    _distro: dataclasses.InitVar[str] = None
+
+    def __post_init__(self, _distro: Optional[str] = None):
         # load from disk
         if self.path is None:
             profiles_dir: str = os.environ.get("DTSHELL_PROFILES", DEFAULT_PROFILES_DIR)
@@ -176,6 +181,10 @@ class ShellProfile:
 
         # updates check database
         self.updates_check_db: DTShellDatabase[float] = self.database(DB_UPDATES_CHECK)
+
+        # set distro if given
+        if _distro is not None:
+            self.distro = _distro
 
         # this is the order with which command sets are loaded
         self.command_sets: List[CommandSet] = []
@@ -289,7 +298,7 @@ class ShellProfile:
 
     @property
     def secrets(self) -> ShellProfileSecrets:
-        return ShellProfileSecrets.load(location=self._databases_location)
+        return ShellProfileSecrets.load(profile=self, location=self._databases_location)
 
     @property
     def events(self) -> ShellProfileEventsDatabase:

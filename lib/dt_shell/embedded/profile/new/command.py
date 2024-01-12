@@ -1,13 +1,15 @@
 import argparse
+import logging
 from typing import Optional, List, Set
 
 import questionary
 from questionary import Choice
 
 from dt_shell import DTCommandAbs, DTShell, UserAborted, UserError, dtslogger
-from dt_shell.constants import KNOWN_DISTRIBUTIONS, SUGGESTED_DISTRIBUTION
+from dt_shell.constants import KNOWN_DISTRIBUTIONS, SUGGESTED_DISTRIBUTION, EMBEDDED_COMMAND_SET_NAME
 from dt_shell.profile import ShellProfile
 from dt_shell.utils import cli_style
+from dt_shell_cli import logger
 
 
 class DTCommand(DTCommandAbs):
@@ -51,14 +53,21 @@ class DTCommand(DTCommandAbs):
                             f"\n\n\n\t\tdts profile switch {new_profile}\n\n")
         # make a new profile
         dtslogger.info(f"Setting up a new profile '{new_profile}'...")
-        profile: ShellProfile = ShellProfile(name=new_profile)
+        profile: ShellProfile = ShellProfile(name=new_profile, _distro=new_profile)
         # set the new profile as the profile to load at the next launch
         shell.settings.profile = new_profile
-        # if we are using a staging distribution we need to update the profile settings
-        if parsed.staging:
-            profile.distro = new_profile
         # configure profile
         profile.configure()
+        # download command sets
+        logger.setLevel(logging.INFO)
+        for cs in profile.command_sets:
+            if cs.name == EMBEDDED_COMMAND_SET_NAME:
+                continue
+            if cs.leave_alone:
+                continue
+            # update command set
+            cs.update()
+        logger.setLevel(logging.WARNING)
 
     @staticmethod
     def complete(shell: DTShell, word: str, line: str) -> List[str]:

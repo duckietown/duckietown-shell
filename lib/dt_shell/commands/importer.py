@@ -91,6 +91,9 @@ def import_configuration(command_set: CommandSet, selector: str) -> Type[DTComma
     if _exists(_configuration_file):
         _command_sel: str = _relpath(_command_dir, command_set.path).strip("/").replace("/", ".")
         _configuration_sel: str = f"{_command_sel}.configuration"
+        # we temporarily add the path to the command set to PYTHONPATH
+        old: List[str] = copy.deepcopy(sys.path)
+        sys.path.insert(0, os.path.abspath(command_set.path))
         try:
             if DTShellConstants.VERBOSE:
                 logger.debug(f"Importing configuration for command '{_command_sel}' from "
@@ -103,6 +106,9 @@ def import_configuration(command_set: CommandSet, selector: str) -> Type[DTComma
                 f"{e.version_needed}"
             )
             return default_command_configuration.DTCommandConfiguration
+        finally:
+            # restore PYTHONPATH
+            sys.path = old
 
         DTCommandConfiguration = configuration.DTCommandConfiguration
         if not issubclass(DTCommandConfiguration.__class__, DTCommandConfigurationAbs.__class__):
