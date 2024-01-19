@@ -344,10 +344,12 @@ class DTShell(Cmd):
         compatibility.apply(self)
 
         # register SIGINT handler
-        signal.signal(
-            signal.SIGINT,
-            lambda sig, frame: self._trigger_event(Event(EventType.KEYBOARD_INTERRUPT, "user"))
-        )
+        # TODO: disabled for now, we need to figure out how to handle this properly, commands naturally
+        #  expect SIGINT signals and KeyboardInterrupt exceptions
+        # signal.signal(
+        #     signal.SIGINT,
+        #     lambda sig, frame: self._trigger_event(Event(EventType.KEYBOARD_INTERRUPT, "user"))
+        # )
 
         # register at-exit (we use a lambda so that the event is created at the proper time)
         atexit.register(lambda: self._trigger_event(Event(EventType.SHUTDOWN, "shell")))
