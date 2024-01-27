@@ -8,6 +8,7 @@ from typing import Optional, Dict, List
 from . import logger
 
 
+# noinspection PyPep8Naming
 def dts():
     # make sure we have not imported dt_shell yet
     modules = [m.__name__ for m in sys.modules.values() if m]
