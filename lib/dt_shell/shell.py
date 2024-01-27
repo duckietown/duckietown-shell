@@ -112,9 +112,9 @@ def get_cli_options(args: List[str]) -> Tuple[CLIOptions, List[str]]:
             help="Execute command completion",
         )
 
-    parsed, others = parser.parse_known_args(args)
+    parsed = parser.parse_args(args[:i])
 
-    return CLIOptions(**parsed.__dict__), others
+    return CLIOptions(**parsed.__dict__), args[i:]
 
 
 prompt = "dts> "
