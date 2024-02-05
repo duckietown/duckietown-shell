@@ -4,10 +4,10 @@ import traceback
 from typing import Optional, List
 
 import requests
+
 from dt_shell.utils import pretty_json
 
 import dt_shell
-from dt_shell import dtslogger
 
 DTHUB_SCHEMA: str = "https"
 DTHUB_HOST: str = os.environ.get("DTHUB_HOST", "hub.duckietown.com")
@@ -56,7 +56,6 @@ def hub_api_post(endpoint: str, data: dict, token: Optional[str] = None) -> HUBA
         token = dt_shell.shell.profile.secrets.dt_token
     # compile url
     url: str = f"{DTHUB_API_URL}/{endpoint.lstrip('/')}"
-    dtslogger.debug(f"POST: {url}")
     response: Optional[dict] = None
     try:
         response = requests.post(
