@@ -43,9 +43,12 @@ class ShellProfileEventsDatabase(DTShellDatabase[dict]):
         raise NotImplementedError("Use the method ShellProfileEventsDatabase.new() instead.")
 
     def events(self) -> Iterator[StatsEvent]:
-        for key in self.keys():
+        for key in list(self.keys()):
             value: dict = super(ShellProfileEventsDatabase, self).get(key)
-            yield StatsEvent(**value, __db__=self, __key__=key)
+            try:
+                yield StatsEvent(**value, __db__=self, __key__=key)
+            except TypeError:
+                self.delete(key)
 
     def new(self, name: str, payload: dict = None, when: float = None, format: int = 1,
             labels: dict = None) -> StatsEvent:
