@@ -1,3 +1,4 @@
+import copy
 from dataclasses import dataclass
 from typing import Dict, Optional
 
@@ -28,7 +29,7 @@ def read_shell_config(shell) -> ShellConfig:
     global _instance
     if _instance is None:
         docker_credentials: Dict[str, dict] = {
-            registry: credentials
+            registry: copy.deepcopy(credentials)
             for registry, credentials in shell.profile.secrets.docker_credentials.items()
         }
         # rename password -> secret
