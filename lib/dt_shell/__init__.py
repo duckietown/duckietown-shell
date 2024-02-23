@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 import logging
 import pathlib
+import warnings
+
+warnings.filterwarnings(action='ignore', module='.*paramiko.*')
 
 # ===> COMPATIBILITY
 # these are only for older versions of the commands, we will drop these with the shell v7
