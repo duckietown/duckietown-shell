@@ -1,6 +1,9 @@
+import atexit
 import copy
 import dataclasses
+import json
 import os.path
+import tempfile
 import time
 from typing import Optional, List, Dict, Union, Iterator, Tuple, Type
 
@@ -47,6 +50,9 @@ class DockerCredentials(DTShellDatabase[dict]):
     @classmethod
     def load(cls, location: str):
         return DockerCredentials.open(DB_SECRETS_DOCKER, location=location)
+
+    def contains(self, registry: str) -> bool:
+        return super(DockerCredentials, self).contains(registry)
 
     def get(self, registry: str, default: GenericCredentials = NOTSET) -> GenericCredentials:
         try:
@@ -114,6 +120,22 @@ class ShellProfileSecrets(DTShellDatabase):
     @property
     def docker_credentials(self) -> DockerCredentials:
         return DockerCredentials.load(self._location)
+
+    @classmethod
+    def _as_temporary_file(cls, content: str, autoremove: bool = True) -> str:
+        # create temporary file and write content to it
+        tmpf_fd, tmpf_fpath = tempfile.mkstemp()
+        os.write(tmpf_fd, content.encode("utf-8"))
+        os.close(tmpf_fd)
+        # when Python exits, the file gets removed
+        if autoremove:
+            atexit.register(os.remove, tmpf_fpath)
+        # ---
+        return tmpf_fpath
+
+    def as_temporary_json_file(self, key: str, autoremove: bool = True) -> str:
+        secret: dict = self.get(key)
+        return self._as_temporary_file(json.dumps(secret), autoremove=autoremove)
 
 
 class ShellProfileSettings(DTShellDatabase):
