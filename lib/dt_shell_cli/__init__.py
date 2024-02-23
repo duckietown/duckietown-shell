@@ -1,5 +1,7 @@
 import logging
+import warnings
 
+warnings.filterwarnings(action='ignore', module='.*paramiko.*')
 
 logging.basicConfig()
 
