@@ -6,6 +6,7 @@ from threading import Semaphore
 from typing import Union, TypeVar, Generic, Tuple, Optional, Dict, Iterator, ContextManager
 
 import yaml
+from filelock import FileLock, Timeout
 
 from ..utils import safe_pathname
 
@@ -56,6 +57,7 @@ class DTShellDatabase(Generic[T]):
         self._data: dict = {}
         self._ephemeral: dict = {}
         self._lock: Semaphore = Semaphore()
+        self._atomic: FileLock = FileLock(f"{self.yaml}.lock", timeout=10)
         self._in_memory: bool = False
         # ---
         raise RuntimeError(f'Call {self.__class__.__name__}.open() instead')
@@ -75,6 +77,7 @@ class DTShellDatabase(Generic[T]):
             inst._data = {}
             inst._ephemeral = {}
             inst._lock = Semaphore()
+            inst._atomic = FileLock(f"{inst.yaml}.lock", timeout=10)
             inst._in_memory = False
             # set custom init args
             for k, v in (init_args or {}).items():
@@ -188,8 +191,13 @@ class DTShellDatabase(Generic[T]):
         exists: bool = os.path.exists(self.yaml) and os.path.isfile(self.yaml)
         # read from disk
         if exists:
-            with open(self.yaml, "rt") as fin:
-                content = yaml.safe_load(fin)
+            try:
+                with self._atomic:
+                    with open(self.yaml, "rt") as fin:
+                        content = yaml.safe_load(fin)
+            except Timeout:
+                raise TimeoutError(f"Could not acquire lock for '{self.yaml}'. "
+                                   f"If this happens often, delete the file {self.yaml}.lock")
             # populate internal state
             self._data = content["data"]
 
@@ -201,8 +209,13 @@ class DTShellDatabase(Generic[T]):
         with self._lock:
             content = {**EMPTY_DB, "data": {**self._data}}
             # write to disk
-            with open(self.yaml, "wt") as fout:
-                yaml.safe_dump(content, fout, indent=4)
+            try:
+                with self._atomic:
+                    with open(self.yaml, "wt") as fout:
+                        yaml.safe_dump(content, fout, indent=4)
+            except Timeout:
+                raise TimeoutError(f"Could not acquire lock for '{self.yaml}'. "
+                                   f"If this happens often, delete the file {self.yaml}.lock")
 
     @staticmethod
     def _serialize(v: object) -> SerializedValue:
