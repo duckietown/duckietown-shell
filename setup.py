@@ -38,6 +38,9 @@ shell_requires = [
     "questionary>=2.0.1,<3",
     "argcomplete>=3.1.4,<4",
 
+    # database concurrent access control
+    "filelock>=3,<4",
+
     # duckietown deps
     "dockertown>=0.2.2,<1",
     "dtproject>=1.0.6,<2",
