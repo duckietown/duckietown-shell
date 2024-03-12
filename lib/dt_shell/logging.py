@@ -28,25 +28,6 @@ def dts_print(msg: str, color: Optional[str] = None, attrs: Sequence[str] = ()) 
         print(s)
 
 
-def setup_logging_format():
-    from logging import Logger, StreamHandler, Formatter
-    import logging
-
-    FORMAT = "%(name)15s|ds|%(filename)15s:%(lineno)-4s - %(funcName)-15s| %(message)s"
-
-    logging.basicConfig(format=FORMAT)
-
-    # noinspection PyUnresolvedReferences
-    root = Logger.root
-    if root.handlers:
-        for handler in root.handlers:
-            if isinstance(handler, StreamHandler):
-                formatter = Formatter(FORMAT)
-                handler.setFormatter(formatter)
-    else:
-        logging.basicConfig(format=FORMAT)
-
-
 def add_coloring_to_emit_ansi(fn):
     # add methods we need to the class
     def new(*args):
@@ -85,8 +66,3 @@ def setup_logging_color():
     if platform.system() != "Windows":
         emit2 = add_coloring_to_emit_ansi(logging.StreamHandler.emit)
         logging.StreamHandler.emit = emit2
-
-
-def setup_logging():
-    setup_logging_color()
-    setup_logging_format()
