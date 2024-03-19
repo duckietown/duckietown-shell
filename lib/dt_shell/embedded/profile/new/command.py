@@ -28,6 +28,9 @@ class DTCommand(DTCommandAbs):
             # filter by staging VS production
             if parsed.staging != distro.staging:
                 continue
+            # only show stable distributions
+            if not distro.stable and not parsed.unstable:
+                continue
             # create questionnaire
             extras: str = "" if distro.name not in profiles else f"(profile already exists)"
             eol: str = "" if distro.end_of_life is None else f"(end of life: {distro.end_of_life_fmt})"

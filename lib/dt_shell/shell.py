@@ -820,8 +820,13 @@ class DTShell(Cmd):
             print("You need to choose the distribution you want to work with.")
             distros: List[Choice] = []
             for distro in KNOWN_DISTRIBUTIONS.values():
+                # only show production branches
                 if distro.staging:
                     continue
+                # only show stable distributions
+                if not distro.stable:
+                    continue
+                # ---
                 eol: str = "" if distro.end_of_life is None else f"(end of life: {distro.end_of_life_fmt})"
                 label = [("class:choice", distro.name), ("class:disabled", f"  {eol}")]
                 choice: Choice = Choice(title=label, value=distro.name)

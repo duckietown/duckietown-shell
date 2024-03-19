@@ -17,6 +17,7 @@ class Distro:
     branch: str = None
     end_of_life: Optional[datetime.date] = None
     staging: bool = False
+    stable: bool = False
     tokens_supported: List[str] = dataclasses.field(default_factory=list)
     token_preferred: Optional[str] = None
 
@@ -59,14 +60,16 @@ KNOWN_DISTRIBUTIONS: Dict[str, Distro] = {
     "daffy": Distro(
         "daffy",
         "daffy",
-        end_of_life=datetime.date(2024, 3, 31),
+        stable=True,
+        # end_of_life=datetime.date(2024, 12, 31),
         tokens_supported=["dt1", "dt2"],
         token_preferred="dt1"
     ),
     "daffy-staging": Distro(
         "daffy",
         "daffy-staging",
-        end_of_life=datetime.date(2024, 3, 31),
+        stable=True,
+        # end_of_life=datetime.date(2024, 12, 31),
         staging=True,
         tokens_supported=["dt1", "dt2"],
         token_preferred="dt1"
@@ -75,18 +78,20 @@ KNOWN_DISTRIBUTIONS: Dict[str, Distro] = {
     "ente": Distro(
         "ente",
         "ente",
+        stable=False,
         tokens_supported=["dt2"],
         token_preferred="dt2"
     ),
     "ente-staging": Distro(
         "ente",
         "ente-staging",
+        stable=False,
         staging=True,
         tokens_supported=["dt2"],
         token_preferred="dt2"
     ),
 }
-SUGGESTED_DISTRIBUTION: str = "ente"
+SUGGESTED_DISTRIBUTION: str = "daffy"
 
 # command set
 EMBEDDED_COMMAND_SET_NAME: str = "embedded"
