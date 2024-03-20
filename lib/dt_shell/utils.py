@@ -309,7 +309,7 @@ def print_debug_info() -> None:
             )
             if include:
                 v[pkg_name] = pkg_version
-    except ImportError:
+    except (ImportError, AttributeError):
         logger.warning('Please update "pip" to have better debug info.')
 
     versions = yaml.dump(v, default_flow_style=False)
