@@ -58,7 +58,7 @@ class CLIOptions:
     verbose: bool = env_option("DTSHELL_VERBOSE", False)
     quiet: bool = env_option("DTSHELL_QUIET", False)
     complete: bool = False
-    profile: Optional[str] = None
+    profile: Optional[str] = env_option("DTSHELL_PROFILE", None)
 
 
 def get_cli_options(args: List[str]) -> Tuple[CLIOptions, List[str]]:
@@ -100,7 +100,7 @@ def get_cli_options(args: List[str]) -> Tuple[CLIOptions, List[str]]:
     parser.add_argument(
         "--profile",
         type=str,
-        default=None,
+        default=default_opts.profile,
         help="Select specific profile just for this session"
     )
 
@@ -236,7 +236,7 @@ class DTShell(Cmd):
         if profile is not None:
             if profile not in self._db_profiles.keys():
                 raise UserError(f"The profile '{profile}' does not exist.")
-            logger.info(f"Using profile '{profile}' as prescribed by the option --profile")
+            logger.info(f"Using profile '{profile}' as prescribed by --profile or environment variable DTSHELL_PROFILE")
             with self.settings.in_memory():
                 self.settings.profile = profile
 
