@@ -32,15 +32,15 @@ class DTCommand(DTCommandAbs):
             if not distro.stable and not parsed.unstable:
                 continue
             # create questionnaire
-            extras: str = "" if distro.name not in profiles else f"(profile already exists)"
+            extras: str = "" if distro.branch not in profiles else f"(profile already exists)"
             eol: str = "" if distro.end_of_life is None else f"(end of life: {distro.end_of_life_fmt})"
             label = [
-                ("class:choice", distro.name),
+                ("class:choice", distro.branch),
                 ("class:disabled", f"    {eol}"),
                 ("class:disabled", f" {extras}")
             ]
-            choice: Choice = Choice(title=label, value=distro.name)
-            if distro.name.startswith(SUGGESTED_DISTRIBUTION) and distro.name not in profiles:
+            choice: Choice = Choice(title=label, value=distro.branch)
+            if distro.branch.startswith(SUGGESTED_DISTRIBUTION) and distro.branch not in profiles:
                 distros.insert(0, choice)
             else:
                 distros.append(choice)
