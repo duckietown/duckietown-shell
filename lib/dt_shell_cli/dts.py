@@ -43,7 +43,7 @@ def dts():
     from dt_shell.shell import get_cli_options
     from dt_shell.commands import CommandDescriptor
     from dt_shell.environments import ShellCommandEnvironmentAbs
-    from dt_shell.exceptions import CommandNotFound, ShellInitException, UserAborted, UserError
+    from dt_shell.exceptions import CommandNotFound, ShellInitException, UserAborted, UserError, ConfigInvalid
     from dt_shell.utils import replace_spaces, print_debug_info
     from dt_shell import DTShell, dtslogger
 
@@ -96,6 +96,9 @@ def dts():
             billboard=True,
             profile=cli_options.profile
         )
+    except ConfigInvalid as e:
+        dts_print(f"A configuration file or field is invalid.\nDetails:\n\t{str(e)}", "red")
+        exit(1)
     except (UserAborted, KeyboardInterrupt):
         dts_print("User aborted operation.")
         return

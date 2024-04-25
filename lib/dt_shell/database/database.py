@@ -8,6 +8,7 @@ from typing import Union, TypeVar, Generic, Tuple, Optional, Dict, Iterator, Con
 import yaml
 from filelock import FileLock, Timeout
 
+from ..exceptions import ConfigInvalid
 from ..utils import safe_pathname
 
 SerializedValue = Union[int, float, str, bytes, dict, list]
@@ -199,7 +200,12 @@ class DTShellDatabase(Generic[T]):
                 raise TimeoutError(f"Could not acquire lock for '{self.yaml}'. "
                                    f"If this happens often, delete the file {self.yaml}.lock")
             # populate internal state
-            self._data = content["data"]
+            try:
+                self._data = content["data"]
+            except KeyError:
+
+                raise ConfigInvalid(f"Database file '{self.yaml}' is corrupted. Missing 'data' key. Check with "
+                                    f"technical support if it is ok to delete this file.")
 
     def _write(self):
         # skip writing to disk if in read-only mode
