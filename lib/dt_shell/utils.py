@@ -270,12 +270,13 @@ def ensure_bash_completion_installed():
             src: str = os.path.join(SHELL_LIB_DIR, "assets", "dts-completion.bash")
             dst: str = os.path.join(BASH_COMPLETION_DIR, "dts")
             try:
+                os.makedirs(BASH_COMPLETION_DIR, exist_ok=True)
                 shutil.copyfile(src, dst)
             except Exception:
                 logger.warning("An error occurred while attempting to install the bash-completion script")
                 if DTShellConstants.VERBOSE:
                     traceback.print_last()
-                    return
+                return
             # mark it as installed in the database
             db.set(key, True)
             logger.info("Bash-completion script successfully installed")
