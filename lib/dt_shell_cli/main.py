@@ -37,12 +37,14 @@ def main() -> None:
     DTShellConstants.VERBOSE = cli_options.verbose
     DTShellConstants.QUIET = cli_options.quiet
 
+    # we run in quiet mode
+    logger.setLevel(logging.WARNING)
+
     # process options here
     if cli_options.debug:
         dtslogger.setLevel(logging.DEBUG)
-
-    # we run in quiet mode
-    logger.setLevel(logging.WARNING)
+    if cli_options.verbose:
+        logger.setLevel(logging.DEBUG)
 
     # instantiate shell
     shell: Optional[DTShell] = None
