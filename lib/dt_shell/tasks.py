@@ -5,6 +5,8 @@ from threading import Thread
 from typing import Optional
 
 import requests
+from requests import JSONDecodeError, Response
+
 from dt_shell.utils import DebugInfo
 
 import dockertown
@@ -96,12 +98,22 @@ class UpdateBillboardsTask(Task):
         self._db: DTShellDatabase = DTShellDatabase.open(DB_BILLBOARDS)
 
     def execute(self):
-        url: str = f"{DTHUB_URL}/api/v1/billboard/list"
+        url: str = f"{DTHUB_URL}/api/v1/billboard/list/"
+        raw: Optional[Response] = None
         # reach out to the HUB and grub the new billboards
         try:
-            response: dict = requests.get(url).json()
+            logger.debug(f"GET {url}")
+            raw = requests.get(url)
+            response: dict = raw.json()
             self._shell.profile.events.new("shell/billboards/update")
-        except:
+        except JSONDecodeError:
+            logger.warning("An error occurred while decoding the received billboards. Use --verbose for further info")
+            logger.debug(traceback.format_exc())
+            logger.debug("HUB response:\n" + str(raw))
+            # mark as updated so we don't retry right away
+            self._shell.mark_updated("billboards")
+            return
+        except Exception:
             logger.warning("An error occurred while updating the billboards")
             logger.debug(traceback.format_exc())
             # mark as updated so we don't retry right away
@@ -116,9 +128,8 @@ class UpdateBillboardsTask(Task):
             return
         # update local database
         self._db.clear()
-        self._db.update({
-            b["name"]: b for b in response.get("result", [])
-        })
+        for bboard in response.get("result", {}).get("results", []):
+            self._db.set(bboard["name"], bboard)
         self._shell.mark_updated("billboards")
         logger.debug("Billboards updated!")
 
