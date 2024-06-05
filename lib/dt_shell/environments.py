@@ -166,6 +166,10 @@ class VirtualPython3Environment(ShellCommandEnvironmentAbs):
         }
         exec_env.pop("PYTHONPATH", None)
 
+        if DTShellConstants.VERBOSE:
+            logger.debug(f"Running command: {exec_args}")
+            logger.debug(f"Environment: {exec_env}")
+
         # noinspection PyTypeChecker
         os.execle(*exec_args, exec_env)
 
