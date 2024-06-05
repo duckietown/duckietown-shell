@@ -96,7 +96,7 @@ class UpdateBillboardsTask(Task):
         self._db: DTShellDatabase = DTShellDatabase.open(DB_BILLBOARDS)
 
     def execute(self):
-        url: str = f"{DTHUB_URL}/api/v1/shell/billboards"
+        url: str = f"{DTHUB_URL}/api/v1/billboard/list"
         # reach out to the HUB and grub the new billboards
         try:
             response: dict = requests.get(url).json()
@@ -116,7 +116,9 @@ class UpdateBillboardsTask(Task):
             return
         # update local database
         self._db.clear()
-        self._db.update(response.get("result", {}))
+        self._db.update({
+            b["name"]: b for b in response.get("result", [])
+        })
         self._shell.mark_updated("billboards")
         logger.debug("Billboards updated!")
 
