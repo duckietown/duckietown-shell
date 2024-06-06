@@ -42,7 +42,7 @@ shell_requires = [
     "filelock>=3,<4",
 
     # duckietown deps
-    "dockertown>=0.2.2,<1",
+    "dockertown>=0.2.5,<1",
     "dtproject>=1.0.6,<2",
     "dt-authentication>=2.1.4,<3",
     # TODO: this cannot be released until DCSS is released on the HUB
