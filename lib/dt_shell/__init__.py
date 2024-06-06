@@ -25,7 +25,7 @@ from dt_shell_cli import logger
 dtslogger = logging.getLogger("dts")
 dtslogger.setLevel(logging.INFO)
 
-__version__ = "6.0.6"
+__version__ = "6.0.7"
 
 import sys
 
