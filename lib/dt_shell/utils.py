@@ -304,6 +304,7 @@ def print_debug_info() -> None:
         for pkg_name, pkg_version in pkgs.items():
             include = (
                     ("duckietown" in pkg_name)
+                    or ("dockertown" in pkg_name)
                     or ("dt-" in pkg_name)
                     or ("-z" in pkg_name)
                     or ("aido" in pkg_name)
