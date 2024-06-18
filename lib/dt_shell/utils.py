@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 import platform
@@ -235,10 +236,12 @@ class DebugInfo:
 
 
 def pip_install(interpreter: str, requirements: str):
+    run = subprocess.check_call if logger.level <= logging.DEBUG else subprocess.check_output
     try:
-        subprocess.check_output(
+        run(
             [interpreter, "-m", "pip", "install", "-r", requirements],
             stderr=subprocess.STDOUT,
+            env={}
         )
     except subprocess.CalledProcessError as e:
         msg: str = "An error occurred while installing python dependencies"
