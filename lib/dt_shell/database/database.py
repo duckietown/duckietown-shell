@@ -203,8 +203,10 @@ class DTShellDatabase(Generic[T]):
             try:
                 self._data = content["data"]
             except KeyError:
-
                 raise ConfigInvalid(f"Database file '{self.yaml}' is corrupted. Missing 'data' key. Check with "
+                                    f"technical support if it is ok to delete this file.")
+            except TypeError:
+                raise ConfigInvalid(f"Database file '{self.yaml}' is corrupted. Check with "
                                     f"technical support if it is ok to delete this file.")
 
     def _write(self):
