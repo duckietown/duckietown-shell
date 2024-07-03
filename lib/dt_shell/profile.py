@@ -11,6 +11,8 @@ import questionary
 from questionary import Choice
 
 from dt_authentication import DuckietownToken
+from yaml.scanner import ScannerError
+
 from . import logger, __version__
 from .commands import CommandSet, CommandDescriptor
 from .commands.repository import CommandsRepository
@@ -324,7 +326,12 @@ class ShellProfile:
 
     @property
     def events(self) -> ShellProfileEventsDatabase:
-        return ShellProfileEventsDatabase.load(location=self._databases_location)
+        try:
+            db = ShellProfileEventsDatabase.load(location=self._databases_location)
+        except ScannerError:
+            logger.warning("The statistics/events database appears to be corrupted. It will be reset.")
+            db = ShellProfileEventsDatabase.reset(location=self._databases_location)
+        return db
 
     @property
     def distro(self) -> Optional[Distro]:

@@ -3,8 +3,10 @@ import os
 import time
 from typing import Iterator, Optional
 
+from dt_shell_cli import logger
 from .constants import DB_STATISTICS_EVENTS
 from .database import DTShellDatabase
+from .utils import safe_pathname
 
 
 @dataclasses.dataclass
@@ -30,6 +32,18 @@ class ShellProfileEventsDatabase(DTShellDatabase[dict]):
 
     @classmethod
     def load(cls, location: str):
+        return ShellProfileEventsDatabase.open(DB_STATISTICS_EVENTS, location=location)
+
+    @classmethod
+    def reset(cls, location: str):
+        # remove file
+        try:
+            yaml_fpath: str = os.path.abspath(os.path.join(location, f"{safe_pathname(DB_STATISTICS_EVENTS)}.yaml"))
+            logger.warning(f"Removing file '{yaml_fpath}'")
+            os.remove(yaml_fpath)
+        except FileNotFoundError:
+            pass
+        # open new instance (will recreate the file)
         return ShellProfileEventsDatabase.open(DB_STATISTICS_EVENTS, location=location)
 
     @property
