@@ -25,7 +25,7 @@ dtslogger = logging.getLogger("dts")
 dtslogger.setLevel(logging.INFO)
 install_colored_logs(logger=dtslogger)
 
-__version__ = "6.0.13"
+__version__ = "6.0.14"
 
 import sys
 
