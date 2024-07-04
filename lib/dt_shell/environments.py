@@ -14,7 +14,7 @@ from .exceptions import ShellInitException, InvalidEnvironment, CommandsLoadingE
 from .constants import SHELL_LIB_DIR, SHELL_REQUIREMENTS_LIST, DTShellConstants
 from .database.utils import InstalledDependenciesDatabase
 from .logging import dts_print
-from .utils import pip_install, replace_spaces, print_debug_info
+from .utils import pip_install, replace_spaces, print_debug_info, pretty_json
 
 
 class ShellCommandEnvironmentAbs(metaclass=ABCMeta):
@@ -171,6 +171,9 @@ class VirtualPython3Environment(ShellCommandEnvironmentAbs):
             logger.debug(f"Environment: {exec_env}")
 
         # noinspection PyTypeChecker
+        logger.debug(f"Delegating execution to:\n"
+                     f"\tCommand: {exec_args}\n"
+                     f"\tEnvironment: {pretty_json(exec_env, indent_len=12)}")
         os.execle(*exec_args, exec_env)
 
 
