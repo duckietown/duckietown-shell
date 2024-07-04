@@ -15,15 +15,15 @@ from .compatibility import OtherVersions
 from .compatibility.env_checks import check_package_version
 # <=== COMPATIBILITY
 
-
-FORMAT = "%(levelname)s:%(name)s : %(message)s"
-logging.basicConfig(format=FORMAT)
+logging.basicConfig()
 
 from dt_shell_cli import logger
+from dt_shell_cli.utils import install_colored_logs
 
 # logger dedicated to the commands
 dtslogger = logging.getLogger("dts")
 dtslogger.setLevel(logging.INFO)
+install_colored_logs(logger=dtslogger)
 
 __version__ = "6.0.13"
 

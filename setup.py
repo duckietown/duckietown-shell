@@ -37,6 +37,7 @@ shell_requires = [
     "pyfiglet>=0.8.0,<1",
     "questionary>=2.0.1,<3",
     "argcomplete>=3.1.4,<4",
+    "coloredlogs>=15.0,<16",
 
     # database concurrent access control
     "filelock>=3,<4",

@@ -1,6 +1,8 @@
 import logging
 import warnings
 
+from dt_shell_cli.utils import install_colored_logs
+
 warnings.filterwarnings(action='ignore', module='.*paramiko.*')
 
 logging.basicConfig()
@@ -8,3 +10,6 @@ logging.basicConfig()
 # logger dedicated to the shell
 logger = logging.getLogger("shell")
 logger.setLevel(logging.INFO)
+
+# add colored logs
+install_colored_logs(logger=logger)
