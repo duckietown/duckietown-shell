@@ -22,8 +22,8 @@ from dt_shell_cli.utils import install_colored_logs
 
 # logger dedicated to the commands
 dtslogger = logging.getLogger("dts")
-dtslogger.setLevel(logging.INFO)
 install_colored_logs(logger=dtslogger)
+dtslogger.setLevel(logging.INFO)
 
 __version__ = "6.0.14"
 

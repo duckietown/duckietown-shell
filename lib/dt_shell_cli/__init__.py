@@ -9,7 +9,7 @@ logging.basicConfig()
 
 # logger dedicated to the shell
 logger = logging.getLogger("shell")
-logger.setLevel(logging.INFO)
 
 # add colored logs
 install_colored_logs(logger=logger)
+logger.setLevel(logging.INFO)
