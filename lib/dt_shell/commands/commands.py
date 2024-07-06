@@ -415,11 +415,11 @@ class CommandSet:
         # ---
         remote_url = self.repository.remoteurl
         try:
-            logger.info(f"Downloading Duckietown shell commands in {self.path} ...")
+            logger.info(f"Downloading command set in {self.path} ...")
             # clone the repo
             branch: List[str] = ["--branch", self.repository.branch] if self.repository.branch else []
             run_cmd(["git", "clone"] + branch + ["--recurse-submodules", remote_url, self.path])
-            logger.info(f"Commands downloaded successfully!")
+            logger.info(f"Command set downloaded successfully!")
             # refresh commands
             self.refresh()
         except Exception as e:
@@ -484,6 +484,9 @@ class CommandSet:
             # get the remote sha from GitHub
             remote_sha: Optional[str] = self.repository.remote_sha()
             if remote_sha is None:
+                if self.repository.use_ssh:
+                    # give up on this, we don't get a SHA via SSH
+                    self.mark_as_just_updated()
                 return False
 
             # check if we need to update

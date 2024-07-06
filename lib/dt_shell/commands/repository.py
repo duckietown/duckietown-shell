@@ -16,13 +16,30 @@ class CommandsRepository:
     project: str
     branch: str
     location: Optional[str] = None
+    use_ssh: bool = False
+    provider: str = "github.com"
 
     @property
     def remoteurl(self) -> str:
-        return f"https://github.com/{self.username}/{self.project}"
+        if self.use_ssh:
+            return f"git@{self.provider}:{self.username}/{self.project}"
+        return f"https://{self.provider}/{self.username}/{self.project}"
+
+    @property
+    def apiurl(self) -> str:
+        if self.provider != "github.com":
+            raise ValueError("Only github.com is supported")
+        return f"https://api.github.com/repos/{self.username}/{self.project}"
+
+    @property
+    def apiurl_with_branch(self) -> str:
+        if self.provider != "github.com":
+            raise ValueError("Only github.com is supported")
+        return f"https://api.github.com/repos/{self.username}/{self.project}/branches/{self.branch}"
 
     def as_dict(self) -> dict:
         return {
+            "provider": self.provider,
             "username": self.username,
             "project": self.project,
             "branch": self.branch,
@@ -30,34 +47,45 @@ class CommandsRepository:
             "url": self.remoteurl,
         }
 
+    @classmethod
+    def from_dict(cls, data: dict) -> 'CommandsRepository':
+        return CommandsRepository(
+            username=data["username"],
+            project=data["project"],
+            branch=data["branch"],
+            location=data.get("location", None),
+            use_ssh=data["url"].startswith("git@"),
+            provider=data.get("provider", "github.com")
+        )
+
     def remote_sha(self) -> Optional[str]:
         # Get the remote sha from GitHub
         logger.info("Fetching remote SHA from github.com ...")
-        remote_url: str = "https://api.github.com/repos/%s/%s/branches/%s" % (
-            self.username,
-            self.project,
-            self.branch,
-        )
-        # contact github
-        try:
-            content = get_url(remote_url)
-        except Exception:
-            if DTShellConstants.VERBOSE:
-                traceback.print_exc()
-            logger.debug(f"URL called: {remote_url}")
-            logger.warning(f"An error occurred while fetching the remote SHA for repository {self.remoteurl}")
+        if self.use_ssh:
+            logger.warning(f"Command set '{self.username}/{self.project}' is using SSH. Cannot fetch remote SHA.")
             return None
-        # parse output
-        try:
-            data = json.loads(content)
-            return data["commit"]["sha"]
-        except Exception:
-            if DTShellConstants.VERBOSE:
-                traceback.print_exc()
-            logger.debug(f"URL called: {remote_url}\n"
-                         f"Object returned by github:\n\n{indent_block(content)}")
-            logger.warning(f"An error occurred while fetching the remote SHA for repository {self.remoteurl}")
-            return None
+        else:
+            remote_url: str = self.apiurl_with_branch
+            # contact github
+            try:
+                content = get_url(remote_url)
+            except Exception:
+                if DTShellConstants.VERBOSE:
+                    traceback.print_exc()
+                logger.debug(f"URL called: {remote_url}")
+                logger.warning(f"An error occurred while fetching the remote SHA for repository {self.remoteurl}")
+                return None
+            # parse output
+            try:
+                data = json.loads(content)
+                return data["commit"]["sha"]
+            except Exception:
+                if DTShellConstants.VERBOSE:
+                    traceback.print_exc()
+                logger.debug(f"URL called: {remote_url}\n"
+                             f"Object returned by github:\n\n{indent_block(content)}")
+                logger.warning(f"An error occurred while fetching the remote SHA for repository {self.remoteurl}")
+                return None
 
     @classmethod
     def given_distro(cls, distro: str) -> 'CommandsRepository':
@@ -97,13 +125,28 @@ class CommandsRepository:
     @staticmethod
     def closest_tag(path: str) -> Optional[str]:
         try:
-            tags: str = run_cmd(["git", "-C", path, "tag", "--merged"])
+            tags: Optional[str] = run_cmd(["git", "-C", path, "tag", "--merged"])
         except Exception:
             if DTShellConstants.VERBOSE:
                 traceback.print_exc()
+            return None
+        # no tgs
+        if tags is None:
             return None
         # ---
         tags: List[str] = tags.strip().split("\n")
         if not tags:
             return None
         return tags[-1]
+
+    @classmethod
+    def from_remoteurl(cls, remoteurl: str, branch: str, location: Optional[str] = None) -> 'CommandsRepository':
+        provider, username, project = provider_username_project_from_git_url(remoteurl)
+        return CommandsRepository(
+            username=username,
+            project=project,
+            branch=branch,
+            provider=provider,
+            location=location,
+            use_ssh=remoteurl.startswith("git@")
+        )

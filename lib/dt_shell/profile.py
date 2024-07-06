@@ -213,6 +213,9 @@ class ShellProfile:
         # this is the order with which command sets are loaded
         self.command_sets: List[CommandSet] = []
 
+        # this is the directory where command sets for this profile are stored
+        profile_command_sets_dir: str = os.path.join(self.path, "commands")
+
         # load command sets
         if "DTSHELL_COMMANDS" in os.environ:
             commands_path = os.environ["DTSHELL_COMMANDS"]
@@ -237,7 +240,6 @@ class ShellProfile:
             # TODO: this is where we update the profile.distro by taking the branch from the repository but
             #  only for this session
         else:
-            profile_command_sets_dir: str = os.path.join(self.path, "commands")
             # add the default 'duckietown' command set
             if self.distro is not None:
                 repository: CommandsRepository = CommandsRepository(
@@ -252,9 +254,10 @@ class ShellProfile:
                     )
                 )
 
-            # add user defined command sets
-            for n, r in self.user_command_sets_repositories:
-                self.command_sets.append(CommandSet(n, os.path.join(profile_command_sets_dir, n), self, r))
+        # add user defined command sets
+        for n, r in self.user_command_sets_repositories:
+            logger.debug(f"Loading command set '{n}' from '{r}'...")
+            self.command_sets.append(CommandSet(n, os.path.join(profile_command_sets_dir, n), self, r))
 
         # we always add the embedded command set last so that it can override everything the others do
         self.command_sets.append(
@@ -314,7 +317,8 @@ class ShellProfile:
 
     @property
     def user_command_sets_repositories(self) -> Iterator[Tuple[str, CommandsRepository]]:
-        return self.database(DB_USER_COMMAND_SETS_REPOSITORIES).items()
+        for k, v in self.database(DB_USER_COMMAND_SETS_REPOSITORIES).items():
+            yield k, CommandsRepository.from_dict(v)
 
     @property
     def settings(self) -> ShellProfileSettings:
