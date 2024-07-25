@@ -75,10 +75,11 @@ setup(
     version=shell_version,
     download_url='http://github.com/duckietown/duckietown-shell/tarball/%s' % shell_version,
     package_dir={
+        '': 'lib',
         'dt_shell': 'lib/dt_shell',
         'dt_shell_cli': 'lib/dt_shell_cli',
     },
-    packages=find_packages("lib", exclude=["dt_shell_tests"]),
+    packages=find_packages(where="lib", exclude=["dt_shell_tests"]),
     # we want the python 2 version to download it, and then exit with an error
     # python_requires='>=3.6',
 

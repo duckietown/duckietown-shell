@@ -218,7 +218,7 @@ class ShellProfile:
 
         # load command sets
         if "DTSHELL_COMMANDS" in os.environ:
-            commands_path = os.environ["DTSHELL_COMMANDS"]
+            commands_path = os.path.abspath(os.environ["DTSHELL_COMMANDS"])
             # make sure the given path exists
             if not os.path.exists(commands_path):
                 msg = f"The path {commands_path} given with the environment variable DTSHELL_COMMANDS does " \
