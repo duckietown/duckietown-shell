@@ -135,6 +135,27 @@ def import_command(command_set: CommandSet, fpath: str) -> Type[DTCommandAbs]:
         try:
             if DTShellConstants.VERBOSE:
                 logger.debug(f"Importing command '{_command_sel}' from '{_dirname(fpath)}/'")
+
+            # when running in debug mode (via vscode debugpy), it seems that Python's `code.py` is loaded
+            # and it clashes with the `code` commands... The code below checks for such clashes, and
+            # unloads the module if not part of the commandset.
+
+            # see implementation of `_find_and_load_unlocked` in importlib._bootstrap
+            _command_sel_parent = _command_sel.split('.')[0]
+            if _command_sel_parent and _command_sel_parent in sys.modules:
+                mod = sys.modules.get(_command_sel_parent, None)
+                # if (_command_sel_parent == "code"):
+                #     print(dir(mod))
+                #     print(mod.__path__)
+                if "__path__" not in dir(mod) or mod.__path__[0] not in _command_dir:
+                    # print(f"{_command_dir} == {mod.__path__[0]}")
+                    logger.warning(
+                        f"Command '{_command_sel}' is already loaded or there's a name "
+                        f"clash with '{_command_sel_parent}:{mod.__file__}'. Unloading '{_command_sel_parent}' "
+                        f"to load '{_command_sel}'"
+                    )
+                    # see https://stackoverflow.com/questions/43181440/what-does-del-sys-modulesmodule-actually-do
+                    del sys.modules[_command_sel_parent]
             command = importlib.import_module(_command_sel)
         except ShellNeedsUpdate as e:
             logger.warning(

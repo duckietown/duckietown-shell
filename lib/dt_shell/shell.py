@@ -656,7 +656,7 @@ class DTShell(Cmd):
                     raise
                 except (UserAborted, KeyboardInterrupt):
                     raise
-                except ModuleNotFoundError:
+                except ModuleNotFoundError as e:
                     lines: List[str] = []
                     cs_path: str = os.path.abspath(os.path.realpath(command_set.path))
                     # check PYTHONPATH
@@ -687,7 +687,8 @@ class DTShell(Cmd):
                         lines.append(f"\t- file[{init_fpath}] exists: {os.path.isfile(init_fpath)}")
                     # compile details
                     details: str = "\n".join(lines)
-                    msg = f"The command '{selector.replace('.', '/')}' could not be imported." \
+                    msg = f"The command '{selector.replace('.', '/')}' could not be imported.\n\n" \
+                          f"ModuleNotFoundError: {e}" \
                           f"\n\n{details}\n\n" \
                           f"{traceback.format_exc()}"
                     self._errors_loading.append(msg)

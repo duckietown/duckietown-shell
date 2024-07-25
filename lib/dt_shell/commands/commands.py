@@ -391,6 +391,7 @@ class CommandSet:
             stdout: str = run_cmd(["git", "-C", self.path, "rev-parse", "HEAD"])
             # noinspection PyTypeChecker
             return next(filter(len, stdout.split("\n")))
+        return None
 
     def as_dict(self) -> dict:
         return {
@@ -419,13 +420,14 @@ class CommandSet:
             # clone the repo
             branch: List[str] = ["--branch", self.repository.branch] if self.repository.branch else []
             run_cmd(["git", "clone"] + branch + ["--recurse-submodules", remote_url, self.path])
-            logger.info(f"Command set downloaded successfully!")
+            logger.info("Command set downloaded successfully!")
             # refresh commands
             self.refresh()
         except Exception as e:
             # Excepts as InvalidRemote
             logger.error(f"Unable to clone the repo at '{remote_url}':\n{str(e)}.")
             return False
+        return True
 
     def update(self) -> bool:
         # check that the repo is initialized in the commands path
