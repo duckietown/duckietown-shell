@@ -1,0 +1,9 @@
+{
+    "python.envFile": "${workspaceFolder}/.vscode/python.env",
+    "editor.wordWrapColumn": 120,
+    "editor.rulers": [
+        120
+    ],
+    "files.trimFinalNewlines": true,
+    "files.trimTrailingWhitespace": true
+}
