@@ -27,8 +27,7 @@ class DTCommand(DTCommandAbs):
                 sys.exit(3)
 
             dtslogger.info("Token parsed correctly!")
-            payload = json.dumps(token.payload)
-            print(f"\nToken content:\n{payload}")
+            print(f"\nToken content:\n{token.payload_as_json()}")
             sys.exit(0)
 
         except Exception as e:
