@@ -37,7 +37,7 @@ def dts():
 
     # import dt_shell
     import dt_shell
-    from dt_shell.constants import DTShellConstants
+    from dt_shell.constants import DTShellConstants, EMBEDDED_COMMAND_SET_NAME
     from dt_shell.logging import setup_logging_color, dts_print
     from dt_shell.checks.environment import abort_if_running_with_sudo
     from dt_shell.shell import get_cli_options
@@ -128,10 +128,19 @@ def dts():
                 if shell.performed_migrations or shell.configured_shell or shell.configured_profile:
                     exit(0)
                 # no input
-                # TODO: maybe suggest possible commands?
                 dts_print("Use the syntax\n\n"
                           "\t\tdts [options] command [subcommand1 [subcommand2] ...] [arguments]\n",
                           color="red")
+                print("\nCore commands:")
+                for cmd in shell.command_set(EMBEDDED_COMMAND_SET_NAME).commands.keys():
+                    print("\t%s" % cmd)
+                # show commands grouped by command sets
+                for cs in shell.command_sets:
+                    if cs.name == EMBEDDED_COMMAND_SET_NAME:
+                        continue
+                    print(f"\nCommand set '{cs.name}':")
+                    for cmd in cs.commands.keys():
+                        print("\t%s" % cmd)
                 exit(1)
             else:
                 # input was given but it was not recognized
