@@ -1,9 +1,9 @@
-import yaml
+import os, yaml
 from dt_shell import DTCommandAbs, DTShell
 from dt_shell.constants import EMBEDDED_COMMAND_SET_NAME
 from typing import List
 
-with open("lib/command_descriptions.yaml") as stream:
+with open(f"{os.path.dirname(__file__)}/command_descriptions.yaml") as stream:
     command_descriptions = yaml.safe_load(stream)
 
 

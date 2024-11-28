@@ -3,7 +3,7 @@ from . import logger
 from typing import Optional, Dict, List
 # NOTE: DO NOT IMPORT DT_SHELL HERE
 
-with open("lib/command_descriptions.yaml") as stream:
+with open(f"{os.path.dirname(__file__)}/command_descriptions.yaml") as stream:
     command_descriptions = yaml.safe_load(stream)
 
 
