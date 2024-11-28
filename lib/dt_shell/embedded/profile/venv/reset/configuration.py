@@ -14,4 +14,4 @@ class DTCommandConfiguration(DTCommandConfigurationAbs):
 
     @classmethod
     def aliases(cls) -> List[str]:
-        return ["ls"]
+        return []

@@ -1,0 +1,360 @@
+build_utils:
+  description: Build DT challenge utilities
+challenges:
+  description: Perform a DT challenge action
+cli:
+  description: Run a command inside an instance of the DT ROS environment
+code:
+  description: DT project commands
+  subcommands:
+    build:
+      description: Build an image for a DT project
+    editor:
+      description: Run an instance of VS Code for a DT project
+    start_matrix:
+      description: Run the DM and a DT project agent against a DT robot
+    vnc:
+      description: Run an instance of VNC for a DT project
+    workbench: &code_workbench
+      description: Run a DT project agent against a DT robot
+    wb: *code_workbench
+commands:
+  description: Get the available DTS commands
+config:
+  description: Account configuration commands
+  subcommands:
+    docker:
+      description: Docker account configuration commands
+      subcommands:
+        credentials:
+          description: Docker account credential commands
+          subcommands:
+            info:
+              description: Get Docker account credential information
+            set:
+              description: Set Docker account credentials
+    github:
+      description: GitHub account configuration commands
+      subcommands:
+        credentials:
+          description: GitHub account credential commands
+          subcommands:
+            info:
+              description: Get GitHub account credential information
+            set:
+              description: Set GitHub account credentials
+data:
+  description: DT Cloud Storage Space (DCSS) commands
+  subcommands:
+    cat:
+      description: Get the contents of an object from the DCSS
+    get:
+      description: Get a file from the DCSS
+    head:
+      description: Get the metadata of an object from the DCSS
+    ls:
+      description: Get the objects contained within a given prefix of the DCSS
+    push:
+      description: Push a file to the DCSS
+    rm:
+      description: Remove a file from the DCSS
+desktop:
+  description: DT desktop commands
+  subcommands:
+    update:
+      description: Update the DT desktop
+    viewer:
+      description: DT Viewer (DTV) commands
+      subcommands:
+        devel:
+          description: DTV development commands
+          subcommands:
+            release:
+              subcommands: Create a new release of the DTV and push it to the DCSS
+        install:
+          description: Install a DTV application
+        update:
+          description: Update a DTV application
+devel:
+  description: DT development commands
+  subcommands:
+    build: &devel_build
+      description: Build the current DT project
+    buildx: *devel_build
+    bump:
+      description: Bump the version of the current DT project
+    clean:
+      description: Remove the Docker images relative to the current DT project
+    info:
+      description: Get information about the current DT project
+    jupyter:
+      description: Jupyter commands
+      subcommands:
+        lab:
+          description: Open the current DT project in JupyterLab
+    pip:
+      description: pip commands
+      subcommands:
+        resolve:
+          description: Resolve and/or make sure that the pip dependencies of a DT project are properly pinned
+    pull:
+      description: Pull the images relative to the current DT project
+    push:
+      description: Push the images relative to the current DT project
+    release:
+      description: DT project release commands
+      subcommands:
+        description: Ensure that a DT project can be sent to production
+    run:
+      description: Run the current DT project
+    sync:
+      description: Sync the current DT project with another machine
+    template:
+      description: Template commands
+      subcommands:
+        apply:
+          description: Reapply a template to the current DT project
+        diff:
+          description: Compute the difference between the current DT project and its template
+diagnostics:
+  description: DT device diagnostic commands
+  subcommands:
+    run:
+      description: Run diagnostics for a DT device
+disk_image:
+  description: DT device disk image commands
+  subcommands:
+    create:
+      description: Create a new disk image for a DT device
+dockerhub:
+  description: Docker Hub commands
+  subcommands:
+    limits:
+      description: Get the Docker Hub limits
+docs:
+  description: Documentation commands
+  subcommands:
+    build:
+      description: Build the documentation for the current DT project
+    clean:
+      description: Clean the documentation for the current DT project
+    env:
+      description: Documentation environment commands
+      subcommands:
+        build:
+          description: Build the documentation environment for the current DT project
+    publish:
+      description: Publish the documentation for the current DT project
+duckiebot:
+  description: DT robot commands
+  subcommands:
+    _update:
+      description: Update the code API for a DT robot
+    battery:
+      description: DT robot battery commands
+      subcommands:
+        check_firmware:
+          description: Get the firmware information for a DT robot battery
+        info:
+          description: Get the information for a DT robot battery
+        upgrade:
+          description: Upgrade the firmware for a DT robot battery
+    calibrate_extrinsics: &duckiebot_calibrate_extrinsics
+      description: Run the extrinsics calibrator for a DT robot
+    extrinsics_calibrator: *duckiebot_calibrate_extrinsics
+    calibrate_intrinsics: &duckiebot_calibrate_intrinsics
+      description: Run the intrinsics calibrator for a DT robot
+    intrinsics_calibrator: *duckiebot_calibrate_intrinsics
+    clean:
+      description: Clean a DT robot
+    demo:
+      description: Run a demo on a DT robot
+    image_viewer: &duckiebot_image_viewer
+      description: Run the image viewer for a DT robot
+    image_view: *duckiebot_image_viewer
+    keyboard_control: &duckiebot_keyboard_control
+      description: Run the keyboard controller for a DT robot
+    jc: *duckiebot_keyboard_control
+    joy: *duckiebot_keyboard_control
+    joystick: *duckiebot_keyboard_control
+    joystick_control: *duckiebot_keyboard_control
+    keyboard_controller: *duckiebot_keyboard_control
+    led_control: &duckiebot_led_control
+      description: Run the LED controller for a DT robot
+    led_controller: *duckiebot_led_control
+    reboot:
+      description: Reboot a DT robot
+    shutdown:
+      description: Shutdown a DT robot
+    support:
+      description: Technical support commands
+      subcommands:
+        connect:
+          description: Connect technical support
+        request:
+          description: Request technical support
+    update:
+      description: Update a DT robot
+    virtual:
+      description: Virtual DT robot commands
+      subcommands:
+        connect:
+          description: Connect to a virtual DT robot
+        create:
+          description: Create a new virtual DT robot
+        destroy:
+          description: Destroy a virtual DT robot
+        list: &duckiebot_virtual_list
+          description: Get a list of the created virtual DT robots
+        ls: *duckiebot_virtual_list
+        restart:
+          description: Restart a virtual DT robot
+        start:
+          description: Start a virtual DT robot
+        stop:
+          description: Stop a virtual DT robot
+exercises:
+  description: DT exercise commands
+  subcommands:
+    build:
+      description: Build DT exercise
+    init:
+      description: Initialize DT exercise
+    lab:
+      description: Run DT exercise in JupyterLab
+    notebooks:
+      description: Run DT exercise in JupyterLab
+    test:
+      description: Test DT exercise
+exit: &exit
+  description: Exit the DTS
+quit: *exit
+fleet:
+  description: DT fleet commands
+  subcommands:
+    discover:
+      description: Discover the DT fleet on the local network
+gui: &gui
+  description: Start DT GUI tools
+start_gui_tools: *gui
+hatchery:
+  description: Start DT hatchery
+init_sd_card:
+  description: Initialize an SD card
+install:
+  description: Install a command set
+logs:
+  description: Logging commands
+  subcommands:
+    copy:
+      description: Copy logs
+    details:
+      description: Get log details
+    download:
+      description: Download logs
+    make_thumbnails:
+      description: Make log thumbnail
+    make_video:
+      description: Make log video
+    summary:
+      description: Get log summary
+lx:
+  description: Learning Experience (LX) commands
+  subcommands:
+    create:
+      description: Create a new LX
+    publish:
+      description: Publish a LX to the LX repository
+map:
+  description: DT map commands
+  subcommands:
+    editor:
+      description: Open DT map editor
+matrix:
+  description: Duckiematrix (DM) commands
+  subcommands:
+    attach:
+      description: Attach a DT robot to a DM agent
+    build_assets:
+      description: Build map assets
+    detach:
+      description: Detach a DT robot from a DM agent
+    devel:
+      description: DM development commands
+      subcommands:
+        description: Create a new release of the DM and push it to the DCSS
+    engine:
+      description: DM engine commands
+      subcommands:
+        run:
+          description: Run the DM engine
+    info:
+      description: Get information about the DM
+    install:
+      description: Install the DM
+    run:
+      description: Run the DM renderer
+    update:
+      description: Update the DM
+profile:
+  description: DTS profile commands
+  subcommands:
+    dependencies:
+      description: DTS profile dependency commands
+      subcommands:
+        reinstall:
+          description: Reinstall the dependencies for the current DTS profile
+    list: &profile_list
+      description: Get a list of the available DTS profiles
+    ls: *profile_list
+    new:
+      description: Create a new DTS profile
+    switch:
+      description: Switch to a different DTS profile
+    venv:
+      description: DTS profile Python virtual environment commands
+      subcommands:
+        reset:
+          description: Reset the Python virtual environment for the current DTS profile
+setup:
+  description: Certificate Authority commands
+  subcommands:
+    mkcert:
+      description: Create a local certificate authority and register it against the OS trust stores
+social:
+  description: Social media commands
+  subcommands:
+    camera:
+      description: Take a picture with a DT robot
+stack:
+  description: Stack commands
+  subcommands:
+    down:
+      description: Remove stack from DT robot
+    pull:
+      description: Pull stack onto DT robot
+    up:
+      description: Run stack on DT robot
+tok: &tok
+  description: DT token commands
+  subcommands:
+    set:
+      description: Set the DT token
+    status:
+      description: Get status of the current DT token
+    verify:
+      description: Verify a DT token
+token: *tok
+uninstall:
+  description: Uninstall a command set
+update:
+  description: Update a command set
+version:
+  description: Get the version information for the DTS and command sets
+vscode:
+  description: VS Code commands
+  subcommands:
+    open:
+      description: Open the current project
+    run:
+      description: Run an instance of VS Code
