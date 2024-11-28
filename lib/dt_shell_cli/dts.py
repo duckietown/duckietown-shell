@@ -1,11 +1,10 @@
-import logging
-import os
-import sys
+import logging, os, sys, yaml
+from . import logger
 from typing import Optional, Dict, List
-
 # NOTE: DO NOT IMPORT DT_SHELL HERE
 
-from . import logger
+with open("lib/command_descriptions.yaml") as stream:
+    command_descriptions = yaml.safe_load(stream)
 
 
 # noinspection PyPep8Naming
@@ -133,14 +132,14 @@ def dts():
                           color="red")
                 print("\nCore commands:")
                 for cmd in shell.command_set(EMBEDDED_COMMAND_SET_NAME).commands.keys():
-                    print("\t%s" % cmd)
+                    print("\t%-*s%s" % (15, cmd, command_descriptions[cmd]["description"]))
                 # show commands grouped by command sets
                 for cs in shell.command_sets:
                     if cs.name == EMBEDDED_COMMAND_SET_NAME:
                         continue
                     print(f"\nCommand set '{cs.name}':")
                     for cmd in cs.commands.keys():
-                        print("\t%s" % cmd)
+                        print("\t%-*s%s" % (15, cmd, command_descriptions[cmd]["description"]))
                 exit(1)
             else:
                 # input was given but it was not recognized
@@ -151,7 +150,13 @@ def dts():
             word: Optional[str] = e.remaining[0] if e.remaining else None
             subcommands: Dict[str] = e.last_matched.commands
             if len(subcommands) > 0:
-                subcommands_list: str = "\n\t\t".join(subcommands.keys())
+                command_description_set = command_descriptions
+                for argument in arguments:
+                    command_description_set = command_description_set[argument]["subcommands"]
+                subcommand_strings = []
+                for subcommand in subcommands.keys():
+                    subcommand_strings.append("\t%-*s%s" % (15, subcommand, command_description_set[subcommand]["description"]))
+                subcommands_list: str = "\n\t\t".join(subcommand_strings)
                 # the partially matched command has subcommands
                 if word:
                     dts_print(
