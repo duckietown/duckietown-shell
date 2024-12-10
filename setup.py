@@ -101,7 +101,9 @@ setup(
             'assets/*/*/*',
             'assets/*/*/*/*',
         ],
-        'dt_shell_cli': [],
+        'dt_shell_cli': [
+            '*.yaml'
+        ],
     },
 
     entry_points={
