@@ -1,8 +1,12 @@
-import logging, os, sys, yaml
-from . import logger
+import logging
+import yaml
+import os
+import sys
 from typing import Optional, Dict, List
+
 # NOTE: DO NOT IMPORT DT_SHELL HERE
 
+from . import logger
 with open(f"{os.path.dirname(__file__)}/command_descriptions.yaml") as stream:
     command_descriptions = yaml.safe_load(stream)
 
