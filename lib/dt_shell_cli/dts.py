@@ -156,7 +156,8 @@ def dts():
             if len(subcommands) > 0:
                 command_description_set = command_descriptions
                 for argument in arguments:
-                    command_description_set = command_description_set[argument]["subcommands"]
+                    if argument in command_description_set:
+                        command_description_set = command_description_set[argument]["subcommands"]
                 subcommand_strings = []
                 for subcommand in subcommands.keys():
                     subcommand_strings.append("\t%-*s%s" % (25, subcommand, command_description_set[subcommand]["description"]))
