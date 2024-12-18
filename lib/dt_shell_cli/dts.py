@@ -135,15 +135,19 @@ def dts():
                           "\t\tdts [options] command [subcommand1 [subcommand2] ...] [arguments]\n",
                           color="red")
                 print("\nCore commands:")
-                for cmd in shell.command_set(EMBEDDED_COMMAND_SET_NAME).commands.keys():
-                    print("\t%-*s%s" % (25, cmd, command_descriptions[cmd]["description"]))
+                keys = shell.command_set(EMBEDDED_COMMAND_SET_NAME).commands.keys()
+                length = len(max(keys, key=len)) + 2
+                for cmd in keys:
+                    print("\t%-*s%s" % (length, cmd, command_descriptions[cmd]["description"]))
                 # show commands grouped by command sets
                 for cs in shell.command_sets:
                     if cs.name == EMBEDDED_COMMAND_SET_NAME:
                         continue
                     print(f"\nCommand set '{cs.name}':")
-                    for cmd in cs.commands.keys():
-                        print("\t%-*s%s" % (25, cmd, command_descriptions[cmd]["description"]))
+                    keys = cs.commands.keys()
+                    length = len(max(keys, key=len)) + 2
+                    for cmd in keys:
+                        print("\t%-*s%s" % (length, cmd, command_descriptions[cmd]["description"]))
                 exit(1)
             else:
                 # input was given but it was not recognized
@@ -159,8 +163,10 @@ def dts():
                     if argument in command_description_set:
                         command_description_set = command_description_set[argument]["subcommands"]
                 subcommand_strings = []
-                for subcommand in subcommands.keys():
-                    subcommand_strings.append("\t%-*s%s" % (25, subcommand, command_description_set[subcommand]["description"]))
+                keys = subcommands.keys()
+                length = len(max(keys, key=len)) + 2
+                for subcommand in keys:
+                    subcommand_strings.append("\t%-*s%s" % (length, subcommand, command_description_set[subcommand]["description"]))
                 subcommands_list: str = "\n\t\t".join(subcommand_strings)
                 # the partially matched command has subcommands
                 if word:

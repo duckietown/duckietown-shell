@@ -14,15 +14,19 @@ class DTCommand(DTCommandAbs):
     def command(shell: DTShell, args: List[str]):
         # show core commands
         print("\nCore commands:")
-        for cmd in shell.command_set(EMBEDDED_COMMAND_SET_NAME).commands.keys():
-            print("\t%-*s%s" % (25, cmd, command_descriptions[cmd]["description"]))
+        keys = shell.command_set(EMBEDDED_COMMAND_SET_NAME).commands.keys()
+        length = len(max(keys, key=len)) + 2
+        for cmd in keys:
+            print("\t%-*s%s" % (length, cmd, command_descriptions[cmd]["description"]))
         # show commands grouped by command sets
         for cs in shell.command_sets:
             if cs.name == EMBEDDED_COMMAND_SET_NAME:
                 continue
             print(f"\nCommand set '{cs.name}':")
-            for cmd in cs.commands.keys():
-                print("\t%-*s%s" % (25, cmd, command_descriptions[cmd]["description"]))
+            keys = cs.commands.keys()
+            length = len(max(keys, key=len)) + 2
+            for cmd in keys:
+                print("\t%-*s%s" % (length, cmd, command_descriptions[cmd]["description"]))
 
     @staticmethod
     def complete(shell: DTShell, word: str, line: str) -> List[str]:
