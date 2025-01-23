@@ -143,6 +143,8 @@ docs:
       subcommands:
         build:
           description: Build the documentation environment for the current DT project
+    library:
+      description: Open the DT Documentation Library
     publish:
       description: Publish the documentation for the current DT project
 duckiebot:
