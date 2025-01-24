@@ -366,3 +366,5 @@ vscode:
       description: Open the current project
     run:
       description: Run an instance of VS Code
+website:
+  description: Open the DT website
