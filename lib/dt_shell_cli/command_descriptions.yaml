@@ -334,6 +334,14 @@ social:
   subcommands:
     camera:
       description: Take a picture with a DT robot
+    facebook:
+      description: Open the DT Facebook page
+    instagram:
+      description: Open the DT Instagram page
+    linkedin:
+      description: Open the DT LinkedIn page
+    x:
+      description: Open the DT X page
 stack:
   description: Stack commands
   subcommands:
