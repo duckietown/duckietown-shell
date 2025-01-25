@@ -1,5 +1,4 @@
 import logging
-import yaml
 import os
 import sys
 from typing import Optional, Dict, List
@@ -7,9 +6,6 @@ from typing import Optional, Dict, List
 # NOTE: DO NOT IMPORT DT_SHELL HERE
 
 from . import logger
-with open(f"{os.path.dirname(__file__)}/command_descriptions.yaml") as stream:
-    command_descriptions = yaml.safe_load(stream)
-
 
 # noinspection PyPep8Naming
 def dts():
@@ -137,8 +133,9 @@ def dts():
                 print("\nCore commands:")
                 keys = shell.command_set(EMBEDDED_COMMAND_SET_NAME).commands.keys()
                 length = len(max(keys, key=len)) + 2
+                command_descriptions = shell.profile.command_descriptions
                 for cmd in keys:
-                    print("\t%-*s%s" % (length, cmd, command_descriptions[cmd]["description"]))
+                    print("\t%-*s%s" % (length, cmd, command_descriptions[cmd]["description"] if command_descriptions else ""))
                 # show commands grouped by command sets
                 for cs in shell.command_sets:
                     if cs.name == EMBEDDED_COMMAND_SET_NAME:
@@ -147,7 +144,7 @@ def dts():
                     keys = cs.commands.keys()
                     length = len(max(keys, key=len)) + 2
                     for cmd in keys:
-                        print("\t%-*s%s" % (length, cmd, command_descriptions[cmd]["description"]))
+                        print("\t%-*s%s" % (length, cmd, command_descriptions[cmd]["description"] if command_descriptions else ""))
                 exit(1)
             else:
                 # input was given but it was not recognized
@@ -158,15 +155,16 @@ def dts():
             word: Optional[str] = e.remaining[0] if e.remaining else None
             subcommands: Dict[str] = e.last_matched.commands
             if len(subcommands) > 0:
-                command_description_set = command_descriptions
-                for argument in arguments:
-                    if argument in command_description_set:
-                        command_description_set = command_description_set[argument]["subcommands"]
+                command_description_set = shell.profile.command_descriptions
+                if command_description_set:
+                    for argument in arguments:
+                        if argument in command_description_set:
+                            command_description_set = command_description_set[argument]["subcommands"]
                 subcommand_strings = []
                 keys = subcommands.keys()
                 length = len(max(keys, key=len)) + 2
                 for subcommand in keys:
-                    subcommand_strings.append("\t%-*s%s" % (length, subcommand, command_description_set[subcommand]["description"]))
+                    subcommand_strings.append("\t%-*s%s" % (length, subcommand, command_description_set[subcommand]["description"] if command_description_set else ""))
                 subcommands_list: str = "\n\t\t".join(subcommand_strings)
                 # the partially matched command has subcommands
                 if word:

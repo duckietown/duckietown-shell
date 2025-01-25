@@ -5,6 +5,7 @@ import json
 import os.path
 import tempfile
 import time
+import yaml
 from typing import Optional, List, Dict, Union, Iterator, Tuple, Type
 
 import questionary
@@ -180,6 +181,7 @@ class ShellProfile:
     path: Optional[str] = None
     command_sets: List[CommandSet] = dataclasses.field(default_factory=list)
     readonly: bool = False
+    command_descriptions: Optional[dict] = None
 
     _distro: dataclasses.InitVar[str] = None
 
@@ -242,17 +244,24 @@ class ShellProfile:
         else:
             # add the default 'duckietown' command set
             if self.distro is not None:
+                commands_path = os.path.join(profile_command_sets_dir, "duckietown")
                 repository: CommandsRepository = CommandsRepository(
                     **{**DEFAULT_COMMAND_SET_REPOSITORY, "branch": self.distro.branch}
                 )
                 self.command_sets.append(
                     CommandSet(
                         "duckietown",
-                        os.path.join(profile_command_sets_dir, "duckietown"),
+                        commands_path,
                         profile=self,
                         repository=repository,
                     )
                 )
+
+        # get command descriptions if they exist
+        command_descriptions_path = commands_path + "/command_descriptions.yaml"
+        if os.path.exists(command_descriptions_path):
+            with open(command_descriptions_path) as stream:
+                self.command_descriptions = yaml.safe_load(stream)
 
         # add user defined command sets
         for n, r in self.user_command_sets_repositories:
