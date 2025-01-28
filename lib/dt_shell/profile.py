@@ -218,6 +218,7 @@ class ShellProfile:
         # this is the directory where command sets for this profile are stored
         profile_command_sets_dir: str = os.path.join(self.path, "commands")
 
+        commands_path = None
         # load command sets
         if "DTSHELL_COMMANDS" in os.environ:
             commands_path = os.path.abspath(os.environ["DTSHELL_COMMANDS"])
@@ -257,11 +258,12 @@ class ShellProfile:
                     )
                 )
 
-        # get command descriptions if they exist
-        command_descriptions_path = commands_path + "/command_descriptions.yaml"
-        if os.path.exists(command_descriptions_path):
-            with open(command_descriptions_path) as stream:
-                self.command_descriptions = yaml.safe_load(stream)
+        if commands_path:
+            # get command descriptions if they exist
+            command_descriptions_path = commands_path + "/command_descriptions.yaml"
+            if os.path.exists(command_descriptions_path):
+                with open(command_descriptions_path) as stream:
+                    self.command_descriptions = yaml.safe_load(stream)
 
         # add user defined command sets
         for n, r in self.user_command_sets_repositories:
