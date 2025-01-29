@@ -10,7 +10,7 @@ class DTCommand(DTCommandAbs):
     def command(shell: DTShell, args: List[str]):
         # show core commands
         print("\nCore commands:")
-        keys = shell.command_set(EMBEDDED_COMMAND_SET_NAME).commands.keys()
+        keys = sorted(shell.command_set(EMBEDDED_COMMAND_SET_NAME).commands.keys())
         length = len(max(keys, key=len)) + 2
         command_descriptions = shell.profile.command_descriptions
         for cmd in keys:
@@ -20,7 +20,7 @@ class DTCommand(DTCommandAbs):
             if cs.name == EMBEDDED_COMMAND_SET_NAME:
                 continue
             print(f"\nCommand set '{cs.name}':")
-            keys = cs.commands.keys()
+            keys = sorted(cs.commands.keys())
             length = len(max(keys, key=len)) + 2
             for cmd in keys:
                 print("\t%-*s%s" % (length, cmd, command_descriptions[cmd]["description"] if command_descriptions else ""))

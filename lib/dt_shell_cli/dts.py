@@ -131,7 +131,7 @@ def dts():
                           "\t\tdts [options] command [subcommand1 [subcommand2] ...] [arguments]\n",
                           color="red")
                 print("\nCore commands:")
-                keys = shell.command_set(EMBEDDED_COMMAND_SET_NAME).commands.keys()
+                keys = sorted(shell.command_set(EMBEDDED_COMMAND_SET_NAME).commands.keys())
                 length = len(max(keys, key=len)) + 2
                 command_descriptions = shell.profile.command_descriptions
                 for cmd in keys:
@@ -141,7 +141,7 @@ def dts():
                     if cs.name == EMBEDDED_COMMAND_SET_NAME:
                         continue
                     print(f"\nCommand set '{cs.name}':")
-                    keys = cs.commands.keys()
+                    keys = sorted(cs.commands.keys())
                     length = len(max(keys, key=len)) + 2
                     for cmd in keys:
                         print("\t%-*s%s" % (length, cmd, command_descriptions[cmd]["description"] if command_descriptions else ""))
@@ -161,7 +161,7 @@ def dts():
                         if argument in command_description_set:
                             command_description_set = command_description_set[argument]["subcommands"]
                 subcommand_strings = []
-                keys = subcommands.keys()
+                keys = sorted(subcommands.keys())
                 length = len(max(keys, key=len)) + 2
                 for subcommand in keys:
                     subcommand_strings.append("\t%-*s%s" % (length, subcommand, command_description_set[subcommand]["description"] if command_description_set else ""))
