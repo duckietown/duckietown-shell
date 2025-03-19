@@ -1,0 +1,43 @@
+commands:
+  description: Get the available DTS commands
+exit: &exit
+  description: Exit the DTS
+quit: *exit
+install:
+  description: Install a command set
+profile:
+  description: DTS profile commands
+  subcommands:
+    dependencies:
+      description: DTS profile dependency commands
+      subcommands:
+        reinstall:
+          description: Reinstall the dependencies for the current DTS profile
+    list: &profile_list
+      description: Get a list of the available DTS profiles
+    ls: *profile_list
+    new:
+      description: Create a new DTS profile
+    switch:
+      description: Switch to a different DTS profile
+    venv:
+      description: DTS profile Python virtual environment commands
+      subcommands:
+        reset:
+          description: Reset the Python virtual environment for the current DTS profile
+tok: &tok
+  description: DT token commands
+  subcommands:
+    set:
+      description: Set the DT token
+    status:
+      description: Get status of the current DT token
+    verify:
+      description: Verify a DT token
+token: *tok
+uninstall:
+  description: Uninstall a command set
+update:
+  description: Update a command set
+version:
+  description: Get the version information for the DTS and command sets
