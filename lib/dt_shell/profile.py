@@ -453,6 +453,8 @@ class ShellProfile:
 
     def update_command_descriptions(self, commands_path: str) -> None:
         command_descriptions_path = commands_path + "/command_descriptions.yaml"
-        if os.path.exists(command_descriptions_path):
-            with open(command_descriptions_path) as stream:
-                self.command_descriptions.update(yaml.safe_load(stream))
+        if not os.path.exists(command_descriptions_path):
+            logger.warning(f"File '{command_descriptions_path}' does not exist.")
+            return
+        with open(command_descriptions_path) as stream:
+            self.command_descriptions.update(yaml.safe_load(stream))
