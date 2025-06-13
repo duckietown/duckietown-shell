@@ -181,7 +181,7 @@ class ShellProfile:
     path: Optional[str] = None
     command_sets: List[CommandSet] = dataclasses.field(default_factory=list)
     readonly: bool = False
-    command_descriptions: Optional[dict] = None
+    command_descriptions = {}
 
     _distro: dataclasses.InitVar[str] = None
 
@@ -257,13 +257,8 @@ class ShellProfile:
                         repository=repository,
                     )
                 )
-
         if commands_path:
-            # get command descriptions if they exist
-            command_descriptions_path = commands_path + "/command_descriptions.yaml"
-            if os.path.exists(command_descriptions_path):
-                with open(command_descriptions_path) as stream:
-                    self.command_descriptions = yaml.safe_load(stream)
+            self.update_command_descriptions(commands_path)
 
         # add user defined command sets
         for n, r in self.user_command_sets_repositories:
@@ -271,14 +266,16 @@ class ShellProfile:
             self.command_sets.append(CommandSet(n, os.path.join(profile_command_sets_dir, n), self, r))
 
         # we always add the embedded command set last so that it can override everything the others do
+        commands_path = os.path.join(SHELL_LIB_DIR, "embedded")
         self.command_sets.append(
             CommandSet(
                 EMBEDDED_COMMAND_SET_NAME,
-                os.path.join(SHELL_LIB_DIR, "embedded"),
+                commands_path,
                 profile=self,
                 leave_alone=True,
             )
         )
+        self.update_command_descriptions(commands_path)
 
         # add command set versions to debugging data
         for cs in self.command_sets:
@@ -453,3 +450,11 @@ class ShellProfile:
             modified_config = True
         # ---
         return modified_config
+
+    def update_command_descriptions(self, commands_path: str) -> None:
+        command_descriptions_path = commands_path + "/command_descriptions.yaml"
+        if not os.path.exists(command_descriptions_path):
+            logger.warning(f"File '{command_descriptions_path}' does not exist.")
+            return
+        with open(command_descriptions_path) as stream:
+            self.command_descriptions.update(yaml.safe_load(stream))
