@@ -7,7 +7,7 @@
 
 The idea is that most of the functionality is implemented as Docker containers, and `dt-shell` provides a nice interface for that, so that user should not type a very long `docker run` command line.
 
-**Note: Duckietown Shell required Python 3.6 or higher.**
+**Note: Duckietown Shell requires Python 3.6 or higher.**
 
 ## Prerequisites
 
@@ -24,13 +24,13 @@ Please use the links provided and follow the instructions for your OS
 
     $ sudo adduser `whoami` docker
 
-**Important**: after you that, you must *log out and in* to have the group change take effect.
+**Important**: after you do that, you must *log out and in* to have the group change take effect.
 
 #### Docker on MacOS
 
-By default Docker uses the OS X keychain to store credentials but this is not good.
+By default, Docker uses the OS X keychain to store credentials, but this is not good.
 
-Edit `~/.docker/config.json` and remove all references to a "osxkeychain".
+Edit `~/.docker/config.json` and remove all references to an "osxkeychain".
 
 Then run `docker login` again.
 
@@ -46,9 +46,9 @@ Then you should see an `auth` entry of the type:
 
 ## Installing the Duckietown Shell
 
-### Installation on Ubuntu 18.xx or 20.xx
+### Installation on Ubuntu 18.xx or higher
 
-**Note**: This OS is officially supported
+**Note**: 22.xx and above are officially supported
 
 #### Install using [pipx](https://pipx.pypa.io/stable/installation/)
 
@@ -60,7 +60,7 @@ Install the `duckietown-shell`:
 
     $ pipx install duckietown-shell
 
-To upgrade to the latest version of `duckietown-sheel`:
+To upgrade to the latest version of `duckietown-shell`:
 
     $ pipx upgrade duckietown-shell
 
@@ -82,7 +82,7 @@ Typing
 
 should output something like: `/home/![user]/.local/bin/dts`
 
-If nothing is output you may need to add `/home/![user]/.local/bin` to your shell path. You can do so by adding the line:
+If nothing is output, you may need to add `/home/![user]/.local/bin` to your shell path. You can do so by adding the line:
 
     `export PATH=$PATH:/root/.local/bin`
 
@@ -90,8 +90,8 @@ into your `~/.bashrc` file (if you use bash, otherwise the corresponding shell i
 
 ### Installation on Ubuntu 16.xx
 
-The duckietown shell requires python 3.6 or higher, which is not standard on ubuntu16.
-A currently working workaround is to install homebrew, by following instructions [here](https://docs.brew.sh/Homebrew-on-Linux).
+The Duckietown shell requires Python 3.6 or higher, which is not standard on Ubuntu 16.
+A workaround is to install Homebrew by following the instructions [here](https://docs.brew.sh/Homebrew-on-Linux).
 Then, run :
 
     $ brew install python3
@@ -101,7 +101,7 @@ Then, typing
 
     $ which dts
 
-should output : `/home/linuxbrew/.linuxbrew/bin/dts`
+should output: `/home/linuxbrew/.linuxbrew/bin/dts`
 
 ### Duckietown Shell on MacOS X
 
@@ -139,8 +139,8 @@ Typing
 
     $ which dts
 
-should output the path to the `dts` executable. This path can vary based on your python setup.
-If it is not found you may need to add something to your shell path.
+should output the path to the `dts` executable. This path can vary based on your Python setup.
+If it is not found, you may need to add something to your shell path.
 
 ### Installation in other operating systems
 
@@ -148,7 +148,7 @@ To install the shell, use:
 
     $ pip3 install --no-cache-dir --user -U duckietown-shell
 
-The shell itself does not require any other dependency beside standard cross-platform Python libraries.
+The shell itself does not require any other dependencies besides standard cross-platform Python libraries.
 
 **Note: Never use `sudo pip3 install` to install `duckietown-shell`.**
 
@@ -178,7 +178,7 @@ Then, try again
 
 -----------------------
 
-**You now have successfully installed the Duckietown Shell. If you know what you want to do with it go ahead. Below are some examples of things you can do with the Duckietown Shell**
+**You have successfully installed the Duckietown Shell. If you know what you want to do with it, go ahead. Below are some examples of things you can do with the Duckietown Shell**
 
 ## Non-interactive setup
 
@@ -191,9 +191,9 @@ The Duckietown Shell can be preconfigured without interactive prompts by setting
 
 With these variables exported, running `dts` will not ask for input during the initial configuration, which is useful for scripted or containerized setups.
 
-## Compile one of the "Duckumentation"
+## Compile one of the (legacy) "Duckumentation" (books)
 
-To compile one of the books (e.g. docs-duckumentation but there are many others):
+To compile one of the books (e.g., docs-duckumentation, but there are many others):
 
     $ git clone https://github.com/duckietown/docs-duckumentation.git
     $ cd docs-duckumentation
@@ -206,6 +206,11 @@ There is an incremental build system. To clean and run from scratch:
     $ dts docs clean
     $ dts docs build
 
+The new [Duckietown documentation infrastructure](https://docs.duckietown.com/ente/devmanual-docs/intro.html) requires only the command
+
+    $ dts docs build
+
+to compile a book locally.
 
 ## Authenticate a Duckietown Token
 
@@ -213,7 +218,7 @@ Run the command `dts tok set` to set the Duckietown authentication token:
 
     $ dts tok set
 
-Instructions will guide you and you will be prompted for the token.
+Instructions will guide you, and you will be prompted for the token.
 
 If you already know the token, then you can use:
 
@@ -262,13 +267,14 @@ This command will run the Duckiebot calibration procedure:
 
 In some cases, you might want to uninstall the `duckietown-shell`, or reset the configurations.
 
-If you want to just uninstall the duckietown-shell python module, you could do:
+If you want to just uninstall the duckietown-shell Python module, you could do:
 
     $ python3 -m pip uninstall duckietown-shell
 
-If you also want to reset the settings, e.g. your Duckietown token, docker logins, version of the shell, etc, you would
-also want to remove the `.duckietown/shell` folder in your home folder.
-On Ubuntu/mac for example, this could be done with:
+If you also want to reset the settings, e.g., your Duckietown token, Docker logins, version of the shell, etc, you would
+Also, want to remove the `.duckietown/shell` folder in your home folder.
+
+On Ubuntu/Mac, for example, this could be done with:
 
     $ rm -rf ~/.duckietown/shell
 
@@ -306,7 +312,7 @@ This will launch the application in debug mode, allowing you to set breakpoints 
 
 ### Developing Duckietown Shell Commands
 
-**Note**: Duckietown Shell comes with a core set of commands used to manage the Duckietown Shell environment. All Duckietown specific commands come from the Duckietown Shell Commands repository - https://github.com/duckietown/duckietown-shell-commands
+**Note**: Duckietown Shell comes with a core set of commands used to manage the Duckietown Shell environment. All Duckietown-specific commands come from the Duckietown Shell Commands repository - https://github.com/duckietown/duckietown-shell-commands
 
 For Duckietown Shell Commands development, you need to tell `dts` where to find the command set.
 
@@ -331,5 +337,4 @@ ln -s $(realpath ../duckietown-shell-commands) ./
 
 Note: don't forget to set your `DTSHELL_COMMANDS` environment variable by editing the `python.env` file.
 
-This allows you to easily add breakpoints in the `duckietown-shell-commands` python files and run `dts` in debug mode.
-
+This allows you to easily add breakpoints in the `duckietown-shell-commands` Python files and run `dts` in debug mode.
