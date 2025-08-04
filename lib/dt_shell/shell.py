@@ -817,27 +817,33 @@ class DTShell(Cmd):
         if self._profile is None:
             if readonly:
                 raise ConfigNotPresent()
-            print()
-            print("You need to choose the distribution you want to work with.")
-            distros: List[Choice] = []
-            for distro in KNOWN_DISTRIBUTIONS.values():
-                # only show production branches
-                if distro.staging:
-                    continue
-                # only show stable distributions
-                if not distro.stable:
-                    continue
-                # ---
-                eol: str = "" if distro.end_of_life is None else f"(end of life: {distro.end_of_life_fmt})"
-                label = [("class:choice", distro.name), ("class:disabled", f"  {eol}")]
-                choice: Choice = Choice(title=label, value=distro.name)
-                if distro.name == SUGGESTED_DISTRIBUTION:
-                    distros.insert(0, choice)
-                else:
-                    distros.append(choice)
-            # let the user choose the distro
-            new_profile = questionary.select(
-                "Choose a distribution:", choices=distros, style=cli_style).unsafe_ask()
+            env_distro: Optional[str] = os.environ.get("DTSHELL_DISTRO")
+            if env_distro is not None:
+                if env_distro not in KNOWN_DISTRIBUTIONS:
+                    raise ValueError(f"Unknown distribution '{env_distro}' specified in DTSHELL_DISTRO")
+                new_profile = env_distro
+            else:
+                print()
+                print("You need to choose the distribution you want to work with.")
+                distros: List[Choice] = []
+                for distro in KNOWN_DISTRIBUTIONS.values():
+                    # only show production branches
+                    if distro.staging:
+                        continue
+                    # only show stable distributions
+                    if not distro.stable:
+                        continue
+                    # ---
+                    eol: str = "" if distro.end_of_life is None else f"(end of life: {distro.end_of_life_fmt})"
+                    label = [("class:choice", distro.name), ("class:disabled", f"  {eol}")]
+                    choice: Choice = Choice(title=label, value=distro.name)
+                    if distro.name == SUGGESTED_DISTRIBUTION:
+                        distros.insert(0, choice)
+                    else:
+                        distros.append(choice)
+                # let the user choose the distro
+                new_profile = questionary.select(
+                    "Choose a distribution:", choices=distros, style=cli_style).unsafe_ask()
             modified_config = True
 
         # make a new profile if needed

@@ -180,6 +180,17 @@ Then, try again
 
 **You now have successfully installed the Duckietown Shell. If you know what you want to do with it go ahead. Below are some examples of things you can do with the Duckietown Shell**
 
+## Non-interactive setup
+
+The Duckietown Shell can be preconfigured without interactive prompts by setting a few environment variables before the first run:
+
+- `DTSHELL_PROFILE` – name of the profile to use or create.
+- `DTSHELL_COMMANDS` – path to the command set repository.
+- `DTSHELL_DISTRO` – distribution to associate with the profile.
+- `DTSHELL_TOKEN` or `DUCKIETOWN_TOKEN` – a Duckietown authentication token.
+
+With these variables exported, running `dts` will not ask for input during the initial configuration, which is useful for scripted or containerized setups.
+
 ## Compile one of the "Duckumentation"
 
 To compile one of the books (e.g. docs-duckumentation but there are many others):
