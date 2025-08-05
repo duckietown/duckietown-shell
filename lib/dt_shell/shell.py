@@ -235,10 +235,40 @@ class DTShell(Cmd):
         # custom profile
         if profile is not None:
             if profile not in self._db_profiles.keys():
-                raise UserError(f"The profile '{profile}' does not exist.")
-            logger.info(f"Using profile '{profile}' as prescribed by --profile or environment variable DTSHELL_PROFILE")
-            with self.settings.in_memory():
-                self.settings.profile = profile
+                # Auto-create profile if DTSHELL_PROFILE is set but profile doesn't exist
+                if not readonly:
+                    # Get distro from environment variable
+                    env_distro: Optional[str] = os.environ.get("DTSHELL_DISTRO")
+                    if env_distro is not None:
+                        if env_distro not in KNOWN_DISTRIBUTIONS:
+                            raise ValueError(f"Unknown distribution '{env_distro}' specified in DTSHELL_DISTRO")
+                        
+                        # Print big warning
+                        print("\n" + "=" * 80)
+                        print("🚨 AUTOMATIC PROFILE CREATION 🚨")
+                        print("=" * 80)
+                        print(f"WARNING: Profile '{profile}' does not exist!")
+                        print(f"Auto-creating profile '{profile}' with distribution '{env_distro}'")
+                        print("as specified by DTSHELL_PROFILE and DTSHELL_DISTRO environment variables.")
+                        print("=" * 80 + "\n")
+                        
+                        # Create the profile
+                        logger.info(f"Auto-creating profile '{profile}' with distribution '{env_distro}'...")
+                        new_profile = ShellProfile(name=profile, _distro=env_distro)
+                        # Set as current profile
+                        self.settings.profile = profile
+                        # Configure the profile (this will handle token setup if needed)
+                        new_profile.configure(readonly=readonly)
+                        logger.info(f"Profile '{profile}' created successfully!")
+                    else:
+                        raise UserError(f"The profile '{profile}' does not exist and DTSHELL_DISTRO is not set. "
+                                      f"Set DTSHELL_DISTRO to auto-create the profile or create it manually with 'dts profile new'.")
+                else:
+                    raise UserError(f"The profile '{profile}' does not exist.")
+            else:
+                logger.info(f"Using profile '{profile}' as prescribed by --profile or environment variable DTSHELL_PROFILE")
+                with self.settings.in_memory():
+                    self.settings.profile = profile
 
         # load current profile
         self._profile: ShellProfile = ShellProfile(self.settings.profile, readonly=readonly) \
@@ -817,27 +847,33 @@ class DTShell(Cmd):
         if self._profile is None:
             if readonly:
                 raise ConfigNotPresent()
-            print()
-            print("You need to choose the distribution you want to work with.")
-            distros: List[Choice] = []
-            for distro in KNOWN_DISTRIBUTIONS.values():
-                # only show production branches
-                if distro.staging:
-                    continue
-                # only show stable distributions
-                if not distro.stable:
-                    continue
-                # ---
-                eol: str = "" if distro.end_of_life is None else f"(end of life: {distro.end_of_life_fmt})"
-                label = [("class:choice", distro.name), ("class:disabled", f"  {eol}")]
-                choice: Choice = Choice(title=label, value=distro.name)
-                if distro.name == SUGGESTED_DISTRIBUTION:
-                    distros.insert(0, choice)
-                else:
-                    distros.append(choice)
-            # let the user choose the distro
-            new_profile = questionary.select(
-                "Choose a distribution:", choices=distros, style=cli_style).unsafe_ask()
+            env_distro: Optional[str] = os.environ.get("DTSHELL_DISTRO")
+            if env_distro is not None:
+                if env_distro not in KNOWN_DISTRIBUTIONS:
+                    raise ValueError(f"Unknown distribution '{env_distro}' specified in DTSHELL_DISTRO")
+                new_profile = env_distro
+            else:
+                print()
+                print("You need to choose the distribution you want to work with.")
+                distros: List[Choice] = []
+                for distro in KNOWN_DISTRIBUTIONS.values():
+                    # only show production branches
+                    if distro.staging:
+                        continue
+                    # only show stable distributions
+                    if not distro.stable:
+                        continue
+                    # ---
+                    eol: str = "" if distro.end_of_life is None else f"(end of life: {distro.end_of_life_fmt})"
+                    label = [("class:choice", distro.name), ("class:disabled", f"  {eol}")]
+                    choice: Choice = Choice(title=label, value=distro.name)
+                    if distro.name == SUGGESTED_DISTRIBUTION:
+                        distros.insert(0, choice)
+                    else:
+                        distros.append(choice)
+                # let the user choose the distro
+                new_profile = questionary.select(
+                    "Choose a distribution:", choices=distros, style=cli_style).unsafe_ask()
             modified_config = True
 
         # make a new profile if needed

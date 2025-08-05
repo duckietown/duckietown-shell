@@ -2,7 +2,7 @@ import atexit
 import copy
 import dataclasses
 import json
-import os.path
+import os
 import tempfile
 import time
 import yaml
@@ -387,64 +387,83 @@ class ShellProfile:
         if self.distro is None:
             if readonly:
                 raise ConfigNotPresent()
-            # see if we can find the distro ourselves
-            matched: bool = False
-            for d in KNOWN_DISTRIBUTIONS.keys():
-                if d == self.name:
-                    logger.info(f"Automatically selecting distribution '{d}' as it matches the profile name")
-                    self.distro = d
-                    matched = True
-                    break
+            # first check environment variable
+            env_distro: Optional[str] = os.environ.get("DTSHELL_DISTRO")
+            if env_distro is not None:
+                if env_distro not in KNOWN_DISTRIBUTIONS:
+                    raise ValueError(f"Unknown distribution '{env_distro}' specified in DTSHELL_DISTRO")
+                self.distro = env_distro
+            else:
+                # see if we can find the distro ourselves
+                matched: bool = False
+                for d in KNOWN_DISTRIBUTIONS.keys():
+                    if d == self.name:
+                        logger.info(f"Automatically selecting distribution '{d}' as it matches the profile name")
+                        self.distro = d
+                        matched = True
+                        break
 
-            # if we don't have a match, we ask the user to pick a distribution
-            if not matched:
-                print()
-                print("You need to choose the distribution you want to work with in this profile.")
-                distros: List[Choice] = []
-                for distro in KNOWN_DISTRIBUTIONS.values():
-                    # only show production branches
-                    if distro.staging:
-                        continue
-                    # only show stable distributions
-                    if not distro.stable:
-                        continue
-                    # ---
-                    eol: str = "" if distro.end_of_life is None else \
-                        f"(end of life: {distro.end_of_life_fmt})"
-                    label = [("class:choice", distro.name), ("class:disabled", f"  {eol}")]
-                    choice: Choice = Choice(title=label, value=distro.name)
-                    if distro.name == SUGGESTED_DISTRIBUTION:
-                        distros.insert(0, choice)
-                    else:
-                        distros.append(choice)
-                # let the user choose the distro
-                chosen_distro: str = questionary.select(
-                    "Choose a distribution:", choices=distros, style=cli_style).unsafe_ask()
-                # attach distro to profile
-                self.distro = chosen_distro
+                # if we don't have a match, we ask the user to pick a distribution
+                if not matched:
+                    print()
+                    print("You need to choose the distribution you want to work with in this profile.")
+                    distros: List[Choice] = []
+                    for distro in KNOWN_DISTRIBUTIONS.values():
+                        # only show production branches
+                        if distro.staging:
+                            continue
+                        # only show stable distributions
+                        if not distro.stable:
+                            continue
+                        # ---
+                        eol: str = "" if distro.end_of_life is None else \
+                            f"(end of life: {distro.end_of_life_fmt})"
+                        label = [("class:choice", distro.name), ("class:disabled", f"  {eol}")]
+                        choice: Choice = Choice(title=label, value=distro.name)
+                        if distro.name == SUGGESTED_DISTRIBUTION:
+                            distros.insert(0, choice)
+                        else:
+                            distros.append(choice)
+                    # let the user choose the distro
+                    chosen_distro: str = questionary.select(
+                        "Choose a distribution:", choices=distros, style=cli_style).unsafe_ask()
+                    # attach distro to profile
+                    self.distro = chosen_distro
             modified_config = True
 
         # make sure we have a token for this profile
         if self.secrets.dt_token is None:
             if readonly:
                 raise ConfigNotPresent()
-            print()
-            print(f"The Duckietown Shell needs a Duckietown Token to work properly. "
-                  f"Get yours for free at {DUCKIETOWN_TOKEN_URL}")
-            while True:
-                # let the user insert the token
-                token_str: str = questionary.password("Enter your token:", validate=validator_token)\
-                    .unsafe_ask()
+            env_token: Optional[str] = os.environ.get("DTSHELL_TOKEN") or os.environ.get("DUCKIETOWN_TOKEN")
+            if env_token is not None:
+                token_str = env_token
                 token: DuckietownToken = DuckietownToken.from_string(token_str)
-                # make sure this token is supported by this profile distro
                 tokens_supported: List[str] = self.distro.tokens_supported
                 if token.version not in tokens_supported:
-                    print(f"Token version '{token.version}' not supported by this profile's distro. "
-                          f"Only versions supported are {tokens_supported}.")
-                    continue
-                else:
-                    print(f"Token verified successfully. Your ID is: {yellow_bold(token.uid)}")
-                    break
+                    raise ValueError(
+                        f"Token version '{token.version}' not supported by this profile's distro. "
+                        f"Only versions supported are {tokens_supported}."
+                    )
+                print(f"Token verified successfully. Your ID is: {yellow_bold(token.uid)}")
+            else:
+                print()
+                print(f"The Duckietown Shell needs a Duckietown Token to work properly. "
+                      f"Get yours for free at {DUCKIETOWN_TOKEN_URL}")
+                while True:
+                    # let the user insert the token
+                    token_str: str = questionary.password("Enter your token:", validate=validator_token)\
+                        .unsafe_ask()
+                    token: DuckietownToken = DuckietownToken.from_string(token_str)
+                    # make sure this token is supported by this profile distro
+                    tokens_supported: List[str] = self.distro.tokens_supported
+                    if token.version not in tokens_supported:
+                        print(f"Token version '{token.version}' not supported by this profile's distro. "
+                              f"Only versions supported are {tokens_supported}.")
+                        continue
+                    else:
+                        print(f"Token verified successfully. Your ID is: {yellow_bold(token.uid)}")
+                        break
             # store token
             self.secrets.dt_token = token_str
             modified_config = True

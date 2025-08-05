@@ -106,6 +106,18 @@ def import_configuration(command_set: CommandSet, selector: str) -> Type[DTComma
                 f"{e.version_needed}"
             )
             return default_command_configuration.DTCommandConfiguration
+        except ModuleNotFoundError as e:
+            logger.warning(
+                f"Command configuration '{_command_sel}' could not be loaded due to missing dependency: {e}. "
+                f"Using default configuration."
+            )
+            return default_command_configuration.DTCommandConfiguration
+        except Exception as e:
+            logger.warning(
+                f"Command configuration '{_command_sel}' could not be loaded: {e}. "
+                f"Using default configuration."
+            )
+            return default_command_configuration.DTCommandConfiguration
         finally:
             # restore PYTHONPATH
             sys.path = old

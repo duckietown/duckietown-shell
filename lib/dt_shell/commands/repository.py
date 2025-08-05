@@ -1,4 +1,5 @@
 import json
+import os
 import traceback
 from dataclasses import dataclass
 from typing import Optional, List
@@ -103,8 +104,11 @@ class CommandsRepository:
 
     @staticmethod
     def head_tag(path: str) -> Optional[str]:
+        # Check if path exists first
+        if not os.path.exists(path):
+            return None
         try:
-            tags: str = run_cmd(["git", "-C", path, "describe", "--exact-match", "--tags", "HEAD"])
+            tags_output: Optional[str] = run_cmd(["git", "-C", path, "describe", "--exact-match", "--tags", "HEAD"])
         except RunCommandException as e:
             if e.stderr is not None and "no tag exactly matches" in e.stderr:
                 # just not an exact match
@@ -117,24 +121,29 @@ class CommandsRepository:
                 traceback.print_exc()
             return None
         # ---
-        tags: List[str] = tags.strip().split("\n")
+        if tags_output is None:
+            return None
+        tags: List[str] = tags_output.strip().split("\n")
         if not tags:
             return None
         return tags[0]
 
     @staticmethod
     def closest_tag(path: str) -> Optional[str]:
+        # Check if path exists first
+        if not os.path.exists(path):
+            return None
         try:
-            tags: Optional[str] = run_cmd(["git", "-C", path, "tag", "--merged"])
+            tags_output: Optional[str] = run_cmd(["git", "-C", path, "tag", "--merged"])
         except Exception:
             if DTShellConstants.VERBOSE:
                 traceback.print_exc()
             return None
-        # no tgs
-        if tags is None:
+        # no tags
+        if tags_output is None:
             return None
         # ---
-        tags: List[str] = tags.strip().split("\n")
+        tags: List[str] = tags_output.strip().split("\n")
         if not tags:
             return None
         return tags[-1]

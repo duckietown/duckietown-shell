@@ -5,3 +5,4 @@ cli
 .idea
 testing/ubuntu18/challenge-aido1_luck-template-python/
 build
+.env.local
