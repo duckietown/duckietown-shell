@@ -8,9 +8,6 @@
 		"ghcr.io/devcontainers/features/docker-in-docker:2": {},
 		"ghcr.io/devcontainers/features/python:1": {}
 	},
-	"runArgs": [
-		"--env-file", "${localWorkspaceFolder}/.env.local"
-	],
 	"containerEnv": {
 		"DTSHELL_PROFILE" : "ente",		// name of the profile to use or create.
 		//"DTSHELL_COMMANDS" : "", // path to the command set repository.

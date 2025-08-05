@@ -338,3 +338,111 @@ ln -s $(realpath ../duckietown-shell-commands) ./
 Note: don't forget to set your `DTSHELL_COMMANDS` environment variable by editing the `python.env` file.
 
 This allows you to easily add breakpoints in the `duckietown-shell-commands` Python files and run `dts` in debug mode.
+
+## Development Environment
+
+### DevContainer Setup
+
+This repository includes a pre-configured development container for VS Code that provides a consistent development environment with all necessary tools pre-installed.
+
+#### Quick Start with DevContainer
+
+1. **Prerequisites**:
+   - [VS Code](https://code.visualstudio.com/)
+   - [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+   - [Docker](https://www.docker.com/get-started)
+
+2. **Open in DevContainer**:
+   ```bash
+   # Clone the repository
+   git clone https://github.com/duckietown/duckietown-shell.git
+   cd duckietown-shell
+
+   # Open in VS Code
+   code .
+
+   # When prompted, click "Reopen in Container"
+   # Or use Command Palette: "Dev Containers: Reopen in Container"
+   ```
+
+3. **Environment Configuration** (Optional):
+   ```bash
+   # Create .env.local for secure token storage (gitignored)
+   echo "DTSHELL_TOKEN=your-secret-token-here" > .env.local
+
+   # The devcontainer will automatically:
+   # - Set DTSHELL_PROFILE=ente
+   # - Set DTSHELL_DISTRO=ente
+   # - Load DTSHELL_TOKEN from host environment
+   # - Auto-create the profile on first shell run
+   ```
+
+#### DevContainer Features
+
+The development container includes:
+
+- **OS**: Ubuntu 24.04.2 LTS
+- **Python**: `python3` and `pip3` pre-installed and available on PATH
+- **Git**: Up-to-date version built from source, pre-installed and available on PATH
+- **Docker**: Docker CLI (`docker`) with dedicated daemon running inside the container
+- **Tools**: `apt`, `dpkg`, `curl`, `wget`, `ssh`, `scp`, `rsync`, `gpg`, `ps`, `lsof`, `netstat`, `top`, `tree`, `find`, `grep`, `zip`, `unzip`, `tar`, `gzip`, `bzip2`, `xz`
+
+#### Auto-Profile Creation
+
+The devcontainer is pre-configured to automatically create a shell profile on first run:
+
+```bash
+# Test the shell - should auto-create 'ente' profile with warning
+dts --help
+
+# Verify profile creation
+ls -la ~/.duckietown/shell/profiles/ente/
+```
+
+### Environment Variables
+
+The shell supports automatic configuration via environment variables:
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `DTSHELL_PROFILE` | Profile name to use or create | `ente` |
+| `DTSHELL_DISTRO` | Distribution for new profiles | `ente`, `daffy` |
+| `DTSHELL_TOKEN` | Duckietown authentication token | `dt2-xxx...` |
+
+#### Secure Token Management
+
+```bash
+# Method 1: Environment file (recommended)
+echo "DTSHELL_TOKEN=your-token-here" > .env.local
+# .env.local is gitignored for security
+
+# Method 2: Host environment
+export DTSHELL_TOKEN="your-token-here"
+
+# Method 3: Shell configuration
+dts tok set your-token-here
+```
+
+### Debugging
+
+Use the provided VS Code launch configurations for debugging:
+
+1. **F5** or **Run & Debug** view
+2. Select configuration:
+   - "Debug DTS Shell" - Basic shell debugging
+   - "Debug DTS Command" - Debug specific commands
+   - "Debug DTS Profile Creation" - Test auto-profile creation
+3. Set breakpoints and start debugging
+
+```bash
+# Manual debugging with verbose output
+dts --debug -vv version
+```
+
+### Browser Integration
+
+Open webpages in the host's default browser from the container:
+
+```bash
+"$BROWSER" https://www.duckietown.org
+```
