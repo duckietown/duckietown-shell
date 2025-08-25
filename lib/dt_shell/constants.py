@@ -91,7 +91,7 @@ KNOWN_DISTRIBUTIONS: Dict[str, Distro] = {
         token_preferred="dt2"
     ),
 }
-SUGGESTED_DISTRIBUTION: str = "daffy"
+SUGGESTED_DISTRIBUTION: str = "ente"
 
 # command set
 EMBEDDED_COMMAND_SET_NAME: str = "embedded"
