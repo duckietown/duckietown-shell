@@ -19,8 +19,8 @@ def get_version(filename):
     return version
 
 
-if sys.version_info < (3, 6):
-    msg = 'duckietown-shell works with Python 3.6 and later.\nDetected %s.' % str(sys.version)
+if sys.version_info < (3, 10):
+    msg = 'duckietown-shell works with Python 3.10 and later.\nDetected %s.' % str(sys.version)
     sys.exit(msg)
 
 distro = 'daffy'
@@ -81,7 +81,7 @@ setup(
     },
     packages=find_packages(where="lib", exclude=["dt_shell_tests"]),
     # we want the python 2 version to download it, and then exit with an error
-    # python_requires='>=3.6',
+    # python_requires='>=3.10',
 
     tests_require=[],
     install_requires=install_requires,
