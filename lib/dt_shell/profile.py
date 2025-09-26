@@ -17,14 +17,34 @@ from yaml.scanner import ScannerError
 from . import logger, __version__
 from .commands import CommandSet, CommandDescriptor
 from .commands.repository import CommandsRepository
-from .constants import DUCKIETOWN_TOKEN_URL, SHELL_LIB_DIR, DEFAULT_COMMAND_SET_REPOSITORY, \
-    DEFAULT_PROFILES_DIR, DB_SECRETS, DB_SECRETS_DOCKER, DB_SETTINGS, DB_USER_COMMAND_SETS_REPOSITORIES, \
-    DB_PROFILES, KNOWN_DISTRIBUTIONS, SUGGESTED_DISTRIBUTION, DB_UPDATES_CHECK, EMBEDDED_COMMAND_SET_NAME, \
-    Distro
+from .constants import (
+    DUCKIETOWN_TOKEN_URL,
+    SHELL_LIB_DIR,
+    DEFAULT_COMMAND_SET_REPOSITORY,
+    DEFAULT_PROFILES_DIR,
+    DB_SECRETS,
+    DB_SECRETS_DOCKER,
+    DB_SETTINGS,
+    DB_USER_COMMAND_SETS_REPOSITORIES,
+    DB_PROFILES,
+    KNOWN_DISTRIBUTIONS,
+    SUGGESTED_DISTRIBUTION,
+    DB_UPDATES_CHECK,
+    EMBEDDED_COMMAND_SET_NAME,
+    Distro,
+)
 from .database.database import DTShellDatabase, NOTSET, DTSerializable
 from .statistics import ShellProfileEventsDatabase
-from .utils import safe_pathname, validator_token, yellow_bold, cli_style, parse_version, render_version, \
-    indent_block, DebugInfo
+from .utils import (
+    safe_pathname,
+    validator_token,
+    yellow_bold,
+    cli_style,
+    parse_version,
+    render_version,
+    indent_block,
+    DebugInfo,
+)
 from .exceptions import ConfigNotPresent
 
 TupleVersion = Tuple[int, int, int]
@@ -44,7 +64,7 @@ class GenericCredentials(DTSerializable):
         return {"username": self.username, "password": self.password}
 
     @classmethod
-    def load(cls, v: dict) -> 'GenericCredentials':
+    def load(cls, v: dict) -> "GenericCredentials":
         return GenericCredentials(**v)
 
 
@@ -79,7 +99,7 @@ class ShellProfileSecrets(DTShellDatabase):
         return inst
 
     @classmethod
-    def load(cls, profile: 'ShellProfile', location: str):
+    def load(cls, profile: "ShellProfile", location: str):
         return ShellProfileSecrets.open(DB_SECRETS, location=location, init_args={"profile": profile})
 
     @property
@@ -190,8 +210,10 @@ class ShellProfile:
         if self.path is None:
             profiles_dir: str = os.environ.get("DTSHELL_PROFILES", DEFAULT_PROFILES_DIR)
             if profiles_dir != DEFAULT_PROFILES_DIR:
-                logger.info(f"Loading profiles from '{profiles_dir}' as prescribed by the environment "
-                            f"variable DTSHELL_PROFILES.")
+                logger.info(
+                    f"Loading profiles from '{profiles_dir}' as prescribed by the environment "
+                    f"variable DTSHELL_PROFILES."
+                )
             safe_name: str = safe_pathname(self.name)
             self.path = os.path.join(profiles_dir, safe_name)
             # make sure the profile directory exists
@@ -224,12 +246,16 @@ class ShellProfile:
             commands_path = os.path.abspath(os.environ["DTSHELL_COMMANDS"])
             # make sure the given path exists
             if not os.path.exists(commands_path):
-                msg = f"The path {commands_path} given with the environment variable DTSHELL_COMMANDS does " \
-                      f"not exist."
+                msg = (
+                    f"The path {commands_path} given with the environment variable DTSHELL_COMMANDS does "
+                    f"not exist."
+                )
                 raise Exception(msg)
             # load commands from given path
-            msg = f"Loading commands from '{commands_path}' as instructed by the environment variable " \
-                  f"DTSHELL_COMMANDS."
+            msg = (
+                f"Loading commands from '{commands_path}' as instructed by the environment variable "
+                f"DTSHELL_COMMANDS."
+            )
             logger.info(msg)
             self.command_sets.append(
                 CommandSet(
@@ -288,27 +314,31 @@ class ShellProfile:
             vmax: Optional[TupleVersion] = cs.configuration.maximum_shell_version()
             # check min
             if vmin is not None and vnow < vmin:
-                logger.warning(f"\n -- WARNING\n\n" +
-                                indent_block(
-                                   f"Command set '{cs.name}' wants a Duckietown Shell v{render_version(vmin)}"
-                                   f" or newer. We are running v{render_version(vnow)}.\n"
-                                   f"You will need to upgrade your shell to be able to use this command "
-                                   f"set or switch to an older version of this command set.\n"
-                                   f"This command set will now be disabled."
-                                ) +
-                               f"\n\n -- WARNING\n")
+                logger.warning(
+                    f"\n -- WARNING\n\n"
+                    + indent_block(
+                        f"Command set '{cs.name}' wants a Duckietown Shell v{render_version(vmin)}"
+                        f" or newer. We are running v{render_version(vnow)}.\n"
+                        f"You will need to upgrade your shell to be able to use this command "
+                        f"set or switch to an older version of this command set.\n"
+                        f"This command set will now be disabled."
+                    )
+                    + f"\n\n -- WARNING\n"
+                )
                 self.command_sets.remove(cs)
             # check max
             if vmax is not None and vnow > vmax:
-                logger.warning(f"\n -- WARNING\n\n" +
-                               indent_block(
-                                   f"Command set '{cs.name}' only supports Duckietown Shell up to "
-                                   f"v{render_version(vmax)}. We are running v{render_version(vnow)}.\n"
-                                   f"You will need to downgrade your shell to be able to use this command "
-                                   f"set or switch to a newer version of this command set.\n"
-                                   f"This command set will now be disabled."
-                               ) +
-                               f"\n\n -- WARNING\n")
+                logger.warning(
+                    f"\n -- WARNING\n\n"
+                    + indent_block(
+                        f"Command set '{cs.name}' only supports Duckietown Shell up to "
+                        f"v{render_version(vmax)}. We are running v{render_version(vnow)}.\n"
+                        f"You will need to downgrade your shell to be able to use this command "
+                        f"set or switch to a newer version of this command set.\n"
+                        f"This command set will now be disabled."
+                    )
+                    + f"\n\n -- WARNING\n"
+                )
                 self.command_sets.remove(cs)
 
     @property
@@ -350,9 +380,11 @@ class ShellProfile:
         if self.settings.distro is None:
             return None
         if self.settings.distro not in KNOWN_DISTRIBUTIONS:
-            logger.warning(f"Your profile is set to use the distribution '{self.settings.distro}' but this "
-                           f"is not in the list of known distributions. Known distributions are "
-                           f"{list(KNOWN_DISTRIBUTIONS.keys())}")
+            logger.warning(
+                f"Your profile is set to use the distribution '{self.settings.distro}' but this "
+                f"is not in the list of known distributions. Known distributions are "
+                f"{list(KNOWN_DISTRIBUTIONS.keys())}"
+            )
             return None
         return KNOWN_DISTRIBUTIONS[self.settings.distro]
 
@@ -398,7 +430,9 @@ class ShellProfile:
                 matched: bool = False
                 for d in KNOWN_DISTRIBUTIONS.keys():
                     if d == self.name:
-                        logger.info(f"Automatically selecting distribution '{d}' as it matches the profile name")
+                        logger.info(
+                            f"Automatically selecting distribution '{d}' as it matches the profile name"
+                        )
                         self.distro = d
                         matched = True
                         break
@@ -416,8 +450,9 @@ class ShellProfile:
                         if not distro.stable:
                             continue
                         # ---
-                        eol: str = "" if distro.end_of_life is None else \
-                            f"(end of life: {distro.end_of_life_fmt})"
+                        eol: str = (
+                            "" if distro.end_of_life is None else f"(end of life: {distro.end_of_life_fmt})"
+                        )
                         label = [("class:choice", distro.name), ("class:disabled", f"  {eol}")]
                         choice: Choice = Choice(title=label, value=distro.name)
                         if distro.name == SUGGESTED_DISTRIBUTION:
@@ -426,7 +461,8 @@ class ShellProfile:
                             distros.append(choice)
                     # let the user choose the distro
                     chosen_distro: str = questionary.select(
-                        "Choose a distribution:", choices=distros, style=cli_style).unsafe_ask()
+                        "Choose a distribution:", choices=distros, style=cli_style
+                    ).unsafe_ask()
                     # attach distro to profile
                     self.distro = chosen_distro
             modified_config = True
@@ -448,18 +484,23 @@ class ShellProfile:
                 print(f"Token verified successfully. Your ID is: {yellow_bold(token.uid)}")
             else:
                 print()
-                print(f"The Duckietown Shell needs a Duckietown Token to work properly. "
-                      f"Get yours for free at {DUCKIETOWN_TOKEN_URL}")
+                print(
+                    f"The Duckietown Shell needs a Duckietown Token to work properly. "
+                    f"Get yours for free at {DUCKIETOWN_TOKEN_URL}"
+                )
                 while True:
                     # let the user insert the token
-                    token_str: str = questionary.password("Enter your token:", validate=validator_token)\
-                        .unsafe_ask()
+                    token_str: str = questionary.password(
+                        "Enter your token:", validate=validator_token
+                    ).unsafe_ask()
                     token: DuckietownToken = DuckietownToken.from_string(token_str)
                     # make sure this token is supported by this profile distro
                     tokens_supported: List[str] = self.distro.tokens_supported
                     if token.version not in tokens_supported:
-                        print(f"Token version '{token.version}' not supported by this profile's distro. "
-                              f"Only versions supported are {tokens_supported}.")
+                        print(
+                            f"Token version '{token.version}' not supported by this profile's distro. "
+                            f"Only versions supported are {tokens_supported}."
+                        )
                         continue
                     else:
                         print(f"Token verified successfully. Your ID is: {yellow_bold(token.uid)}")
@@ -473,7 +514,14 @@ class ShellProfile:
     def update_command_descriptions(self, commands_path: str) -> None:
         command_descriptions_path = commands_path + "/command_descriptions.yaml"
         if not os.path.exists(command_descriptions_path):
-            logger.warning(f"File '{command_descriptions_path}' does not exist.")
+            # Only warn if the command set directory exists but the descriptions file is missing
+            # During auto-profile creation, the entire command set directory may not exist yet
+            if os.path.exists(commands_path):
+                logger.warning(f"File '{command_descriptions_path}' does not exist.")
+            else:
+                logger.debug(
+                    f"Command set directory '{commands_path}' does not exist yet, skipping command descriptions update."
+                )
             return
         with open(command_descriptions_path) as stream:
             self.command_descriptions.update(yaml.safe_load(stream))
