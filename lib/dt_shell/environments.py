@@ -14,7 +14,7 @@ from .exceptions import ShellInitException, InvalidEnvironment, CommandsLoadingE
 from .constants import SHELL_LIB_DIR, SHELL_REQUIREMENTS_LIST, DTShellConstants
 from .database.utils import InstalledDependenciesDatabase
 from .logging import dts_print
-from .utils import pip_install, replace_spaces, print_debug_info, pretty_json
+from .utils import install_pip, pip_install, replace_spaces, print_debug_info, pretty_json
 
 
 class ShellCommandEnvironmentAbs(metaclass=ABCMeta):
@@ -110,16 +110,7 @@ class VirtualPython3Environment(ShellCommandEnvironmentAbs):
                 with_pip=False,
                 prompt="dts"
             )
-            # install pip
-            get_pip_fpath: str = os.path.join(SHELL_LIB_DIR, "assets", "get-pip.py")
-            assert os.path.exists(get_pip_fpath)
-            logger.info(f"Installing pip...")
-            try:
-                subprocess.check_output([interpreter_fpath, get_pip_fpath], stderr=subprocess.PIPE)
-            except subprocess.CalledProcessError as e:
-                # TODO: test this failure case on purpose
-                msg: str = "An error occurred while installing pip in the virtual environment"
-                raise ShellInitException(msg, stdout=e.stdout, stderr=e.stderr)
+            install_pip(interpreter_fpath)
 
         # install dependencies
         cache: InstalledDependenciesDatabase = InstalledDependenciesDatabase.load(shell.profile)
