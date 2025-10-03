@@ -14,7 +14,7 @@ from .exceptions import ShellInitException, InvalidEnvironment, CommandsLoadingE
 from .constants import SHELL_LIB_DIR, SHELL_REQUIREMENTS_LIST, DTShellConstants
 from .database.utils import InstalledDependenciesDatabase
 from .logging import dts_print
-from .utils import install_pip, pip_install, replace_spaces, print_debug_info, pretty_json
+from .utils import install_pip_tool, pip_install, replace_spaces, print_debug_info, pretty_json
 
 
 class ShellCommandEnvironmentAbs(metaclass=ABCMeta):
@@ -110,7 +110,7 @@ class VirtualPython3Environment(ShellCommandEnvironmentAbs):
                 with_pip=False,
                 prompt="dts"
             )
-            install_pip(interpreter_fpath)
+            install_pip_tool(interpreter_fpath)
 
         # install dependencies
         cache: InstalledDependenciesDatabase = InstalledDependenciesDatabase.load(shell.profile)

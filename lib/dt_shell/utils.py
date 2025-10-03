@@ -236,7 +236,7 @@ class DebugInfo:
     name2versions: Dict[str, Union[str, Dict[str, str]]] = {}
 
 
-def install_pip(interpreter: str):
+def install_pip_tool(interpreter: str):
     get_pip_fpath: str = os.path.join(SHELL_LIB_DIR, "assets", "get-pip.py")
     if not os.path.exists(get_pip_fpath):
         msg = f"Required file for pip installation not found: {get_pip_fpath}"
@@ -265,7 +265,7 @@ def pip_install(interpreter: str, requirements: str):
             if attempt == MAX_PIP_INSTALL_ATTEMPTS - 1 or "No module named pip" not in error:
                 msg: str = "An error occurred while installing python dependencies"
                 raise ShellInitException(msg, stdout=e.stdout, stderr=e.stderr)
-            install_pip(interpreter)
+            install_pip_tool(interpreter)
 
 
 def indent_block(s: str, indent_len: int = 4) -> str:
