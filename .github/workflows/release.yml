@@ -1,0 +1,130 @@
+name: Automated Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_bump:
+        description: "Version bump type"
+        required: true
+        default: "patch"
+        type: choice
+        options: [patch, minor, major]
+      pre_release:
+        description: "Mark as pre-release"
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install bump2version
+        run: |
+          python -m pip install --upgrade pip
+          pip install bump2version
+
+      - name: Configure git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "github-actions[bot]"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      # Read current/new versions using bump2version's dry-run output
+      - name: Preview bump
+        id: preview
+        run: |
+          bump="${{ github.event.inputs.version_bump }}"
+          out="$(bump2version --dry-run --list "$bump" || true)"
+          echo "$out"
+          current="$(echo "$out" | grep -E '^current_version=' | cut -d= -f2)"
+          new="$(echo "$out" | grep -E '^new_version=' | cut -d= -f2)"
+          if [ -z "$new" ]; then
+            echo "No new_version computed. Check your .bumpversion.cfg or bump type." >&2
+            exit 1
+          fi
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+          echo "new=$new" >> "$GITHUB_OUTPUT"
+
+      - name: Bump version (commit + tag)
+        run: |
+          bump2version --commit --tag ${{ github.event.inputs.version_bump }}
+          # optional: make tag annotated (if your config makes lightweight tags)
+          # latest_tag=$(git describe --tags --abbrev=0)
+          # git tag -f -a "$latest_tag" -m "Release $latest_tag"
+
+      - name: Push changes and tags
+        env:
+          GH_BRANCH: ${{ github.ref_name }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # If the workflow was dispatched from the default branch, this is correct.
+          # If you always want to push to default, replace $GH_BRANCH with your branch name.
+          git push origin "HEAD:${GH_BRANCH}"
+          git push --tags
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          latest_tag=$(git describe --tags --abbrev=0)
+          # previous tag if exists
+          previous_tag=$(git describe --tags --abbrev=0 "${latest_tag}^" 2>/dev/null || true)
+
+          {
+            echo "## Changes"
+            if [ -n "$previous_tag" ]; then
+              echo ""
+              echo "Comparing $previous_tag...$latest_tag"
+              echo ""
+              git log --pretty=format:"* %s (%an)" "$previous_tag..$latest_tag"
+            else
+              echo ""
+              echo "Initial release"
+              echo ""
+              git log --pretty=format:"* %s (%an)"
+            fi
+          } > changelog.md
+
+          {
+            echo 'body<<EOF'
+            cat changelog.md
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
+
+      # Use maintained release action
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.preview.outputs.new }}   # ↔️ ensure your bump2version tags also have the 'v' prefix
+          name: Release v${{ steps.preview.outputs.new }}
+          body: ${{ steps.changelog.outputs.body }}
+          draft: false
+          prerelease: ${{ github.event.inputs.pre_release }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        run: |
+          {
+            echo "🚀 Successfully released v${{ steps.preview.outputs.new }}"
+            echo "📦 Release type: ${{ github.event.inputs.version_bump }}"
+            echo "🏷️ Previous version: v${{ steps.preview.outputs.current }}"
+            echo "✨ New version: v${{ steps.preview.outputs.new }}"
+            if [ "${{ github.event.inputs.pre_release }}" = "true" ]; then
+              echo "⚠️ Pre-release: Yes"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

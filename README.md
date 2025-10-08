@@ -446,3 +446,23 @@ Open webpages in the host's default browser from the container:
 ```bash
 "$BROWSER" https://www.duckietown.org
 ```
+
+## Development & Releases
+
+### Automated Releases
+
+This repository uses automated semantic versioning for releases. Instead of manually creating tags like `v0.2.8`, you can now specify the type of release:
+
+- **Go to Actions → Automated Release → Run workflow**
+- **Choose version bump type:**
+  - `patch` - Bug fixes (6.2.12 → 6.2.13)
+  - `minor` - New features (6.2.12 → 6.3.0)  
+  - `major` - Breaking changes (6.2.12 → 7.0.0)
+
+The workflow automatically:
+- Updates version numbers
+- Creates git tags  
+- Generates changelogs
+- Creates GitHub releases
+
+For detailed instructions, see [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md).
