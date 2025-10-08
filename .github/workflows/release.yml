@@ -99,11 +99,10 @@ jobs:
             fi
           } > changelog.md
 
-          {
-            echo 'body<<EOF'
-            cat changelog.md
-            echo EOF
-          } >> "$GITHUB_OUTPUT"
+          # Set multiline output properly
+          echo "body<<EOF" >> "$GITHUB_OUTPUT"
+          cat changelog.md >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
 
       # Use maintained release action
       - name: Create GitHub Release
