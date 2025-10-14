@@ -27,6 +27,7 @@ from .constants import BASH_COMPLETION_DIR, SHELL_LIB_DIR, DTShellConstants
 from .exceptions import ShellInitException, RunCommandException
 
 NOTSET = object()
+MAX_PIP_INSTALL_ATTEMPTS = 2
 
 
 cli_style = Style([
@@ -235,17 +236,36 @@ class DebugInfo:
     name2versions: Dict[str, Union[str, Dict[str, str]]] = {}
 
 
+def install_pip_tool(interpreter: str):
+    get_pip_fpath: str = os.path.join(SHELL_LIB_DIR, "assets", "get-pip.py")
+    if not os.path.exists(get_pip_fpath):
+        msg = f"Required file for pip installation not found: {get_pip_fpath}"
+        raise ShellInitException(msg)
+    logger.info("Installing pip...")
+    try:
+        subprocess.check_output([interpreter, get_pip_fpath], stderr=subprocess.PIPE)
+    except subprocess.CalledProcessError as e:
+        # TODO: test this failure case on purpose
+        msg: str = "An error occurred while installing pip in the virtual environment"
+        raise ShellInitException(msg, stdout=e.stdout, stderr=e.stderr)
+
+
 def pip_install(interpreter: str, requirements: str):
     run = subprocess.check_call if logger.level <= logging.DEBUG else subprocess.check_output
-    try:
-        run(
-            [interpreter, "-m", "pip", "install", "-r", requirements],
-            stderr=subprocess.STDOUT,
-            env={}
-        )
-    except subprocess.CalledProcessError as e:
-        msg: str = "An error occurred while installing python dependencies"
-        raise ShellInitException(msg, stdout=e.stdout, stderr=e.stderr)
+    for attempt in range(MAX_PIP_INSTALL_ATTEMPTS):
+        try:
+            run(
+                [interpreter, "-m", "pip", "install", "-r", requirements],
+                stderr=subprocess.STDOUT,
+                env={}
+            )
+            break
+        except subprocess.CalledProcessError as e:
+            error = e.stdout.decode("utf-8", errors="replace") if e.stdout else ""
+            if attempt == MAX_PIP_INSTALL_ATTEMPTS - 1 or "No module named pip" not in error:
+                msg: str = "An error occurred while installing python dependencies"
+                raise ShellInitException(msg, stdout=e.stdout, stderr=e.stderr)
+            install_pip_tool(interpreter)
 
 
 def indent_block(s: str, indent_len: int = 4) -> str:

@@ -84,25 +84,27 @@ jobs:
           # previous tag if exists
           previous_tag=$(git describe --tags --abbrev=0 "${latest_tag}^" 2>/dev/null || true)
 
-          {
-            echo "## Changes"
-            if [ -n "$previous_tag" ]; then
-              echo ""
-              echo "Comparing $previous_tag...$latest_tag"
-              echo ""
-              git log --pretty=format:"* %s (%an)" "$previous_tag..$latest_tag"
-            else
-              echo ""
-              echo "Initial release"
-              echo ""
-              git log --pretty=format:"* %s (%an)"
-            fi
-          } > changelog.md
+          # Generate changelog content
+          echo "## Changes" > changelog.md
+          if [ -n "$previous_tag" ]; then
+            echo "" >> changelog.md
+            echo "Comparing $previous_tag...$latest_tag" >> changelog.md
+            echo "" >> changelog.md
+            git log --pretty=format:"* %s (%an)" "$previous_tag..$latest_tag" >> changelog.md
+          else
+            echo "" >> changelog.md
+            echo "Initial release" >> changelog.md
+            echo "" >> changelog.md
+            git log --pretty=format:"* %s (%an)" --max-count=20 >> changelog.md
+          fi
 
-          # Set multiline output properly
-          echo "body<<EOF" >> "$GITHUB_OUTPUT"
-          cat changelog.md >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
+          # Use a more unique delimiter and escape any problematic content
+          delimiter="CHANGELOG_$(date +%s)_END"
+          {
+            echo "body<<${delimiter}"
+            cat changelog.md
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
 
       # Use maintained release action
       - name: Create GitHub Release
