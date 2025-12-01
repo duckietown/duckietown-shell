@@ -605,6 +605,10 @@ class DTShell(Cmd):
             if not skeleton:
                 cs.init()
 
+            # skip command sets with no commands (e.g., failed to load)
+            if cs.commands is None:
+                continue
+
             # load commands from disk
             for cmd, subcmds in cs.commands.items():
                 # noinspection PyTypeChecker
