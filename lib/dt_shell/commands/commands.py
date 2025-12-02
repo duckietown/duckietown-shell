@@ -403,8 +403,11 @@ class CommandSet:
         }
 
     def refresh(self):
+        from .importer import import_commandset_configuration
+        # reload command set configuration
+        self.configuration = import_commandset_configuration(self)
         # reload commands
-        self.commands = self._find_commands()
+        self.commands = self._find_commands() or {}
 
     def command_path(self, selector: str) -> str:
         return os.path.join(self.path, selector.strip(".").replace(".", os.path.sep))
@@ -421,12 +424,12 @@ class CommandSet:
             branch: List[str] = ["--branch", self.repository.branch] if self.repository.branch else []
             run_cmd(["git", "clone"] + branch + ["--recurse-submodules", remote_url, self.path])
             logger.info("Command set downloaded successfully!")
-            # refresh commands
-            self.refresh()
         except Exception as e:
             # Excepts as InvalidRemote
             logger.error(f"Unable to clone the repo at '{remote_url}':\n{str(e)}.")
             return False
+        # refresh commands (outside try/except since clone succeeded)
+        self.refresh()
         return True
 
     def update(self) -> bool:

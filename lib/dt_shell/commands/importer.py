@@ -3,6 +3,7 @@
 # Maintainer: Andrea F. Daniele
 import copy
 import importlib
+import importlib.util
 import os.path
 import sys
 from os.path import (
@@ -29,17 +30,20 @@ def import_commandset_configuration(command_set: CommandSet) -> Type[DTCommandSe
         if DTShellConstants.VERBOSE:
             logger.debug(f"Importing configuration for command set '{command_set.name}' from "
                          f"'{_configuration_file}'")
-        _configuration_sel: str = "__command_set__.configuration"
+        # use a unique module name to avoid caching issues between command sets
+        _module_name: str = f"__command_set_config_{command_set.name}__"
         # we temporarily add the path to the command set to PYTHONPATH
         old: List[str] = copy.deepcopy(sys.path)
         sys.path.insert(0, os.path.abspath(command_set.path))
         try:
-            # import/refresh the configuration module
-            configuration = importlib.import_module(_configuration_sel)
-            if configuration.__file__ != _configuration_file:
-                importlib.reload(configuration)
-            # make sure we got the right one
-            assert configuration.__file__ == _configuration_file
+            # load the configuration module from the specific file
+            spec = importlib.util.spec_from_file_location(_module_name, _configuration_file)
+            if spec is None or spec.loader is None:
+                msg = f"Cannot load command set configuration module from {_configuration_file}"
+                raise CommandsLoadingException(msg)
+            configuration = importlib.util.module_from_spec(spec)
+            sys.modules[_module_name] = configuration
+            spec.loader.exec_module(configuration)
         finally:
             # restore PYTHONPATH
             sys.path = old
@@ -55,6 +59,8 @@ def import_commandset_configuration(command_set: CommandSet) -> Type[DTCommandSe
 
         return DTCommandSetConfiguration
     else:
+        # populate path on default configuration as well
+        default_commandset_configuration.DTCommandSetConfiguration.path = command_set.path
         return default_commandset_configuration.DTCommandSetConfiguration
 
 
