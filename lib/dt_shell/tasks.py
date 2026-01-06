@@ -100,7 +100,7 @@ class UpdateBillboardsTask(Task):
     def execute(self):
         url: str = f"{DTHUB_URL}/api/v1/billboard/list/"
         raw: Optional[Response] = None
-        # reach out to the HUB and grub the new billboards
+        # reach out to the HUB and grab the new billboards
         try:
             logger.debug(f"GET {url}")
             raw = requests.get(url)
