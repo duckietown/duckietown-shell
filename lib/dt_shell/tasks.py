@@ -100,35 +100,41 @@ class UpdateBillboardsTask(Task):
     def execute(self):
         url: str = f"{DTHUB_URL}/api/v1/billboard/list/"
         raw: Optional[Response] = None
+        bboards: list[dict] = []
         # reach out to the HUB and grab the new billboards
-        try:
-            logger.debug(f"GET {url}")
-            raw = requests.get(url)
-            response: dict = raw.json()
-            self._shell.profile.events.new("shell/billboards/update")
-        except JSONDecodeError:
-            logger.warning("An error occurred while decoding the received billboards. Use --verbose for further info")
-            logger.debug(traceback.format_exc())
-            logger.debug("HUB response:\n" + str(raw))
-            # mark as updated so we don't retry right away
-            self._shell.mark_updated("billboards")
-            return
-        except Exception:
-            logger.warning("An error occurred while updating the billboards")
-            logger.debug(traceback.format_exc())
-            # mark as updated so we don't retry right away
-            self._shell.mark_updated("billboards")
-            return
-        # check response
-        if response.get("success", False) is not True:
-            logger.warning("An error occurred while updating the billboards")
-            logger.debug("HUB response:\n" + json.dumps(response, indent=4, sort_keys=True))
-            # mark as updated so we don't retry right away
-            self._shell.mark_updated("billboards")
-            return
+        while url:
+            try:
+                logger.debug(f"GET {url}")
+                raw = requests.get(url)
+                response: dict = raw.json()
+                self._shell.profile.events.new("shell/billboards/update")
+            except JSONDecodeError:
+                logger.warning("An error occurred while decoding the received billboards. Use --verbose for further info")
+                logger.debug(traceback.format_exc())
+                logger.debug("HUB response:\n" + str(raw))
+                # mark as updated so we don't retry right away
+                self._shell.mark_updated("billboards")
+                return
+            except Exception:
+                logger.warning("An error occurred while updating the billboards")
+                logger.debug(traceback.format_exc())
+                # mark as updated so we don't retry right away
+                self._shell.mark_updated("billboards")
+                return
+            # check response
+            if response.get("success", False) is not True:
+                logger.warning("An error occurred while updating the billboards")
+                logger.debug("HUB response:\n" + json.dumps(response, indent=4, sort_keys=True))
+                # mark as updated so we don't retry right away
+                self._shell.mark_updated("billboards")
+                return
+            result: dict = response.get("result", {})
+            results: list[dict] = result.get("results", [])
+            bboards.extend(results)
+            url = result.get("next", "")
         # update local database
         self._db.clear()
-        for bboard in response.get("result", {}).get("results", []):
+        for bboard in bboards:
             self._db.set(bboard["name"], bboard)
         self._shell.mark_updated("billboards")
         logger.debug("Billboards updated!")
@@ -204,4 +210,3 @@ class UploadStatisticsTask(Task):
 
     def shutdown(self, event: Event):
         pass
-
