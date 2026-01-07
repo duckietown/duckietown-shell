@@ -6,6 +6,7 @@ import dataclasses
 import inspect
 import os
 import random
+import shutil
 import signal
 import sys
 import time
@@ -894,32 +895,43 @@ class DTShell(Cmd):
         # ---
         return modified_config
 
+    def _render_banner(self, font: str, width: int) -> Tuple[str, int, int, str]:
+        fmt: Figlet = Figlet(font=font, width=width, justify='left')
+        fig: str = fmt.renderText(DNAME.replace(" ", "   ").upper()).rstrip()
+        # Calculate actual width of the figure and center it manually
+        fig_lines = fig.split('\n')
+        txt_width: int = max(len(line.rstrip()) for line in fig_lines if line.strip())
+        padding: int = int(floor((width - txt_width) / 2))
+        # Center each line with equal padding on both sides
+        centered_lines = [' ' * padding + line.rstrip() for line in fig_lines]
+        centered_fig = '\n'.join(centered_lines)
+        sep: str = text_justify(termcolor.colored("_" * txt_width, "yellow", attrs=["bold"]), width)
+        return centered_fig, txt_width, padding, sep
+
     def _show_banner(self, profile: Optional[ShellProfile], billboard: Optional[str]):
-        width: int = 120
+        # Get terminal width, default to 120 if unable to detect
+        try:
+            terminal_size = shutil.get_terminal_size()
+            width = terminal_size.columns
+        except Exception:
+            width = 120
         if profile is None:
             # first launch -> bigger banner
-            txt_width: int = 95  # measured
-            padding: int = int(floor((width - txt_width) / 2))
-            fmt: Figlet = Figlet(font='standard', width=width, justify='center')
-            fig: str = fmt.renderText(DNAME.replace(" ", "   ").upper()).rstrip()
-            sep: str = text_justify(termcolor.colored("_" * txt_width, "yellow", attrs=["bold"]), width)
-            extras: str = text_distribute([
-                f"First Setup - Welcome!",
+            font = "standard"
+            chunks = [
+                "First Setup - Welcome!",
                 f"v{__version__}"
-            ], width=txt_width)
-            txt: str = f"{fig}\n{sep}\n{' ' * padding}{extras}\n\n"
+            ]
         else:
             # any other launch -> smaller banner
-            txt_width: int = 81  # measured
-            padding: int = int(floor((width - txt_width) / 2))
-            fmt: Figlet = Figlet(font='small', width=width, justify='center')
-            fig: str = fmt.renderText(DNAME.replace(" ", "   ").upper()).rstrip()
-            sep: str = text_justify(termcolor.colored("_" * txt_width, "yellow", attrs=["bold"]), width)
-            extras: str = text_distribute([
+            font = "small"
+            chunks = [
                 f"Profile: {self.settings.profile}",
                 f"v{__version__}"
-            ], width=txt_width)
-            txt: str = f"{fig}\n{sep}\n{' ' * padding}{extras}\n\n"
+            ]
+        fig, txt_width, padding, sep = self._render_banner(font, width)
+        extras: str = text_distribute(chunks, width=txt_width)
+        txt: str = f"{fig}\n{sep}\n{' ' * padding}{extras}\n\n"
         # ---
         print(txt.rstrip())
         print()
