@@ -84,27 +84,20 @@ jobs:
           # previous tag if exists
           previous_tag=$(git describe --tags --abbrev=0 "${latest_tag}^" 2>/dev/null || true)
 
-          # Generate changelog content
-          echo "## Changes" > changelog.md
+          # Generate changelog content and encode as base64 to avoid delimiter issues
+          changelog_content="## Changes"$'\n'
           if [ -n "$previous_tag" ]; then
-            echo "" >> changelog.md
-            echo "Comparing $previous_tag...$latest_tag" >> changelog.md
-            echo "" >> changelog.md
-            git log --pretty=format:"* %s (%an)" "$previous_tag..$latest_tag" >> changelog.md
+            changelog_content+=$'\n'"Comparing $previous_tag...$latest_tag"$'\n'$'\n'
+            changelog_content+="$(git log --pretty=format:"* %s (%an)" "$previous_tag..$latest_tag")"
           else
-            echo "" >> changelog.md
-            echo "Initial release" >> changelog.md
-            echo "" >> changelog.md
-            git log --pretty=format:"* %s (%an)" --max-count=20 >> changelog.md
+            changelog_content+=$'\n'"Initial release"$'\n'$'\n'
+            changelog_content+="$(git log --pretty=format:"* %s (%an)" --max-count=20)"
           fi
 
-          # Use a more unique delimiter and escape any problematic content
-          delimiter="CHANGELOG_$(date +%s)_END"
-          {
-            echo "body<<${delimiter}"
-            cat changelog.md
-            echo "${delimiter}"
-          } >> "$GITHUB_OUTPUT"
+          # Store changelog using proper escaping
+          echo "body<<CHANGELOG_DELIMITER_EOF" >> "$GITHUB_OUTPUT"
+          echo "$changelog_content" >> "$GITHUB_OUTPUT"
+          echo "CHANGELOG_DELIMITER_EOF" >> "$GITHUB_OUTPUT"
 
       # Use maintained release action
       - name: Create GitHub Release
