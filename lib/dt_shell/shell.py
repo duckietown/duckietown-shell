@@ -818,17 +818,31 @@ class DTShell(Cmd):
     def get_billboard() -> Optional[str]:
         # get billboards from the local database
         db: DTShellDatabase = DTShellDatabase.open(DB_BILLBOARDS)
-        # collect billboards names based on priority
+        # collect billboard names based on priority
+        # first, find the maximum priority
+        max_priority = -1
+        for name, billboard in db.items():
+            priority = billboard.get("priority", 0)
+            if priority > max_priority:
+                max_priority = priority
+        # no billboards?
+        if max_priority < 0:
+            return None
+        # collect names with weighted selection
+        # only include priority 0 billboards if no higher priority exists
         names: List[str] = []
         for name, billboard in db.items():
-            names.extend([name] * (billboard["priority"] + 1))
-        # no billboards?
-        if not names:
-            return None
+            priority = billboard.get("priority", 0)
+            # skip priority 0 billboards if higher priority ones exist
+            if priority == 0 and max_priority > 0:
+                continue
+            # add billboard (priority + 1) times for weighted selection
+            billboard_name = str(name)
+            names.extend([billboard_name] * (priority + 1))
         # pick one source at random
-        name: str = random.choice(names)
-        # ---
-        return db.get(name).get("content", None)
+        billboard_name = random.choice(names)
+        billboard_dictionary = db.get(billboard_name, None) if billboard_name is not None else None
+        return billboard_dictionary.get("content", None) if billboard_dictionary is not None else None
 
     def update_commands(self):
         # update all command sets
