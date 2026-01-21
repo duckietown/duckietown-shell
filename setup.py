@@ -20,9 +20,9 @@ def get_version(filename):
         raise ValueError(filename)
     return version
 
-
-if sys.version_info < (3, 10):
-    msg = 'duckietown-shell works with Python 3.10 and later.\nDetected %s.' % str(sys.version)
+version_info = sys.version_info
+if version_info < (3, 10) or version_info >= (3, 13):
+    msg = 'duckietown-shell works with Python 3.10.x-3.12.x.\nDetected %s.' % sys.version
     sys.exit(msg)
 
 distro = 'daffy'
