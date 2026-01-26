@@ -281,8 +281,11 @@ class DTShell(Cmd):
         # get billboard to show (if any)
         bboard: Optional[str] = None
         if billboard and self.settings.show_billboards:
-            bboard = self.get_billboard()
-
+            # get billboards from the local database
+            bboard_db = DTShellDatabase.open(DB_BILLBOARDS)
+            bboard_names = self.get_billboard_names(bboard_db)
+            if bboard_names:
+                bboard = self.get_billboard(bboard_db, bboard_names)
         # print banner
         if banner:
             self._show_banner(profile=self._profile, billboard=bboard)
@@ -816,9 +819,19 @@ class DTShell(Cmd):
         return dts_print(msg=msg, color=color, attrs=attrs)
 
     @staticmethod
-    def get_billboard() -> Optional[str]:
-        # get billboards from the local database
-        db: DTShellDatabase = DTShellDatabase.open(DB_BILLBOARDS)
+    def get_billboard(db, bboard_names) -> Optional[str]:
+        # pick one source at random
+        billboard_name = random.choice(bboard_names)
+        billboard_dictionary = db.get(billboard_name, None) if billboard_name is not None else None
+        if billboard_dictionary is not None:
+            content = billboard_dictionary.get("content", None)
+            if content is None:
+                logger.warning(f"Billboard '{billboard_name}' exists but has no content.")
+            return content
+        return None
+
+    @staticmethod
+    def get_billboard_names(db) -> List[str]:
         # collect billboard names based on priority
         # first, find the maximum priority
         max_priority = -1
@@ -828,10 +841,10 @@ class DTShell(Cmd):
                 max_priority = priority
         # no billboards?
         if max_priority < 0:
-            return None
+            return []
         # collect names with weighted selection
         # only include priority 0 billboards if no higher priority exists
-        names: List[str] = []
+        bboard_names: List[str] = []
         for name, billboard in db.items():
             priority = billboard.get("priority", 0)
             # skip priority 0 billboards if higher priority ones exist
@@ -839,11 +852,8 @@ class DTShell(Cmd):
                 continue
             # add billboard (priority + 1) times for weighted selection
             billboard_name = str(name)
-            names.extend([billboard_name] * (priority + 1))
-        # pick one source at random
-        billboard_name = random.choice(names)
-        billboard_dictionary = db.get(billboard_name, None) if billboard_name is not None else None
-        return billboard_dictionary.get("content", None) if billboard_dictionary is not None else None
+            bboard_names.extend([billboard_name] * (priority + 1))
+        return bboard_names
 
     def update_commands(self):
         # update all command sets
