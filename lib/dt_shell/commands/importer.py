@@ -22,6 +22,81 @@ from .commands import default_command_configuration, failed_to_load_command, DTC
     DTCommandAbs, CommandSet, DTCommandSetConfigurationAbs, default_commandset_configuration
 
 
+def _preload_command_set_packages(command_set: CommandSet, module_parts: List[str]) -> None:
+    """
+    Pre-load packages from the command set to prevent Python from finding built-in modules
+    with the same names (e.g., 'code', 'devel') or missing dependencies (e.g., 'utils').
+
+    Args:
+        command_set: The command set containing the packages
+        module_parts: List of module name parts (e.g., ['code', 'build'] for 'code.build')
+    """
+    # Pre-load utility package from command set (e.g., 'utils') that may be imported
+    _util_pkg = "utils"
+    _util_path = _join(command_set.path, _util_pkg)
+    _util_init = _join(_util_path, "__init__.py")
+    if _exists(_util_init) and _util_pkg not in sys.modules:
+        spec = importlib.util.spec_from_file_location(
+            _util_pkg,
+            _util_init,
+            submodule_search_locations=[_util_path]
+        )
+        if spec and spec.loader:
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[_util_pkg] = module
+            try:
+                spec.loader.exec_module(module)
+            except Exception:
+                # Log the exception to aid debugging when utility package loading fails
+                logger.exception(
+                    f"Failed to preload utility package '{_util_pkg}' from '{_util_path}'. Removing it from "
+                    "sys.modules."
+                )
+                # If loading fails, remove from sys.modules
+                if _util_pkg in sys.modules:
+                    del sys.modules[_util_pkg]
+
+    # Pre-load parent packages from command set to prevent Python from finding built-in modules
+    for idx in range(1, len(module_parts) + 1):
+        _parent_name = ".".join(module_parts[:idx])
+        _parent_path = _join(command_set.path, *module_parts[:idx])
+        _parent_init = _join(_parent_path, "__init__.py")
+
+        # Check if module is already loaded
+        if _parent_name in sys.modules:
+            mod = sys.modules.get(_parent_name)
+            # Check if it's from our command set
+            if mod is not None and hasattr(mod, "__path__") and any(command_set.path in str(p) for p in mod.__path__):
+                # It's ours, keep it
+                continue
+            else:
+                # It's a conflicting module, remove it
+                if DTShellConstants.VERBOSE:
+                    module_file = getattr(mod, "__file__")
+                    logger.debug(f"Removing conflicting module '{_parent_name}' ({module_file})")
+                del sys.modules[_parent_name]
+
+        # Explicitly load our package if it exists
+        if not _exists(_parent_init):
+            continue
+        spec = importlib.util.spec_from_file_location(
+            _parent_name,
+            _parent_init,
+            submodule_search_locations=[_parent_path]
+        )
+        if not spec or not spec.loader:
+            continue
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[_parent_name] = module
+        try:
+            spec.loader.exec_module(module)
+        except Exception:
+            # If loading fails, remove from sys.modules
+            if _parent_name in sys.modules:
+                del sys.modules[_parent_name]
+            raise
+
+
 def import_commandset_configuration(command_set: CommandSet) -> Type[DTCommandSetConfigurationAbs]:
     # constants
     _configuration_file = _join(command_set.path, "__command_set__", "configuration.py")
@@ -104,6 +179,11 @@ def import_configuration(command_set: CommandSet, selector: str) -> Type[DTComma
             if DTShellConstants.VERBOSE:
                 logger.debug(f"Importing configuration for command '{_command_sel}' from "
                              f"'{_configuration_file}'")
+
+            # Pre-load packages to prevent conflicts with built-in modules and ensure dependencies
+            _parts = _command_sel.split('.')
+            _preload_command_set_packages(command_set, _parts)
+
             configuration = importlib.import_module(_configuration_sel)
         except ShellNeedsUpdate as e:
             logger.warning(
@@ -154,26 +234,6 @@ def import_command(command_set: CommandSet, fpath: str) -> Type[DTCommandAbs]:
             if DTShellConstants.VERBOSE:
                 logger.debug(f"Importing command '{_command_sel}' from '{_dirname(fpath)}/'")
 
-            # when running in debug mode (via vscode debugpy), it seems that Python's `code.py` is loaded
-            # and it clashes with the `code` commands... The code below checks for such clashes, and
-            # unloads the module if not part of the commandset.
-
-            # see implementation of `_find_and_load_unlocked` in importlib._bootstrap
-            _command_sel_parent = _command_sel.split('.')[0]
-            if _command_sel_parent and _command_sel_parent in sys.modules:
-                mod = sys.modules.get(_command_sel_parent, None)
-                # if (_command_sel_parent == "code"):
-                #     print(dir(mod))
-                #     print(mod.__path__)
-                if "__path__" not in dir(mod) or mod.__path__[0] not in _command_dir:
-                    # print(f"{_command_dir} == {mod.__path__[0]}")
-                    logger.warning(
-                        f"Command '{_command_sel}' is already loaded or there's a name "
-                        f"clash with '{_command_sel_parent}:{mod.__file__}'. Unloading '{_command_sel_parent}' "
-                        f"to load '{_command_sel}'"
-                    )
-                    # see https://stackoverflow.com/questions/43181440/what-does-del-sys-modulesmodule-actually-do
-                    del sys.modules[_command_sel_parent]
             command = importlib.import_module(_command_sel)
         except ShellNeedsUpdate as e:
             logger.warning(
