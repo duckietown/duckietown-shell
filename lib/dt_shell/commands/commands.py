@@ -69,6 +69,51 @@ class DTCommandAbs(metaclass=ABCMeta):
         """
         return []
 
+    @classmethod
+    def _resolve_parsed(
+        cls,
+        args: List[str],
+        pre_parsed: Optional[argparse.Namespace] = None,
+        *,
+        parser: Optional[argparse.ArgumentParser] = None,
+    ) -> argparse.Namespace:
+        """Resolve CLI arguments consistently for both direct and nested invocations.
+
+        When a command is invoked directly from the CLI, ``pre_parsed`` is
+        ``None`` and the raw ``args`` list is parsed normally.  When it is
+        called programmatically by a parent command (e.g. via
+        ``shell.include.*``), the parent passes its own
+        :class:`~argparse.Namespace` through ``kwargs["parsed"]``; in that
+        case the parent's values are overlaid on top of this command's
+        defaults so that every argument always has its declared default value.
+
+        :func:`~argparse.ArgumentParser.parse_known_args` is used throughout
+        so that unknown arguments are silently forwarded in both code paths,
+        matching the behaviour expected by commands that call nested commands
+        with an extended argument set.
+
+        Args:
+            args:       Raw argument list forwarded from ``command(shell, args, **kwargs)``.
+            pre_parsed: :class:`~argparse.Namespace` forwarded by a parent
+                        command via ``kwargs["parsed"]``, or ``None`` when
+                        this command is the top-level caller.
+            parser:     :class:`~argparse.ArgumentParser` to use.  Defaults
+                        to ``cls.parser`` (the class-level parser provided by
+                        the shell framework).
+
+        Returns:
+            A fully resolved :class:`~argparse.Namespace` that always carries
+            the correct default value for every declared argument.
+        """
+        _parser: argparse.ArgumentParser = parser if parser is not None else cls.parser
+        if pre_parsed is None:
+            resolved, _ = _parser.parse_known_args(args=args)
+        else:
+            defaults, _ = _parser.parse_known_args(args=[])
+            defaults.__dict__.update(pre_parsed.__dict__)
+            resolved = defaults
+        return resolved
+
     @staticmethod
     def fail(msg: str):
         raise Exception(msg)
