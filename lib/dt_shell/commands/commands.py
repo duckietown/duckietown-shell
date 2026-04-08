@@ -87,10 +87,11 @@ class DTCommandAbs(metaclass=ABCMeta):
         case the parent's values are overlaid on top of this command's
         defaults so that every argument always has its declared default value.
 
-        :func:`~argparse.ArgumentParser.parse_known_args` is used throughout
-        so that unknown arguments are silently forwarded in both code paths,
-        matching the behaviour expected by commands that call nested commands
-        with an extended argument set.
+        :func:`~argparse.ArgumentParser.parse_known_args` is used for direct
+        CLI invocations so that unknown arguments are silently forwarded.
+        For nested invocations, defaults are reconstructed from the parser
+        without re-validating required arguments, then overlaid with the
+        supplied namespace.
 
         Args:
             args:       Raw argument list forwarded from ``command(shell, args, **kwargs)``.
@@ -109,7 +110,15 @@ class DTCommandAbs(metaclass=ABCMeta):
         if pre_parsed is None:
             resolved, _ = _parser.parse_known_args(args=args)
         else:
-            defaults, _ = _parser.parse_known_args(args=[])
+            defaults = argparse.Namespace()
+            for action in _parser._actions:
+                dest = action.dest
+                if dest == argparse.SUPPRESS:
+                    continue
+                default = _parser.get_default(dest)
+                if default == argparse.SUPPRESS:
+                    continue
+                setattr(defaults, dest, default)
             defaults.__dict__.update(pre_parsed.__dict__)
             resolved = defaults
         return resolved
