@@ -30,15 +30,10 @@ def check_docker_environment():
     """Returns docker client"""
     check_executable_exists("docker")
 
-    check_user_in_docker_group()
-    #
-    # if on_linux():
-    #
-    #     if username != 'root':
-    #         check_user_in_docker_group()
-    #     # print('checked groups')
-    # else:
-    #     logger.debug('skipping env check because not on Linux')
+    # On Linux, check if user is in the docker group
+    # On macOS, Docker Desktop manages permissions differently and doesn't use groups
+    if on_linux():
+        check_user_in_docker_group()
 
     try:
         import docker
@@ -65,6 +60,10 @@ def check_docker_environment():
 
 def on_linux() -> bool:
     return sys.platform.startswith("linux")
+
+
+def on_macos() -> bool:
+    return sys.platform == "darwin"
 
 
 def check_executable_exists(cmdname: str) -> None:
