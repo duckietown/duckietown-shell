@@ -49,7 +49,7 @@ shell_requires = [
     "dtproject>=1.0.12,<2",
     "dt-authentication>=2.1.4,<3",
     'dt-data-api>=2.0.0,<3',
-    "setuptools>=78.1.1"
+    "setuptools>=78.1.1,<82"
 ]
 
 compatibility_requires = [
