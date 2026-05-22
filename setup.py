@@ -36,7 +36,7 @@ shell_requires = [
     "pyyaml!=6.0.0,!=5.4.0,!=5.4.1,<7",
 
     # CLI utils
-    "pyfiglet>=0.8.0,<1",
+    "pyfiglet>=1.0.4,<2",
     "questionary>=2.0.1,<3",
     "argcomplete>=3.1.4,<4",
     "coloredlogs>=15.0,<16",
