@@ -3,8 +3,10 @@ import sys
 from typing import Optional
 
 # add the content of the environment variable EXTRA_PYTHONPATH to the current path
-sys.path.extend(os.environ.get("EXTRA_PYTHONPATH", "").split(":"))
-
+extra_python_paths = [
+    path for path in os.environ.get("EXTRA_PYTHONPATH", "").split(os.pathsep) if path
+]
+sys.path[:0] = [path for path in extra_python_paths if path not in sys.path]
 import logging
 
 from dt_shell_cli import logger
