@@ -256,8 +256,7 @@ def pip_install(interpreter: str, requirements: str):
         try:
             run(
                 [interpreter, "-m", "pip", "install", "-r", requirements],
-                stderr=subprocess.STDOUT,
-                env={}
+                stderr=subprocess.STDOUT
             )
             break
         except subprocess.CalledProcessError as e:

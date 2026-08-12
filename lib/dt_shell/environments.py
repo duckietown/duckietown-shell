@@ -20,7 +20,7 @@ from .utils import install_pip_tool, pip_install, replace_spaces, print_debug_in
 class ShellCommandEnvironmentAbs(metaclass=ABCMeta):
 
     @abstractmethod
-    def execute(self, shell, args: List[str]):
+    def execute(self, shell, _: List[str]):
         raise NotImplementedError("Subclasses should implement the function execute()")
 
 
@@ -87,7 +87,9 @@ class VirtualPython3Environment(ShellCommandEnvironmentAbs):
             venv_dir: str = os.path.join(shell.profile.path, "venv")
 
         # define path to virtual env's interpreter
-        interpreter_fpath: str = os.path.join(venv_dir, "bin", "python3")
+        interpreter_dir = "Scripts" if os.name == "nt" else "bin"
+        interpreter_name = "python.exe" if os.name == "nt" else "python3"
+        interpreter_fpath: str = os.path.join(venv_dir, interpreter_dir, interpreter_name)
 
         # make and configure env path if it does not exist
         # TODO: this is a place where a --hard-reset flag would ignore the fact that the venv already exists
@@ -146,13 +148,12 @@ class VirtualPython3Environment(ShellCommandEnvironmentAbs):
                     logger.debug("No new dependencies or constraints detected")
 
         # run shell in virtual environment
-        import dt_shell_cli
-        main_py: str = os.path.join(os.path.abspath(dt_shell_cli.__path__[0]), "main.py")
-        exec_args: List[str] = [interpreter_fpath, interpreter_fpath, main_py, *sys.argv[1:]]
+        main_py: str = os.path.join(os.path.dirname(SHELL_LIB_DIR), "dt_shell_cli", "main.py")
+        exec_args: List[str] = [interpreter_fpath, main_py, *sys.argv[1:]]
 
         exec_env: Dict[str, str] = {
             **os.environ,
-            "EXTRA_PYTHONPATH": ":".join(sys.path),
+            "EXTRA_PYTHONPATH": os.path.dirname(SHELL_LIB_DIR),
             "IGNORE_ENVIRONMENTS": "1",
         }
         exec_env.pop("PYTHONPATH", None)
@@ -165,7 +166,10 @@ class VirtualPython3Environment(ShellCommandEnvironmentAbs):
         logger.debug(f"Delegating execution to:\n"
                      f"\tCommand: {exec_args}\n"
                      f"\tEnvironment: {pretty_json(exec_env, indent_len=12)}")
-        os.execle(*exec_args, exec_env)
+        if os.name == "nt":
+            subprocess.check_call(exec_args, env=exec_env)
+            return
+        os.execle(interpreter_fpath, *exec_args, exec_env)
 
 
 @dataclasses.dataclass
