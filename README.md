@@ -22,7 +22,7 @@ Please use the links provided and follow the instructions for your OS
 
 **Note**: You need to add yourself to the `docker` group:
 
-    $ sudo adduser `whoami` docker
+    sudo adduser `whoami` docker
 
 **Important**: after you do that, you must *log out and in* to have the group change take effect.
 
@@ -54,31 +54,31 @@ Then you should see an `auth` entry of the type:
 
 Install `pipx`:
 
-    $ sudo apt install -y pipx
+    sudo apt install -y pipx
 
 Install the `duckietown-shell`:
 
-    $ pipx install duckietown-shell
+    pipx install duckietown-shell
 
 To upgrade to the latest version of `duckietown-shell`:
 
-    $ pipx upgrade duckietown-shell
+    pipx upgrade duckietown-shell
 
 #### Install using `pip`
 
 Install `pip3`
 
-    $ sudo apt install -y python3-pip
+    sudo apt install -y python3-pip
 
 Install the `duckietown-shell` Python package:
 
-    $ pip3 install --no-cache-dir --user -U duckietown-shell
+    pip3 install --no-cache-dir --user -U duckietown-shell
 
 #### Testing the Installation on Ubuntu
 
 Typing
 
-    $ which dts
+    which dts
 
 should output something like: `/home/![user]/.local/bin/dts`
 
@@ -94,12 +94,12 @@ The Duckietown shell requires Python 3.6 or higher, which is not standard on Ubu
 A workaround is to install Homebrew by following the instructions [here](https://docs.brew.sh/Homebrew-on-Linux).
 Then, run :
 
-    $ brew install python3
-    $ python3.7 -m pip install --no-cache-dir --user -U duckietown-shell
+    brew install python3
+    python3.7 -m pip install --no-cache-dir --user -U duckietown-shell
 
 Then, typing
 
-    $ which dts
+    which dts
 
 should output: `/home/linuxbrew/.linuxbrew/bin/dts`
 
@@ -111,17 +111,17 @@ Install `pipx`:
 
 (see https://pipx.pypa.io/stable/installation/ for more details)
 
-    $ brew install pipx
-    $ pipx ensurepath
-    $ sudo pipx ensurepath --global # optional to allow pipx actions in global scope. See "Global installation" section below.
+    brew install pipx
+    pipx ensurepath
+    sudo pipx ensurepath --global # optional to allow pipx actions in global scope. See "Global installation" section below.
 
 Install the `duckietown-shell`:
 
-    $ pipx install duckietown-shell
+    pipx install duckietown-shell
 
 To upgrade to the latest version of `duckietown-sheel`:
 
-    $ pipx upgrade duckietown-shell
+    pipx upgrade duckietown-shell
 
 #### Using `pip` to install
 
@@ -131,13 +131,13 @@ Install the `duckietown-shell`:
 
 **Note: Never use `sudo pip install` to install `duckietown-shell`.**
 
-    $ pip3 install --no-cache-dir --user -U duckietown-shell
+    pip3 install --no-cache-dir --user -U duckietown-shell
 
 #### Testing the Installation
 
 Typing
 
-    $ which dts
+    which dts
 
 should output the path to the `dts` executable. This path can vary based on your Python setup.
 If it is not found, you may need to add something to your shell path.
@@ -146,7 +146,7 @@ If it is not found, you may need to add something to your shell path.
 
 To install the shell, use:
 
-    $ pip3 install --no-cache-dir --user -U duckietown-shell
+    pip3 install --no-cache-dir --user -U duckietown-shell
 
 The shell itself does not require any other dependencies besides standard cross-platform Python libraries.
 
@@ -166,11 +166,12 @@ Some functionality might not be available.
 
 At this point, try to enter the Duckietown shell by typing the command
 
-    $ dts
+    dts
 
 If you get an error, delete the subfolder `commands` in the folder `~/.dt-shell`
 
-    ~/.dt-shell$ rm -rf commands/
+    cd ~/.dt-shell
+	rm -rf commands/
 
 Then, try again
 
@@ -191,24 +192,24 @@ The Duckietown Shell can be preconfigured without interactive prompts by setting
 
 With these variables exported, running `dts` will not ask for input during the initial configuration, which is useful for scripted or containerized setups.
 
-## Compile one of the (legacy) "Duckumentation" (books)
+## Compile one of the (legacy) "Duckumentation" (books) - **No Longer Supported - see new Documentation infrastructure**
 
 To compile one of the books (e.g., docs-duckumentation, but there are many others):
 
-    $ git clone https://github.com/duckietown/docs-duckumentation.git
-    $ cd docs-duckumentation
-    $ git submodule init
-    $ git submodule update
-    $ dts docs build
+    git clone https://github.com/duckietown/docs-duckumentation.git
+    cd docs-duckumentation
+    git submodule init
+    git submodule update
+    dts docs build
 
 There is an incremental build system. To clean and run from scratch:
 
-    $ dts docs clean
-    $ dts docs build
+    dts docs clean
+    dts docs build
 
 The new [Duckietown documentation infrastructure](https://docs.duckietown.com/ente/devmanual-docs/intro.html) requires only the command
 
-    $ dts docs build
+    dts docs build
 
 to compile a book locally.
 
@@ -216,13 +217,13 @@ to compile a book locally.
 
 Run the command `dts tok set` to set the Duckietown authentication token:
 
-    $ dts tok set
+    dts tok set
 
 Instructions will guide you, and you will be prompted for the token.
 
 If you already know the token, then you can use:
 
-    $ dts tok set dt2-YOUR-TOKEN
+    dts tok set dt2-YOUR-TOKEN
 
 ### Verifying that a token is valid
 
@@ -245,7 +246,7 @@ which means that the user is identified as uid 3 until the given expiration date
 
 This command will install DuckieOS on the SD-card:
 
-    $ dts init_sd_card
+    dts init_sd_card
 
 -----------------------
 
@@ -253,7 +254,7 @@ This command will install DuckieOS on the SD-card:
 
 This command will start the ROS GUI container:
 
-    $ dts start_gui_tools <DUCKIEBOT_NAME_GOES_HERE>
+    dts start_gui_tools <DUCKIEBOT_NAME_GOES_HERE>
 
 -----------------------
 
@@ -261,7 +262,7 @@ This command will start the ROS GUI container:
 
 This command will run the Duckiebot calibration procedure:
 
-    $ dts calibrate_duckiebot <DUCKIEBOT_NAME_GOES_HERE>
+    dts calibrate_duckiebot <DUCKIEBOT_NAME_GOES_HERE>
 
 ## Uninstalling or resetting
 
@@ -269,14 +270,14 @@ In some cases, you might want to uninstall the `duckietown-shell`, or reset the 
 
 If you want to just uninstall the duckietown-shell Python module, you could do:
 
-    $ python3 -m pip uninstall duckietown-shell
+    python3 -m pip uninstall duckietown-shell
 
 If you also want to reset the settings, e.g., your Duckietown token, Docker logins, version of the shell, etc, you would
 Also, want to remove the `.duckietown/shell` folder in your home folder.
 
 On Ubuntu/Mac, for example, this could be done with:
 
-    $ rm -rf ~/.duckietown/shell
+    rm -rf ~/.duckietown/shell
 
 -----------------------
 
@@ -284,20 +285,20 @@ On Ubuntu/Mac, for example, this could be done with:
 
 Clone the Duckietown Shell repository
 
-    $ git clone git@github.com:duckietown/duckietown-shell.git
+    git clone git@github.com:duckietown/duckietown-shell.git
 
 ### Install from Local Source
 
 You can install Duckietown Shell from your local source
 
-	$ cd duckietown-shell
-    $ pipx install -e .
+	cd duckietown-shell
+    pipx install -e .
 
 Note: using the `-e` option would install `dts` and link it directly to your source code. This means that any changes to the source code would reflect directly in the environment.
 
 You can also use `pip` to install
 
-    $ pip install -e .
+    pip install -e .
 
 ### Running & Debugging from Visual Studio Code
 
