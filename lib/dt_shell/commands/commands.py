@@ -13,6 +13,7 @@ from typing import Dict, Type, Union, Optional, Mapping, Tuple, List, Any
 from .repository import CommandsRepository
 from .autocomplete import ArgumentParserCompleter
 from .. import __version__, logger
+from ..authorization import require_ente_plan
 from ..constants import CHECK_CMDS_UPDATE_MINS, DB_COMMAND_SET_UPDATES_CHECK, DTShellConstants, \
     EMBEDDED_COMMAND_SET_NAME
 from ..environments import ShellCommandEnvironmentAbs, Python3Environment
@@ -181,6 +182,7 @@ class DTCommandAbs(metaclass=ABCMeta):
         # find the subcommand to execute
         descriptor, args = cls.get_command(shell, line)
         if descriptor is not None and not descriptor.command.fake:
+            require_ente_plan(shell, descriptor)
             # annotate event
             shell.profile.events.new(
                 "shell/command/execute",

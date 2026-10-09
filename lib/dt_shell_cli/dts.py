@@ -36,6 +36,7 @@ def dts():
 
     # import dt_shell
     import dt_shell
+    from dt_shell.authorization import require_ente_plan
     from dt_shell.constants import DTShellConstants, EMBEDDED_COMMAND_SET_NAME
     from dt_shell.logging import setup_logging_color, dts_print
     from dt_shell.checks.environment import abort_if_running_with_sudo
@@ -182,7 +183,11 @@ def dts():
         env: ShellCommandEnvironmentAbs = command.environment
         logger.debug(f"Running command '{command.selector}' in environment '{env.__class__.__name__}'")
         try:
+            require_ente_plan(shell, command)
             env.execute(shell, arguments)
+        except UserError as e:
+            dts_print(str(e), "red")
+            sys.exit(1)
         except ShellInitException:
             logger.error("An error occurred, the reason for the error should be printed above.")
             exit(99)

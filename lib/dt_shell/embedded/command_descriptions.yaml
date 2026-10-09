@@ -35,6 +35,13 @@ tok: &tok
     verify:
       description: Verify a DT token
 token: *tok
+subscription:
+  description: Check plan access to 'ente' and manage computer registration
+  subcommands:
+    status:
+      description: Show account plans, the plan granting 'ente' access, and computer registration
+    transfer:
+      description: Register this computer for 'ente', waiting for old authorizations to expire if needed
 uninstall:
   description: Uninstall a command set
 update:
