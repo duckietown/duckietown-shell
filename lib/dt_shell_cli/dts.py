@@ -3,12 +3,18 @@ import os
 import sys
 from typing import Optional, Dict, List
 
+import cython
+
 # NOTE: DO NOT IMPORT DT_SHELL HERE
 
 from . import logger
 
 # noinspection PyPep8Naming
 def dts():
+    if cython.compiled:
+        from dt_shell_release import verify_installation
+        verify_installation()
+
     # make sure we have not imported dt_shell yet
     modules = [m.__name__ for m in sys.modules.values() if m]
     if "dt_shell" in modules:
@@ -183,6 +189,8 @@ def dts():
         env: ShellCommandEnvironmentAbs = command.environment
         logger.debug(f"Running command '{command.selector}' in environment '{env.__class__.__name__}'")
         try:
+            from dt_shell.integrity import verify_release_integrity
+            verify_release_integrity()
             require_ente_plan(shell, command)
             env.execute(shell, arguments)
         except UserError as e:

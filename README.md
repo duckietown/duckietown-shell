@@ -3,11 +3,22 @@
 
 # Duckietown Shell
 
-*Duckietown Shell* is a pure Python, easily distributable (few dependencies) utility for Duckietown.
+*Duckietown Shell* provides a command-line interface for Duckietown. Official releases use
+compiled core modules and a signed integrity manifest.
 
 The idea is that most of the functionality is implemented as Docker containers, and `dt-shell` provides a nice interface for that, so that user should not type a very long `docker run` command line.
 
-**Note: Duckietown Shell requires Python 3.6 or higher.**
+**Duckietown Shell requires CPython 3.10, 3.11, or 3.12.** Native release wheels
+support Linux x86-64/ARM64, macOS Intel/Apple Silicon, and Windows x86-64.
+There is no source-distribution or universal-wheel fallback for official releases.
+If your default Python is newer, select a supported interpreter explicitly:
+
+    $ pipx install --python python3.12 duckietown-shell
+
+The `ente` distribution requires the `Independent User` plan or the
+`Institutional User` plan, with staff/superuser exemptions. The `daffy`
+distribution does not require a plan. See [development and release guidance](devel.md)
+for source development and signing configuration.
 
 ## Prerequisites
 
@@ -88,20 +99,11 @@ If nothing is output, you may need to add `/home/![user]/.local/bin` to your she
 
 into your `~/.bashrc` file (if you use bash, otherwise the corresponding shell initialization file).
 
-### Installation on Ubuntu 16.xx
+### Older Ubuntu versions
 
-The Duckietown shell requires Python 3.6 or higher, which is not standard on Ubuntu 16.
-A workaround is to install Homebrew by following the instructions [here](https://docs.brew.sh/Homebrew-on-Linux).
-Then, run :
-
-    $ brew install python3
-    $ python3.7 -m pip install --no-cache-dir --user -U duckietown-shell
-
-Then, typing
-
-    $ which dts
-
-should output: `/home/linuxbrew/.linuxbrew/bin/dts`
+Use a supported CPython interpreter and an OS compatible with the published
+manylinux wheel. Unsupported Python or platform combinations cannot build an
+official release from a source archive.
 
 ### Duckietown Shell on MacOS X
 
@@ -142,15 +144,20 @@ Typing
 should output the path to the `dts` executable. This path can vary based on your Python setup.
 If it is not found, you may need to add something to your shell path.
 
-### Installation in other operating systems
+### Installation on Windows
 
-To install the shell, use:
+Install 64-bit CPython 3.10, 3.11, or 3.12, Git, and Docker Desktop. In PowerShell:
 
-    $ pip3 install --no-cache-dir --user -U duckietown-shell
+```powershell
+py -3.12 -m pip install --user pipx
+py -3.12 -m pipx ensurepath
+py -3.12 -m pipx install --python (py -3.12 -c "import sys; print(sys.executable)") duckietown-shell
+```
 
-The shell itself does not require any other dependencies besides standard cross-platform Python libraries.
-
-**Note: Never use `sudo pip3 install` to install `duckietown-shell`.**
+Open a new terminal if needed, then run `dts version`. The shell supports Windows
+startup, computer identification, and profile virtual environments; individual
+robot/development commands may additionally require Linux-specific tools or WSL.
+Windows ARM64 and 32-bit Python are not release-wheel targets.
 
 ### Installation on Docker (experimental)
 
@@ -185,11 +192,14 @@ Then, try again
 The Duckietown Shell can be preconfigured without interactive prompts by setting a few environment variables before the first run:
 
 - `DTSHELL_PROFILE` – name of the profile to use or create.
-- `DTSHELL_COMMANDS` – path to the command set repository.
 - `DTSHELL_DISTRO` – distribution to associate with the profile.
 - `DTSHELL_TOKEN` or `DUCKIETOWN_TOKEN` – a Duckietown authentication token.
 
 With these variables exported, running `dts` will not ask for input during the initial configuration, which is useful for scripted or containerized setups.
+
+Official compiled releases reject `DTSHELL_LIB`, `DTSHELL_COMMANDS`, and
+`DTSHELL_PYTHONPATH`. Local library/command overrides remain available through
+the separate [source-development workflow](devel.md#source-development).
 
 ## Compile one of the (legacy) "Duckumentation" (books)
 

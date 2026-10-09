@@ -1,5 +1,7 @@
 import dataclasses
+import json
 import os
+import platform
 import subprocess
 import sys
 import venv
@@ -11,8 +13,9 @@ from typing import Optional, List, Dict
 from . import logger
 from .exceptions import ShellInitException, InvalidEnvironment, CommandsLoadingException, UserError, \
     UserAborted
-from .constants import SHELL_LIB_DIR, SHELL_REQUIREMENTS_LIST, DTShellConstants
+from .constants import SHELL_REQUIREMENTS_LIST, DTShellConstants
 from .database.utils import InstalledDependenciesDatabase
+from .integrity import is_release_build, verify_release_integrity
 from .logging import dts_print
 from .utils import install_pip_tool, pip_install, replace_spaces, print_debug_info, pretty_json
 
@@ -22,6 +25,33 @@ class ShellCommandEnvironmentAbs(metaclass=ABCMeta):
     @abstractmethod
     def execute(self, shell, args: List[str]):
         raise NotImplementedError("Subclasses should implement the function execute()")
+
+
+def virtualenv_interpreter(venv_dir: str) -> str:
+    if sys.platform == "win32":
+        return os.path.join(venv_dir, "Scripts", "python.exe")
+    return os.path.join(venv_dir, "bin", "python3")
+
+
+def check_release_interpreter(interpreter: str) -> None:
+    if not is_release_build():
+        return
+    code = (
+        "import json, platform, sys; "
+        "print(json.dumps([sys.implementation.cache_tag, sys.platform, platform.machine().lower()]))"
+    )
+    try:
+        actual = json.loads(subprocess.check_output([interpreter, "-c", code], text=True, timeout=10))
+    except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired, ValueError) as error:
+        raise ShellInitException(f"Could not check the profile interpreter '{interpreter}': {error}") from error
+    expected = [sys.implementation.cache_tag, sys.platform, platform.machine().lower()]
+    if actual != expected:
+        raise UserError(
+            f"The profile interpreter '{interpreter}' is incompatible with this compiled DTS release. "
+            f"Expected {expected}; found {actual}. Use a profile virtual environment with the same "
+            "Python minor version, operating system, and architecture as the installed DTS package. "
+            "Remove DTSHELL_VENV_DIR if it selects an incompatible custom environment."
+        )
 
 
 @dataclasses.dataclass
@@ -71,6 +101,7 @@ class VirtualPython3Environment(ShellCommandEnvironmentAbs):
     """
 
     def execute(self, shell, _: List[str]):
+        verify_release_integrity()
         from .shell import DTShell
         shell: DTShell
         # ---
@@ -87,7 +118,7 @@ class VirtualPython3Environment(ShellCommandEnvironmentAbs):
             venv_dir: str = os.path.join(shell.profile.path, "venv")
 
         # define path to virtual env's interpreter
-        interpreter_fpath: str = os.path.join(venv_dir, "bin", "python3")
+        interpreter_fpath: str = virtualenv_interpreter(venv_dir)
 
         # make and configure env path if it does not exist
         # TODO: this is a place where a --hard-reset flag would ignore the fact that the venv already exists
@@ -106,11 +137,13 @@ class VirtualPython3Environment(ShellCommandEnvironmentAbs):
                 venv_dir,
                 system_site_packages=False,
                 clear=False,
-                symlinks=True,
+                symlinks=sys.platform != "win32",
                 with_pip=False,
                 prompt="dts"
             )
             install_pip_tool(interpreter_fpath)
+
+        check_release_interpreter(interpreter_fpath)
 
         # install dependencies
         cache: InstalledDependenciesDatabase = InstalledDependenciesDatabase.load(shell.profile)
@@ -146,13 +179,26 @@ class VirtualPython3Environment(ShellCommandEnvironmentAbs):
                     logger.debug("No new dependencies or constraints detected")
 
         # run shell in virtual environment
-        import dt_shell_cli
-        main_py: str = os.path.join(os.path.abspath(dt_shell_cli.__path__[0]), "main.py")
-        exec_args: List[str] = [interpreter_fpath, interpreter_fpath, main_py, *sys.argv[1:]]
+        if is_release_build():
+            import dt_shell_release
+            entry = (
+                "import importlib.util, sys; "
+                f"spec = importlib.util.spec_from_file_location('dt_shell_release', {dt_shell_release.__file__!r}); "
+                "module = importlib.util.module_from_spec(spec); "
+                "sys.modules['dt_shell_release'] = module; spec.loader.exec_module(module); "
+                "module.delegated_main()"
+            )
+        else:
+            entry = (
+                "import os, sys; "
+                "sys.path.extend(p for p in os.environ['EXTRA_PYTHONPATH'].split(os.pathsep) if p); "
+                "from dt_shell_cli.main import main; main()"
+            )
+        exec_args: List[str] = [interpreter_fpath, interpreter_fpath, "-c", entry, *sys.argv[1:]]
 
         exec_env: Dict[str, str] = {
             **os.environ,
-            "EXTRA_PYTHONPATH": ":".join(sys.path),
+            "EXTRA_PYTHONPATH": os.pathsep.join(sys.path),
             "IGNORE_ENVIRONMENTS": "1",
         }
         exec_env.pop("PYTHONPATH", None)

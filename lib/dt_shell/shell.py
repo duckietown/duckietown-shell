@@ -328,7 +328,7 @@ class DTShell(Cmd):
 
         # add custom PYTHONPATH
         if "DTSHELL_PYTHONPATH" in os.environ:
-            for path in os.environ["DTSHELL_PYTHONPATH"].split(":")[::-1]:
+            for path in os.environ["DTSHELL_PYTHONPATH"].split(os.pathsep)[::-1]:
                 # add new path to PYTHONPATH for this session
                 path: str = os.path.abspath(path)
                 if path in sys.path:
@@ -340,7 +340,7 @@ class DTShell(Cmd):
         super(DTShell, self).__init__()
 
         # remove the char `-` from the list of word separators, this allows us to suggest flags
-        if self.use_rawinput and self.completekey:
+        if self.use_rawinput and self.completekey and sys.platform != "win32":
             import readline
             readline.set_completer_delims(readline.get_completer_delims().replace("-", "", 1))
 

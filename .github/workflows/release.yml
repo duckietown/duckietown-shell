@@ -21,6 +21,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      actions: write
 
     steps:
       - name: Checkout
@@ -122,3 +123,10 @@ jobs:
               echo "⚠️ Pre-release: Yes"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Start signed native package release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: v${{ steps.preview.outputs.new }}
+          RELEASE_BRANCH: ${{ github.ref_name }}
+        run: gh workflow run python-publish.yml --ref "$RELEASE_BRANCH" -f "tag=$RELEASE_TAG"

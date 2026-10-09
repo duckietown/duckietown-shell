@@ -14,6 +14,7 @@ from .repository import CommandsRepository
 from .autocomplete import ArgumentParserCompleter
 from .. import __version__, logger
 from ..authorization import require_ente_plan
+from ..integrity import verify_release_integrity
 from ..constants import CHECK_CMDS_UPDATE_MINS, DB_COMMAND_SET_UPDATES_CHECK, DTShellConstants, \
     EMBEDDED_COMMAND_SET_NAME
 from ..environments import ShellCommandEnvironmentAbs, Python3Environment
@@ -34,8 +35,6 @@ class DTCommandAbs(metaclass=ABCMeta):
     descriptor: 'CommandDescriptor' = None
     fake: bool = False
 
-    @staticmethod
-    @abstractmethod
     def command(shell: DTShell, args: List[str]):
         """
         This function will be invoked when the user presses [Return] and runs the command.
@@ -48,6 +47,9 @@ class DTCommandAbs(metaclass=ABCMeta):
             A list of arguments passed to the command.
         """
         pass
+
+    # Explicit composition preserves the decorator order in Cython builds.
+    command = staticmethod(abstractmethod(command))
 
     @staticmethod
     def complete(shell: DTShell, word: str, line: str):
@@ -182,6 +184,7 @@ class DTCommandAbs(metaclass=ABCMeta):
         # find the subcommand to execute
         descriptor, args = cls.get_command(shell, line)
         if descriptor is not None and not descriptor.command.fake:
+            verify_release_integrity()
             require_ente_plan(shell, descriptor)
             # annotate event
             shell.profile.events.new(
@@ -320,8 +323,6 @@ class DTCommandSetConfigurationAbs(metaclass=ABCMeta):
         requirements_fpath: str = os.path.join(command_set_metadir, "requirements.txt")
         return requirements_fpath if os.path.exists(requirements_fpath) else None
 
-    @classmethod
-    @abstractmethod
     def version(cls, *args, **kwargs) -> Tuple[int, int, int]:
         """
         Version of this command set in the format (major, minor, patch).
@@ -331,8 +332,8 @@ class DTCommandSetConfigurationAbs(metaclass=ABCMeta):
         raise NotImplementedError("Subclasses of 'DTCommandSetConfigurationAbs' must implement the function "
                                   "version().")
 
-    @classmethod
-    @abstractmethod
+    version = classmethod(abstractmethod(version))
+
     def minimum_shell_version(cls, *args, **kwargs) -> Tuple[int, int, int]:
         """
         The minimum version of the shell neeeded for this command set to work properly.
@@ -342,8 +343,8 @@ class DTCommandSetConfigurationAbs(metaclass=ABCMeta):
         raise NotImplementedError("Subclasses of 'DTCommandSetConfigurationAbs' must implement the function "
                                   "minimum_shell_version().")
 
-    @classmethod
-    @abstractmethod
+    minimum_shell_version = classmethod(abstractmethod(minimum_shell_version))
+
     def maximum_shell_version(cls, *args, **kwargs) -> Tuple[int, int, int]:
         """
         The maximum version of the shell neeeded for this command set to work properly.
@@ -352,6 +353,8 @@ class DTCommandSetConfigurationAbs(metaclass=ABCMeta):
         """
         raise NotImplementedError("Subclasses of 'DTCommandSetConfigurationAbs' must implement the function "
                                   "maximum_shell_version().")
+
+    maximum_shell_version = classmethod(abstractmethod(maximum_shell_version))
 
 
 class DTCommandSetConfigurationDefault(DTCommandSetConfigurationAbs):
