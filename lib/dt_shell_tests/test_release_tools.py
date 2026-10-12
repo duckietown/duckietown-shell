@@ -11,7 +11,9 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SPEC = importlib.util.spec_from_file_location("release_tools", ROOT / "tools/release.py")
+SPEC = importlib.util.spec_from_file_location(
+    "release_tools", ROOT / "tools/release.py"
+)
 assert SPEC is not None and SPEC.loader is not None
 release = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(release)
@@ -29,7 +31,19 @@ class ReleaseToolTests(unittest.TestCase):
             .hex()
         )
         self.version = release.current_version()
-        environment = patch.dict(os.environ, {"DTS_RELEASE_PUBLIC_KEY": self.public})
+        self.commands_key = Ed25519PrivateKey.generate()
+        self.commands_public = (
+            self.commands_key.public_key()
+            .public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)
+            .hex()
+        )
+        environment = patch.dict(
+            os.environ,
+            {
+                "DTS_RELEASE_PUBLIC_KEY": self.public,
+                "DTS_COMMANDS_PUBLIC_KEY": self.commands_public,
+            },
+        )
         environment.start()
         self.addCleanup(environment.stop)
 
@@ -44,8 +58,12 @@ class ReleaseToolTests(unittest.TestCase):
                 f"Metadata-Version: 2.1\nName: duckietown-shell\nVersion: {version}\n"
                 "Requires-Python: >=3.10,<3.13\n"
             ).encode("ascii"),
-            info + "/WHEEL": f"Wheel-Version: 1.0\nRoot-Is-Purelib: false\nTag: {tag}\n".encode("ascii"),
-            info + "/entry_points.txt": b"[console_scripts]\ndts = dt_shell_release:launch\n",
+            info
+            + "/WHEEL": f"Wheel-Version: 1.0\nRoot-Is-Purelib: false\nTag: {tag}\n".encode(
+                "ascii"
+            ),
+            info
+            + "/entry_points.txt": b"[console_scripts]\ndts = dt_shell_release:launch\n",
             info + "/RECORD": b"",
             "dt_shell/__init__.py": b"",
             "dt_shell_cli/__init__.py": b"",
@@ -54,7 +72,9 @@ class ReleaseToolTests(unittest.TestCase):
         }
         suffix = ".pyd" if platform.startswith("win_") else ".so"
         for module in (*release.PROTECTED_MODULES, "dt_shell_release"):
-            data[module.replace(".", "/") + "." + python + suffix] = (module + self.public).encode("ascii")
+            data[module.replace(".", "/") + "." + python + suffix] = (
+                module + self.public + self.commands_public
+            ).encode("ascii")
         data.update(extra or {})
         with ZipFile(path, "w") as archive:
             for name, value in data.items():
@@ -73,7 +93,9 @@ class ReleaseToolTests(unittest.TestCase):
                 serialization.PrivateFormat.PKCS8,
                 serialization.NoEncryption(),
             )
-            self.assertFalse(any(private in archive.read(name) for name in archive.namelist()))
+            self.assertFalse(
+                any(private in archive.read(name) for name in archive.namelist())
+            )
 
     def test_unsigned_wheel_cannot_be_verified(self):
         with self.assertRaisesRegex(ValueError, "unsigned"):
@@ -97,7 +119,9 @@ class ReleaseToolTests(unittest.TestCase):
             {"dt_shell/__pycache__/authorization.cpython-312.pyc": b"bytecode"},
             {"dt_shell_release.c": b"generated code"},
         ):
-            with self.subTest(extra=tuple(extra)), self.assertRaisesRegex(ValueError, "fallback|sources"):
+            with self.subTest(extra=tuple(extra)), self.assertRaisesRegex(
+                ValueError, "fallback|sources"
+            ):
                 release.seal(self.wheel(extra=extra), self.version, self.key)
 
     def test_wrong_version_and_public_key_are_rejected(self):
@@ -113,7 +137,9 @@ class ReleaseToolTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "only release wheels"):
             release.verify_directory(self.directory, self.version, False)
         with self.assertRaisesRegex(ValueError, "native wheel"):
-            release.wheel_coordinates(Path(f"duckietown_shell-{self.version}-py3-none-any.whl"), self.version)
+            release.wheel_coordinates(
+                Path(f"duckietown_shell-{self.version}-py3-none-any.whl"), self.version
+            )
 
     def test_missing_matrix_targets_block_publication(self):
         path = self.wheel(platform="manylinux_2_28_aarch64")
@@ -132,12 +158,25 @@ class ReleaseToolTests(unittest.TestCase):
             ):
                 path = self.wheel(python=python, platform=platform)
                 release.seal(path, self.version, self.key)
-        self.assertEqual(15, len(release.verify_directory(self.directory, self.version, True)))
+        self.assertEqual(
+            15, len(release.verify_directory(self.directory, self.version, True))
+        )
 
     def test_release_build_cannot_omit_the_public_key(self):
         with patch.dict(os.environ, {}, clear=True):
             with self.assertRaisesRegex(RuntimeError, "DTS_RELEASE_PUBLIC_KEY"):
                 release.release_public_key()
+
+    def test_release_build_cannot_omit_the_command_public_key(self):
+        with patch.dict(os.environ, {}, clear=True):
+            with self.assertRaisesRegex(RuntimeError, "DTS_COMMANDS_PUBLIC_KEY"):
+                release.commands_public_key()
+
+    def test_wheel_with_the_wrong_command_trust_key_is_rejected(self):
+        path = self.wheel()
+        with patch.dict(os.environ, {"DTS_COMMANDS_PUBLIC_KEY": "0" * 64}):
+            with self.assertRaisesRegex(ValueError, "DTS_COMMANDS_PUBLIC_KEY"):
+                release.seal(path, self.version, self.key)
 
 
 if __name__ == "__main__":

@@ -866,8 +866,9 @@ class DTShell(Cmd):
             # update command set
             logger.info(f"Updating the command set '{cs.name}'...")
             self.profile.events.new("shell/commandset/update", {"command_set": cs.as_dict()})
-            cs.update()
-            logger.info(f"Command set '{cs.name}' updated!")
+            changed = cs.update(force=True)
+            logger.info(f"Command set '{cs.name}' updated!" if changed
+                        else f"Command set '{cs.name}' is already up-to-date.")
 
     def _configure(self, readonly: bool = False) -> bool:
         modified_config: bool = False

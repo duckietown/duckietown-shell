@@ -5,6 +5,8 @@ import glob
 import traceback
 import argparse
 import dataclasses
+import sys
+from pathlib import Path
 from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass
 from types import SimpleNamespace
@@ -12,11 +14,14 @@ from typing import Dict, Type, Union, Optional, Mapping, Tuple, List, Any
 
 from .repository import CommandsRepository
 from .autocomplete import ArgumentParserCompleter
+from .artifacts import CommandArtifactError, CommandArtifactStore, SignedManifest, register_snapshot, \
+    repository_identity, verify_snapshot
+from .artifacts import verify_requirements
 from .. import __version__, logger
 from ..authorization import require_ente_plan
-from ..integrity import verify_release_integrity
+from ..integrity import is_release_build, verify_release_integrity
 from ..constants import CHECK_CMDS_UPDATE_MINS, DB_COMMAND_SET_UPDATES_CHECK, DTShellConstants, \
-    EMBEDDED_COMMAND_SET_NAME
+    EMBEDDED_COMMAND_SET_NAME, SHELL_LIB_DIR
 from ..environments import ShellCommandEnvironmentAbs, Python3Environment
 from ..exceptions import UserError, InvalidRemote, CommandsLoadingException, CommandNotFound
 from ..utils import run_cmd, undo_replace_spaces
@@ -185,6 +190,8 @@ class DTCommandAbs(metaclass=ABCMeta):
         descriptor, args = cls.get_command(shell, line)
         if descriptor is not None and not descriptor.command.fake:
             verify_release_integrity()
+            if is_release_build():
+                descriptor.command_set.verify_integrity(descriptor.path)
             require_ente_plan(shell, descriptor)
             # annotate event
             shell.profile.events.new(
@@ -409,9 +416,32 @@ class CommandSet:
     leave_alone: bool = False
     configuration: Type[DTCommandSetConfigurationAbs] = None
     commands: CommandsTree = dataclasses.field(default_factory=dict)
+    _artifact_store: Optional[CommandArtifactStore] = dataclasses.field(default=None, init=False, repr=False)
+    _signed_manifest: Optional[SignedManifest] = dataclasses.field(default=None, init=False, repr=False)
 
     def __post_init__(self):
         from .importer import import_commandset_configuration
+        if is_release_build():
+            verify_release_integrity()
+            embedded = Path(SHELL_LIB_DIR, "embedded").absolute()
+            if Path(self.path).absolute() != embedded or self.repository is not None:
+                if self.repository is None or self.leave_alone:
+                    raise UserError("Official DTS builds require signed external command artifacts. "
+                                    "Unsigned development overrides are not supported.")
+                try:
+                    identity = repository_identity(
+                        self.repository.provider, self.repository.username, self.repository.project,
+                    )
+                except CommandArtifactError as error:
+                    raise UserError(str(error)) from error
+                self._artifact_store = CommandArtifactStore(
+                    Path(self.path).absolute(),
+                    identity,
+                    self.repository.branch,
+                    self.profile.distro.name,
+                    __version__,
+                )
+                self._select_signed_snapshot()
         # load command set configuration
         self.configuration: Type[DTCommandSetConfigurationAbs] = import_commandset_configuration(self)
         # load commands
@@ -424,6 +454,8 @@ class CommandSet:
 
     @property
     def version(self) -> Optional[str]:
+        if self._signed_manifest is not None:
+            return self._signed_manifest.version
         # embedded command set
         if self.name == EMBEDDED_COMMAND_SET_NAME:
             return __version__
@@ -435,6 +467,8 @@ class CommandSet:
 
     @property
     def closest_version(self) -> Optional[str]:
+        if self._signed_manifest is not None:
+            return self._signed_manifest.version
         # embedded command set
         if self.name == EMBEDDED_COMMAND_SET_NAME:
             return __version__
@@ -446,6 +480,8 @@ class CommandSet:
 
     @property
     def local_sha(self) -> Optional[str]:
+        if self._signed_manifest is not None:
+            return self._signed_manifest.commit
         if self.repository is not None:
             stdout: str = run_cmd(["git", "-C", self.path, "rev-parse", "HEAD"])
             # noinspection PyTypeChecker
@@ -468,11 +504,104 @@ class CommandSet:
         # reload commands
         self.commands = self._find_commands() or {}
 
+    def verify_integrity(self, command_path: Optional[str] = None):
+        if not is_release_build():
+            return
+        try:
+            if self._signed_manifest is not None and self._artifact_store is not None:
+                if command_path is not None and not Path(command_path).absolute().is_relative_to(
+                    Path(self.path).absolute()
+                ):
+                    raise UserError("Signed commands have changed. Restart DTS before using an older command.")
+                self._signed_manifest.matches(
+                    self._artifact_store.repository, self.repository.branch,
+                    self.profile.distro.name, __version__,
+                )
+                verify_snapshot(Path(self.path), self._signed_manifest)
+            elif Path(self.path).absolute() == Path(SHELL_LIB_DIR, "embedded").absolute() \
+                    and self.repository is None:
+                verify_release_integrity()
+            else:
+                raise UserError("An external command set has no verified signed snapshot.")
+        except CommandArtifactError as error:
+            raise UserError(str(error)) from error
+
+    def requirements(self) -> Optional[str]:
+        self.verify_integrity()
+        requirements = self.configuration.requirements()
+        if self._signed_manifest is not None:
+            expected = os.path.join(self.path, self._signed_manifest.requirements) \
+                if self._signed_manifest.requirements is not None else None
+            if requirements != expected:
+                raise UserError("The command-set dependency list does not match its signed metadata.")
+            try:
+                verify_requirements(Path(self.path), self._signed_manifest)
+            except CommandArtifactError as error:
+                raise UserError(str(error)) from error
+        return requirements
+
+    def _select_signed_snapshot(self, force: bool = False) -> bool:
+        store = self._artifact_store
+        if store is None:
+            raise UserError("No signed artifact store is configured for this command set.")
+        db = self.profile.database(DB_COMMAND_SET_UPDATES_CHECK)
+        record = db.get(self.name, {})
+        if not isinstance(record, dict):
+            raise UserError("The command update record is invalid.")
+        last_check = record.get("time", 0)
+        if not isinstance(last_check, (float, int)) or not 0 <= last_check <= time.time():
+            raise UserError("The command update record has an invalid timestamp.")
+        check_updates = force or time.time() - last_check >= CHECK_CMDS_UPDATE_MINS * 60
+        try:
+            root, manifest = store.ensure(
+                check_updates, readonly=self.profile.readonly,
+                warn=None if force else logger.warning,
+            )
+            if record.get("repository") == manifest.repository and record.get("branch") == manifest.branch:
+                previous_revision = record.get("revision", 0)
+                if type(previous_revision) is not int or previous_revision < 0:
+                    raise UserError("The command update record has an invalid revision.")
+                if manifest.revision < previous_revision:
+                    raise UserError("The cached command artifact is older than the latest installed revision.")
+                if manifest.revision == previous_revision and record.get("manifest") != manifest.identifier:
+                    raise UserError("The cached command revision does not match the recorded artifact.")
+        except CommandArtifactError as error:
+            raise UserError(str(error)) from error
+        old_path = self.path
+        changed = self._signed_manifest is not None and self._signed_manifest.identifier != manifest.identifier
+        if changed:
+            # A running shell must not reuse modules from an earlier signed generation.
+            for name, module in list(sys.modules.items()):
+                origin = getattr(module, "__file__", None)
+                namespace_paths = getattr(module, "__path__", ())
+                if (origin is not None and Path(origin).absolute().is_relative_to(Path(old_path).absolute())) \
+                        or any(Path(path).absolute().is_relative_to(Path(old_path).absolute())
+                               for path in namespace_paths):
+                    del sys.modules[name]
+            sys.path[:] = [
+                str(root) + path[len(old_path):] if path == old_path or path == os.path.join(old_path, "lib")
+                else path for path in sys.path
+            ]
+        self.path = str(root)
+        self._signed_manifest = manifest
+        register_snapshot(root, manifest)
+        if not self.profile.readonly:
+            db.set(self.name, {
+                "sha": manifest.commit, "time": time.time() if check_updates else last_check,
+                "revision": manifest.revision,
+                "manifest": manifest.identifier, "repository": manifest.repository, "branch": manifest.branch,
+            })
+        return changed
+
     def command_path(self, selector: str) -> str:
         return os.path.join(self.path, selector.strip(".").replace(".", os.path.sep))
 
     def download(self) -> bool:
         """Raises InvalidRemote if it cannot find it"""
+        if self._artifact_store is not None:
+            self._select_signed_snapshot(force=True)
+            self.refresh()
+            return True
         if self.repository is None:
             raise RuntimeError("You cannot 'download' a command set without a repository defined.")
         # ---
@@ -491,13 +620,21 @@ class CommandSet:
         self.refresh()
         return True
 
-    def update(self) -> bool:
+    def update(self, force: bool = False) -> bool:
+        if self._artifact_store is not None:
+            changed = self._select_signed_snapshot(force)
+            if changed:
+                self.refresh()
+            return changed
         # check that the repo is initialized in the commands path
         self.ensure_commands_exist()
         # update the commands if they are outdated
         return self.ensure_commands_updated()
 
     def ensure_commands_exist(self):
+        if self._artifact_store is not None:
+            self.verify_integrity()
+            return
         # clone the commands if necessary
         if not os.path.exists(self.path):
             msg = f"I cannot find the command path {self.path}"
@@ -515,6 +652,8 @@ class CommandSet:
             raise UserError(f"Commands not found at '{self.path}'.")
 
     def commands_need_update(self) -> bool:
+        if self._artifact_store is not None:
+            raise UserError("Signed command updates must be checked through their verified artifact store.")
         # command sets without repository cannot be updated
         if self.repository is None:
             return False
@@ -565,6 +704,8 @@ class CommandSet:
         db.set(self.name, {"sha": self.local_sha, "time": time.time()})
 
     def ensure_commands_updated(self) -> bool:
+        if self._artifact_store is not None:
+            return self.update()
         # make sure the commands directory exists
         if not os.path.exists(self.path) and os.path.isdir(self.path):
             raise RuntimeError(f"There is no existing commands directory in '{self.path}'.")

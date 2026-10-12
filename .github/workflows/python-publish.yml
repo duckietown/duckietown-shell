@@ -18,6 +18,7 @@ concurrency:
 
 env:
   DTS_RELEASE_PUBLIC_KEY: ${{ vars.DTS_RELEASE_PUBLIC_KEY }}
+  DTS_COMMANDS_PUBLIC_KEY: ${{ vars.DTS_COMMANDS_PUBLIC_KEY }}
 
 jobs:
   resolve:
@@ -38,6 +39,15 @@ jobs:
           fi
           echo "tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
           echo "version=${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ steps.version.outputs.tag }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r requirements-release.txt
+      - name: Require signed artifacts for all four command channels
+        run: python tools/commands_release.py ready --version "${{ steps.version.outputs.version }}"
 
   build:
     needs: resolve
@@ -137,8 +147,16 @@ jobs:
           path: wheelhouse
       - name: Install matching signed wheel
         run: python tools/release.py install wheelhouse --version "${{ needs.resolve.outputs.version }}"
+      - name: Download public signed command fixture
+        run: python tools/commands_release.py download-fixture command-fixture
       - name: Test installed native runtime and tamper detection
+        env:
+          DTS_COMMANDS_TEST_BUNDLE: ${{ github.workspace }}/command-fixture
         run: python -m unittest discover -s lib/dt_shell_tests -p "test_release_runtime.py" -v
+      - name: Test signed command loading, cache and updates
+        env:
+          DTS_COMMANDS_TEST_BUNDLE: ${{ github.workspace }}/command-fixture
+        run: python -m unittest discover -s lib/dt_shell_tests -p "test_command_artifacts*.py" -v
       - name: Test authorization and device behavior in native modules
         run: |
           python -m unittest discover -s lib/dt_shell_tests -p "test_authorization.py"

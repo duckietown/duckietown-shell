@@ -11,6 +11,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
 cdef extern from "dts_release_key.h":
     const char DTS_RELEASE_PUBLIC_KEY[]
+    const char DTS_COMMANDS_PUBLIC_KEY[]
 
 
 class ReleaseIntegrityError(RuntimeError):
@@ -120,6 +121,15 @@ cdef void _verify() except *:
 
 def verify_installation():
     _verify()
+
+
+def verify_command_signature(signature, content):
+    try:
+        Ed25519PublicKey.from_public_bytes(
+            bytes.fromhex((<bytes>DTS_COMMANDS_PUBLIC_KEY).decode("ascii"))
+        ).verify(signature, content)
+    except InvalidSignature as error:
+        raise ValueError("The command manifest signature is invalid.") from error
 
 
 def launch():

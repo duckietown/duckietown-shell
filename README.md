@@ -20,6 +20,14 @@ The `ente` distribution requires the `Independent User` plan or the
 distribution does not require a plan. See [development and release guidance](devel.md)
 for source development and signing configuration.
 
+Official builds also authenticate every external command set before loading its
+configuration, hooks, utilities, commands, or dependencies. `dts update` downloads
+verified, signed command snapshots rather than executing a mutable Git checkout.
+This includes `daffy`, which remains available without a plan. Unsigned third-party
+command repositories cannot be installed in an official build; they need an
+approved signed release. See [signed command delivery](devel.md#signed-command-delivery)
+for publishing, cache migration, and recovery.
+
 ## Prerequisites
 
 The duckietown shell has very minimal requirements.

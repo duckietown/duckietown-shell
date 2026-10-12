@@ -191,6 +191,7 @@ def dts():
         try:
             from dt_shell.integrity import verify_release_integrity
             verify_release_integrity()
+            command.command_set.verify_integrity(command.path)
             require_ente_plan(shell, command)
             env.execute(shell, arguments)
         except UserError as e:

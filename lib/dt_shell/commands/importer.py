@@ -20,6 +20,14 @@ from .. import logger
 from ..exceptions import ShellNeedsUpdate, CommandsLoadingException
 from .commands import default_command_configuration, failed_to_load_command, DTCommandConfigurationAbs, \
     DTCommandAbs, CommandSet, DTCommandSetConfigurationAbs, default_commandset_configuration
+from .artifacts import CommandArtifactError, source_spec
+from ..exceptions import UserError
+
+
+def _discard_module_tree(name: str):
+    for module_name in list(sys.modules):
+        if module_name == name or module_name.startswith(name + "."):
+            del sys.modules[module_name]
 
 
 def _preload_command_set_packages(command_set: CommandSet, module_parts: List[str]) -> None:
@@ -35,8 +43,12 @@ def _preload_command_set_packages(command_set: CommandSet, module_parts: List[st
     _util_pkg = "utils"
     _util_path = _join(command_set.path, _util_pkg)
     _util_init = _join(_util_path, "__init__.py")
+    if _exists(_util_init) and _util_pkg in sys.modules:
+        utility = sys.modules[_util_pkg]
+        if getattr(utility, "__file__", None) != _util_init:
+            _discard_module_tree(_util_pkg)
     if _exists(_util_init) and _util_pkg not in sys.modules:
-        spec = importlib.util.spec_from_file_location(
+        spec = source_spec(
             _util_pkg,
             _util_init,
             submodule_search_locations=[_util_path]
@@ -46,6 +58,9 @@ def _preload_command_set_packages(command_set: CommandSet, module_parts: List[st
             sys.modules[_util_pkg] = module
             try:
                 spec.loader.exec_module(module)
+            except CommandArtifactError as error:
+                sys.modules.pop(_util_pkg, None)
+                raise UserError(str(error)) from error
             except Exception:
                 # Log the exception to aid debugging when utility package loading fails
                 logger.exception(
@@ -74,12 +89,12 @@ def _preload_command_set_packages(command_set: CommandSet, module_parts: List[st
                 if DTShellConstants.VERBOSE:
                     module_file = getattr(mod, "__file__")
                     logger.debug(f"Removing conflicting module '{_parent_name}' ({module_file})")
-                del sys.modules[_parent_name]
+                _discard_module_tree(_parent_name)
 
         # Explicitly load our package if it exists
         if not _exists(_parent_init):
             continue
-        spec = importlib.util.spec_from_file_location(
+        spec = source_spec(
             _parent_name,
             _parent_init,
             submodule_search_locations=[_parent_path]
@@ -98,6 +113,7 @@ def _preload_command_set_packages(command_set: CommandSet, module_parts: List[st
 
 
 def import_commandset_configuration(command_set: CommandSet) -> Type[DTCommandSetConfigurationAbs]:
+    command_set.verify_integrity()
     # constants
     _configuration_file = _join(command_set.path, "__command_set__", "configuration.py")
     # import command set configuration
@@ -111,8 +127,10 @@ def import_commandset_configuration(command_set: CommandSet) -> Type[DTCommandSe
         old: List[str] = copy.deepcopy(sys.path)
         sys.path.insert(0, os.path.abspath(command_set.path))
         try:
+            if command_set._signed_manifest is not None:
+                _preload_command_set_packages(command_set, [])
             # load the configuration module from the specific file
-            spec = importlib.util.spec_from_file_location(_module_name, _configuration_file)
+            spec = source_spec(_module_name, _configuration_file)
             if spec is None or spec.loader is None:
                 msg = f"Cannot load command set configuration module from {_configuration_file}"
                 raise CommandsLoadingException(msg)
@@ -131,15 +149,28 @@ def import_commandset_configuration(command_set: CommandSet) -> Type[DTCommandSe
             raise CommandsLoadingException(msg)
         # populate path
         DTCommandSetConfiguration.path = command_set.path
+        manifest = command_set._signed_manifest
+        if manifest is not None and (
+            DTCommandSetConfiguration.version() != tuple(map(int, manifest.version.split(".")))
+            or DTCommandSetConfiguration.minimum_shell_version()
+            != tuple(map(int, manifest.minimum_shell_version.split(".")))
+            or DTCommandSetConfiguration.maximum_shell_version()
+            != tuple(map(int, manifest.maximum_shell_version.split(".")))
+        ):
+            raise UserError("The command-set configuration does not match its signed version metadata.")
 
         return DTCommandSetConfiguration
     else:
-        # populate path on default configuration as well
-        default_commandset_configuration.DTCommandSetConfiguration.path = command_set.path
-        return default_commandset_configuration.DTCommandSetConfiguration
+        # Each set needs its own path, including sets without a configuration file.
+        return type(
+            "DTCommandSetConfiguration",
+            (default_commandset_configuration.DTCommandSetConfiguration,),
+            {"path": command_set.path},
+        )
 
 
 def import_commandset_init(command_set: CommandSet):
+    command_set.verify_integrity()
     # constants
     _init_file = _join(command_set.path, "__command_set__", "init.py")
     # skip if there is no init file for this command set
@@ -154,6 +185,9 @@ def import_commandset_init(command_set: CommandSet):
     sys.path.insert(0, os.path.abspath(command_set.path))
     # import/refresh the init module
     try:
+        _preload_command_set_packages(command_set, ["__command_set__"])
+        if getattr(sys.modules.get(_init_sel), "__file__", None) != _init_file:
+            _discard_module_tree(_init_sel)
         init = importlib.import_module(_init_sel)
         if init.__file__ != _init_file:
             importlib.reload(init)
@@ -165,6 +199,7 @@ def import_commandset_init(command_set: CommandSet):
 
 
 def import_configuration(command_set: CommandSet, selector: str) -> Type[DTCommandConfigurationAbs]:
+    command_set.verify_integrity()
     # constants
     _command_dir = command_set.command_path(selector)
     _configuration_file = _join(_command_dir, "configuration.py")
@@ -185,6 +220,13 @@ def import_configuration(command_set: CommandSet, selector: str) -> Type[DTComma
             _preload_command_set_packages(command_set, _parts)
 
             configuration = importlib.import_module(_configuration_sel)
+            if command_set._signed_manifest is not None \
+                    and getattr(configuration, "__file__", None) != _configuration_file:
+                raise UserError("Command configuration was loaded from a different command snapshot.")
+        except CommandArtifactError as error:
+            raise UserError(str(error)) from error
+        except UserError:
+            raise
         except ShellNeedsUpdate as e:
             logger.warning(
                 f"Command '{_command_sel}' was not loaded because the shell needs to be "
@@ -220,6 +262,7 @@ def import_configuration(command_set: CommandSet, selector: str) -> Type[DTComma
 
 
 def import_command(command_set: CommandSet, fpath: str) -> Type[DTCommandAbs]:
+    command_set.verify_integrity()
     # we always start from an __init__.py file
     if os.path.isdir(fpath):
         fpath = os.path.join(fpath, "__init__.py")
@@ -235,6 +278,9 @@ def import_command(command_set: CommandSet, fpath: str) -> Type[DTCommandAbs]:
                 logger.debug(f"Importing command '{_command_sel}' from '{_dirname(fpath)}/'")
 
             command = importlib.import_module(_command_sel)
+            if command_set._signed_manifest is not None \
+                    and getattr(command, "__file__", None) != _command_file:
+                raise UserError("The command implementation was loaded from a different signed snapshot.")
         except ShellNeedsUpdate as e:
             logger.warning(
                 f"Command '{_command_sel}' was not loaded because the shell needs to be "

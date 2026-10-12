@@ -13,13 +13,17 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 SPEC = importlib.util.find_spec("dt_shell_release")
 
 
-@unittest.skipUnless(SPEC is not None, "Requires an installed signed native release wheel")
+@unittest.skipUnless(
+    SPEC is not None, "Requires an installed signed native release wheel"
+)
 class InstalledReleaseTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         assert SPEC is not None and SPEC.origin is not None
         cls.root = Path(SPEC.origin).resolve().parent
-        cls.manifest = json.loads((cls.root / "duckietown_shell.integrity.json").read_bytes())
+        cls.manifest = json.loads(
+            (cls.root / "duckietown_shell.integrity.json").read_bytes()
+        )
 
     def run_python(self, code, extra_env=None):
         env = dict(os.environ)
@@ -27,7 +31,11 @@ class InstalledReleaseTests(unittest.TestCase):
             env.pop(name, None)
         env.update(extra_env or {})
         return subprocess.run(
-            [sys.executable, "-c", code], env=env, capture_output=True, text=True, timeout=90
+            [sys.executable, "-c", code],
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=90,
         )
 
     def assert_rejected(self, result, detail):
@@ -36,7 +44,10 @@ class InstalledReleaseTests(unittest.TestCase):
         self.assertIn(detail, result.stderr)
 
     def with_modified_file(
-        self, relative, content, code="import dt_shell_release; dt_shell_release.launch()"
+        self,
+        relative,
+        content,
+        code="import dt_shell_release; dt_shell_release.launch()",
     ):
         path = self.root / relative
         original = path.read_bytes()
@@ -70,13 +81,16 @@ class InstalledReleaseTests(unittest.TestCase):
             for value in ("", str(self.root)):
                 with self.subTest(name=name, value=value):
                     result = self.run_python(
-                        "import dt_shell_release; dt_shell_release.launch()", {name: value}
+                        "import dt_shell_release; dt_shell_release.launch()",
+                        {name: value},
                     )
                     self.assertEqual(78, result.returncode)
                     self.assert_rejected(result, name)
 
     def test_modified_python_payload_is_rejected(self):
-        result = self.with_modified_file("dt_shell/__init__.py", lambda value: value + b"\n# changed\n")
+        result = self.with_modified_file(
+            "dt_shell/__init__.py", lambda value: value + b"\n# changed\n"
+        )
         self.assert_rejected(result, "'dt_shell/__init__.py' has been modified")
 
     def test_modified_native_payload_is_rejected(self):
@@ -89,18 +103,24 @@ class InstalledReleaseTests(unittest.TestCase):
         original = path.read_bytes()
         try:
             path.unlink()
-            result = self.run_python("import dt_shell_release; dt_shell_release.launch()")
+            result = self.run_python(
+                "import dt_shell_release; dt_shell_release.launch()"
+            )
         finally:
             path.write_bytes(original)
         self.assert_rejected(result, "could not be read")
 
     def test_manifest_edits_and_wrong_key_signatures_are_rejected(self):
-        result = self.with_modified_file("duckietown_shell.integrity.json", lambda value: value + b" ")
+        result = self.with_modified_file(
+            "duckietown_shell.integrity.json", lambda value: value + b" "
+        )
         self.assert_rejected(result, "signature is invalid")
         wrong = Ed25519PrivateKey.generate().sign(
             (self.root / "duckietown_shell.integrity.json").read_bytes()
         )
-        result = self.with_modified_file("duckietown_shell.integrity.sig", lambda _: wrong)
+        result = self.with_modified_file(
+            "duckietown_shell.integrity.sig", lambda _: wrong
+        )
         self.assert_rejected(result, "signature is invalid")
 
     def test_added_python_fallback_is_rejected(self):
@@ -108,7 +128,9 @@ class InstalledReleaseTests(unittest.TestCase):
         self.assertFalse(path.exists())
         try:
             path.write_text("def require_ente_plan(*args): pass\n", encoding="ascii")
-            result = self.run_python("import dt_shell_release; dt_shell_release.launch()")
+            result = self.run_python(
+                "import dt_shell_release; dt_shell_release.launch()"
+            )
         finally:
             path.unlink()
         self.assert_rejected(result, "unexpected file")
@@ -121,7 +143,9 @@ class InstalledReleaseTests(unittest.TestCase):
         ):
             with self.subTest(code=code):
                 result = self.with_modified_file(
-                    "dt_shell/assets/requirements.txt", lambda value: value + b"\n# changed\n", code
+                    "dt_shell/assets/requirements.txt",
+                    lambda value: value + b"\n# changed\n",
+                    code,
                 )
                 self.assert_rejected(result, "has been modified")
 
@@ -155,38 +179,30 @@ class InstalledReleaseTests(unittest.TestCase):
         self.assert_rejected(result, "has been modified")
 
     def test_real_console_entry_and_delegated_profile(self):
+        from dt_shell.commands import artifacts
+        import time
+
+        bundle_path = os.environ.get("DTS_COMMANDS_TEST_BUNDLE")
+        self.assertIsNotNone(
+            bundle_path,
+            "Provide the signed command fixture through DTS_COMMANDS_TEST_BUNDLE.",
+        )
+        bundle = Path(bundle_path)
+        manifest = artifacts.verify_manifest(
+            (bundle / artifacts.MANIFEST_NAME).read_bytes()
+        )
         with tempfile.TemporaryDirectory(prefix="dts-release-profile-") as temporary:
             home = Path(temporary)
             profile = home / "profiles" / "daffy"
             commands = profile / "commands" / "duckietown"
             commands.mkdir(parents=True)
-            utilities = commands / "utils"
-            utilities.mkdir()
-            (utilities / "__init__.py").write_text("", encoding="ascii")
-            (utilities / "table_utils.py").write_text(
-                "def format_matrix(*args, **kwargs):\n"
-                "    raise RuntimeError('Table formatting is outside the version fixture')\n",
-                encoding="ascii",
+            store = commands / artifacts.STORE_NAME
+            snapshot = store / manifest.identifier
+            snapshot.mkdir(parents=True)
+            artifacts.extract_archive(
+                (bundle / manifest.archive_name).read_bytes(), snapshot, manifest
             )
-            subprocess.run(["git", "init", "-q", str(commands)], check=True, capture_output=True)
-            subprocess.run(
-                [
-                    "git",
-                    "-C",
-                    str(commands),
-                    "-c",
-                    "user.name=DTS Test",
-                    "-c",
-                    "user.email=dts-test@example.invalid",
-                    "commit",
-                    "-qm",
-                    "fixture",
-                    "--allow-empty",
-                ],
-                check=True,
-                capture_output=True,
-            )
-            subprocess.run(["git", "-C", str(commands), "tag", "v0.0.0"], check=True, capture_output=True)
+            (store / artifacts.INDEX_NAME).write_bytes(manifest.envelope)
             env = dict(os.environ)
             for name in (
                 "DTSHELL_LIB",
@@ -212,6 +228,9 @@ class InstalledReleaseTests(unittest.TestCase):
                 "from dt_shell.constants import DB_SETTINGS, DB_PROFILES, DB_UPDATES_CHECK; "
                 "from dt_shell.profile import ShellProfile; "
                 "from dt_shell.compatibility.migrations import mark_all_migrated; "
+                "from dt_shell.constants import DB_COMMAND_SET_UPDATES_CHECK; "
+                f"DTShellDatabase.open(DB_COMMAND_SET_UPDATES_CHECK, location={str(profile / 'databases')!r}).set("
+                f"'duckietown', {{'time': {time.time()!r}}}); "
                 "db = DTShellDatabase.open(DB_SETTINGS); "
                 "db.update({'profile': 'daffy', 'check_for_updates': False, 'show_billboards': False}); "
                 "p = ShellProfile('daffy', _distro='daffy'); "
@@ -227,16 +246,37 @@ class InstalledReleaseTests(unittest.TestCase):
                 "mark_all_migrated()"
             )
             initialized = subprocess.run(
-                [sys.executable, "-c", setup], env=env, capture_output=True, text=True, timeout=90
+                [sys.executable, "-c", setup],
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=90,
             )
-            self.assertEqual(0, initialized.returncode, initialized.stdout + initialized.stderr)
-            executable = Path(sys.executable).parent / ("dts.exe" if sys.platform == "win32" else "dts")
+            self.assertEqual(
+                0, initialized.returncode, initialized.stdout + initialized.stderr
+            )
+            executable = Path(sys.executable).parent / (
+                "dts.exe" if sys.platform == "win32" else "dts"
+            )
             env["DTSHELL_VENV_DIR"] = str(Path(sys.prefix))
             direct = subprocess.run(
-                [str(executable), "version"], env=env, capture_output=True, text=True, timeout=90
+                [str(executable), "version"],
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=90,
             )
             self.assertEqual(0, direct.returncode, direct.stdout + direct.stderr)
             self.assertIn("shell: v" + self.manifest["version"], direct.stdout)
+            ordinary = subprocess.run(
+                [str(executable), "probe"],
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=90,
+            )
+            self.assertEqual(0, ordinary.returncode, ordinary.stdout + ordinary.stderr)
+            self.assertIn("SIGNED_COMMAND_EXECUTED", ordinary.stdout)
             env["IGNORE_ENVIRONMENTS"] = "1"
             delegated = subprocess.run(
                 [
@@ -250,7 +290,9 @@ class InstalledReleaseTests(unittest.TestCase):
                 text=True,
                 timeout=90,
             )
-            self.assertEqual(0, delegated.returncode, delegated.stdout + delegated.stderr)
+            self.assertEqual(
+                0, delegated.returncode, delegated.stdout + delegated.stderr
+            )
             self.assertIn("shell: v" + self.manifest["version"], delegated.stdout)
 
 

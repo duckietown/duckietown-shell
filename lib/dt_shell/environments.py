@@ -165,7 +165,7 @@ class VirtualPython3Environment(ShellCommandEnvironmentAbs):
         for cs in shell.command_sets:
             if DTShellConstants.VERBOSE:
                 logger.debug(f"Checking for changes in the dependencies list for command set '{cs.name}'...")
-            requirements_list: Optional[str] = cs.configuration.requirements()
+            requirements_list: Optional[str] = cs.requirements()
             if cache.needs_install_step(requirements_list):
                 # warn user of detected changes (if any)
                 if cache.contains(requirements_list):

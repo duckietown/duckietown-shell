@@ -258,7 +258,7 @@ class ShellProfile:
                     )
                 )
         if commands_path:
-            self.update_command_descriptions(commands_path)
+            self.update_command_descriptions(self.command_sets[-1].path)
 
         # add user defined command sets
         for n, r in self.user_command_sets_repositories:
