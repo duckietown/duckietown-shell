@@ -193,13 +193,6 @@ def require_ente_plan(shell: "DTShell", command: "CommandDescriptor") -> None:
         raise UserError("Select a DTS profile and distribution before running this command.")
     if profile.distro.name != "ente":
         return
-    get_ente_authorization(shell)
-
-
-def get_ente_authorization(shell: "DTShell") -> str:
-    profile = shell.profile
-    if profile is None or profile.distro is None or profile.distro.name != "ente":
-        raise UserError("Duckiematrix is exclusive to 'ente'. Select an 'ente' DTS profile.")
     identity, identity_token = _identity(shell)
     cache = profile.database(DB_ENTE_AUTHORIZATION)
     key = f"{DTHUB_URL}:{hashlib.sha256(identity.encode('utf-8')).hexdigest()}"
@@ -219,7 +212,7 @@ def get_ente_authorization(shell: "DTShell") -> str:
                 except (InvalidToken, ValueError, UserError) as error:
                     logger.warning(f"Discarding an invalid cached 'ente' authorization: {error}")
                 else:
-                    return entry["token"]
+                    return
         else:
             logger.warning("Discarding a cached 'ente' authorization with invalid cache data.")
         cache.delete(key)
@@ -255,8 +248,6 @@ def get_ente_authorization(shell: "DTShell") -> str:
             f"The plan granting 'ente' access expires on {deadline}. "
             f"View or change your plans at {DTHUB_URL}/plans/"
         )
-
-    return authorization
 
 
 def get_ente_status(shell: "DTShell") -> dict:

@@ -25,3 +25,5 @@ prune out
 prune testing
 exclude *.md
 exclude *.json
+include pyproject.toml build_support.py
+include lib/dt_shell_release.pyx

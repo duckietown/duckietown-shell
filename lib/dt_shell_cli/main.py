@@ -2,8 +2,14 @@ import os
 import sys
 from typing import Optional
 
+import cython
+
+if cython.compiled:
+    from dt_shell_release import verify_installation
+    verify_installation()
+
 # add the content of the environment variable EXTRA_PYTHONPATH to the current path
-sys.path.extend(os.environ.get("EXTRA_PYTHONPATH", "").split(":"))
+sys.path.extend(path for path in os.environ.get("EXTRA_PYTHONPATH", "").split(os.pathsep) if path)
 
 import logging
 
@@ -15,6 +21,7 @@ from dt_shell.logging import setup_logging_color, dts_print
 from dt_shell.constants import DTShellConstants
 from dt_shell.environments import Python3Environment
 from dt_shell.checks.environment import abort_if_running_with_sudo
+from dt_shell.integrity import verify_release_integrity
 
 
 # NOTE: this file runs the shell in this interpreter and in quiet mode, the entrypoint should always be
@@ -22,6 +29,8 @@ from dt_shell.checks.environment import abort_if_running_with_sudo
 
 
 def main() -> None:
+    verify_release_integrity()
+
     # make sure we are not running as sudo
     abort_if_running_with_sudo()
 

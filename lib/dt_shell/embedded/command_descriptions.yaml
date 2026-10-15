@@ -1,5 +1,14 @@
 commands:
   description: Get the available DTS commands
+developer:
+  description: Manage signed staff/superuser developer authorization
+  subcommands:
+    status:
+      description: Inspect the local signed developer grant without renewing it
+    renew:
+      description: Request a new developer grant after checking current Hub privileges
+    clear:
+      description: Remove the cached developer grant for this account and computer
 exit: &exit
   description: Exit the DTS
 quit: *exit

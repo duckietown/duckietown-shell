@@ -1,9 +1,26 @@
 all:
 
+PYTHON ?= python3
+WHEELHOUSE ?= wheelhouse
+DIST ?= dist
+.PHONY: release-deps release-wheels release-seal release-verify upload
+
+release-deps:
+	$(PYTHON) -m pip install -r requirements-release.txt
+
+release-wheels:
+	$(PYTHON) -m cibuildwheel --output-dir "$(WHEELHOUSE)"
+
+release-seal:
+	$(PYTHON) tools/release.py seal "$(WHEELHOUSE)"
+
+release-verify:
+	$(PYTHON) tools/release.py verify "$(DIST)" --require-matrix
 
 bump-upload:
-	$(MAKE) bump
-	$(MAKE) upload
+	@echo "Use the Automated Release workflow to bump and publish all native platforms."
+	@echo "Use make upload only after placing the complete signed wheel matrix in $(DIST)."
+	@exit 1
 
 bump: # v2
 	bumpversion patch
@@ -13,10 +30,7 @@ bump: # v2
 
 
 upload:
-	rm -f dist/*
-	rm -rf src/*.egg-info
-	python3 setup.py sdist
-	twine upload --skip-existing --verbose dist/*
+	$(PYTHON) tools/release.py publish "$(DIST)"
 
 
 
