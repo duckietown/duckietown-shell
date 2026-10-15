@@ -82,6 +82,7 @@ setup(
         'dt_shell_cli': 'lib/dt_shell_cli',
     },
     packages=find_packages(where="lib", exclude=["dt_shell_tests"]),
+    py_modules=["dt_shell_device"],
     # we want the python 2 version to download it, and then exit with an error
     # python_requires='>=3.10',
 

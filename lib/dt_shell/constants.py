@@ -8,7 +8,9 @@ DEBUG = False
 DNAME = "Duckietown Shell"
 DEFAULT_ROOT = os.path.expanduser("~/.duckietown/shell/")
 BASH_COMPLETION_DIR = os.path.expanduser("~/.local/share/bash-completion/completions")
-DTHUB_URL = os.environ.get("DTHUB_URL", "https://hub.duckietown.com")
+DTHUB_URL = os.environ.get(
+    "DTHUB_URL", f"https://{os.environ.get('DTHUB_HOST', 'hub.duckietown.com')}"
+).rstrip("/")
 
 
 @dataclasses.dataclass
@@ -118,5 +120,6 @@ DB_INSTALLED_DEPENDENCIES: str = "installed_dependencies"
 DB_USER_COMMAND_SETS_REPOSITORIES: str = "user_command_sets_repositories"
 DB_MIGRATIONS: str = "migrations"
 DB_UPDATES_CHECK: str = "updates_check"
+DB_ENTE_AUTHORIZATION: str = "ente_authorization"
 DB_BILLBOARDS: str = "billboards"
 DB_STATISTICS_EVENTS: str = "stats_events"
