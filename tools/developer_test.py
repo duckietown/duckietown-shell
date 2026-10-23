@@ -21,6 +21,7 @@ from setuptools import Distribution, Extension
 
 from release import (
     ROOT, commands_public_key, renderer_public_keys, renderer_release_public_key,
+    viewer_public_keys, viewer_release_public_key,
     seal, verify, read_wheel, wheels,
 )
 
@@ -85,7 +86,9 @@ def run(directory: Path):
             f'static const char DTS_COMMANDS_PUBLIC_KEY[] = "{command_key}";\n'
             f"static const char DTS_DEVELOPER_PUBLIC_KEYS[] = {json.dumps(developer_map)};\n"
             f'static const char DTM_RELEASE_PUBLIC_KEY[] = "{renderer_release_public_key()}";\n'
-            f"static const char DTM_RENDERER_PUBLIC_KEYS[] = {json.dumps(renderer_public_keys())};\n",
+            f"static const char DTM_RENDERER_PUBLIC_KEYS[] = {json.dumps(renderer_public_keys())};\n"
+            f'static const char DTV_RELEASE_PUBLIC_KEY[] = "{viewer_release_public_key()}";\n'
+            f"static const char DTV_AUTH_PUBLIC_KEYS[] = {json.dumps(viewer_public_keys())};\n",
             encoding="ascii",
         )
         source = root / "dt_shell_release.pyx"

@@ -1,6 +1,7 @@
 import datetime
 import hashlib
 import math
+import os
 import time
 from typing import Dict, Optional, Tuple, TYPE_CHECKING
 
@@ -187,6 +188,11 @@ def _result(payload: dict) -> dict:
 
 def require_ente_plan(shell: "DTShell", command: "CommandDescriptor") -> None:
     if command.command_set.name == EMBEDDED_COMMAND_SET_NAME:
+        return
+    from .viewer import COMMAND_APPS, FORWARDED_HANDOFF_ENV, forwarded_lease
+    selector = getattr(command, "selector", None)
+    if selector in COMMAND_APPS and os.environ.get(FORWARDED_HANDOFF_ENV):
+        forwarded_lease(COMMAND_APPS[selector])
         return
     profile = shell.profile
     if profile is None or profile.distro is None:

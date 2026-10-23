@@ -57,3 +57,10 @@ update:
   description: Update a command set
 version:
   description: Get the version information for the DTS and command sets
+viewer:
+  description: Manage live native Viewer sessions
+  subcommands:
+    host_info:
+      description: Report the native desktop computer and pinned Viewer trust for delegation
+    prepare:
+      description: Prepare a bounded staff/superuser-only Viewer developer session

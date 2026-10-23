@@ -30,7 +30,7 @@ On Windows, use `.venv\Scripts\python.exe` and set `$env:PYTHONPATH` to the abso
 
 Cryptography is installed explicitly rather than depending on an older source checkout's dependency asset to include it. Source packaging is not this workflow: `pip install -e .` invokes the protected build and still needs the configured native trust keys. Directly executed tools import source packages through `PYTHONPATH`; `DTSHELL_LIB` is handled by the DTS CLI, not by arbitrary Python scripts.
 
-Source mode does not provide native release integrity or embedded Duckiematrix Renderer trust. It supports ordinary development and compilation-only Unity trust generation. Renderer launch and publication tests use an installed signed native DTS release; setting `DTSHELL_LIB` does not turn a source checkout into a verified native build.
+Source mode does not provide native release integrity or embedded Duckiematrix Renderer/Viewer trust. It supports ordinary development and compilation-only Unity trust generation. Renderer/Viewer launch and publication tests use an installed signed native DTS release; setting `DTSHELL_LIB` does not turn a source checkout into a verified native build.
 
 ## Local commands development
 
@@ -248,6 +248,8 @@ Configure GitHub Actions:
 | `DTS_DEVELOPER_PUBLIC_KEYS` | Repository variable | Exact production/staging issuer map with separate developer public keys, as described above |
 | `DTM_RELEASE_PUBLIC_KEY` | Repository variable | Separate Renderer artifact public key, matching Unity releases |
 | `DTM_RENDERER_PUBLIC_KEYS` | Repository variable | Exact production/staging issuer map with separate Renderer permission public keys |
+| `DTV_RELEASE_PUBLIC_KEY` | Repository variable | Separate Viewer artifact public key, matching backend and desktop releases |
+| `DTV_AUTH_PUBLIC_KEYS` | Repository variable | Exact production/staging issuer map with separate Viewer permission public keys |
 | `DTS_RELEASE_SIGNING_KEY` | Repository secret | Complete unencrypted Ed25519 private PEM, preserving newlines |
 | `PYPI_USERNAME` | Existing repository secret | PyPI token username, normally `__token__` |
 | `PYPI_TOKEN` | Existing repository secret | PyPI upload token |
@@ -264,6 +266,8 @@ export DTS_COMMANDS_PUBLIC_KEY="$(cat /secure/location/dts-commands-public.hex)"
 export DTS_DEVELOPER_PUBLIC_KEYS='{"https://hub.duckietown.com":"<production-developer-public-key>","https://staging-hub.duckietown.com":"<staging-developer-public-key>"}'
 export DTM_RELEASE_PUBLIC_KEY="$(cat /secure/location/renderer-release-public.hex)"
 export DTM_RENDERER_PUBLIC_KEYS='{"https://hub.duckietown.com":"<production-renderer-public-key>","https://staging-hub.duckietown.com":"<staging-renderer-public-key>"}'
+export DTV_RELEASE_PUBLIC_KEY="$(cat /secure/location/viewer-release-public.hex)"
+export DTV_AUTH_PUBLIC_KEYS='{"https://hub.duckietown.com":"<production-viewer-public-key>","https://staging-hub.duckietown.com":"<staging-viewer-public-key>"}'
 make release-wheels PYTHON=/path/to/release-venv/bin/python WHEELHOUSE=wheelhouse
 export DTS_RELEASE_SIGNING_KEY_FILE=/secure/location/dts-release-private.pem
 make release-seal PYTHON=/path/to/release-venv/bin/python WHEELHOUSE=wheelhouse
@@ -373,3 +377,123 @@ PYTHONPATH=/path/to/duckietown-shell/lib \
 `DTHUB_HOST` is a hostname with an optional port; `DTHUB_URL` overrides the full URL used by the shell. A development Hub using different signing keys requires an isolated client configured to trust its development public keys. Self-signed HTTPS certificates must also be trusted; do not disable certificate verification.
 
 This is an official-client policy, not tamper-proof anti-sharing. Machine IDs can be spoofed or cloned, and public clients can be modified to bypass local checks. It also does not stop already-running/downloaded robot images. Enforcing access against hostile clients requires a protected server or image registry.
+
+## Duckietown Viewer authorization
+
+Duckietown Viewer commands on Ente now require their own `use:duckietown-viewer` grant, issued
+only to DTS by `POST /api/v1/auth/token/viewer/`. They reuse the existing
+[eligibility, grace deadline and computer policy](README.md#plans-and-access).
+The legacy Duckietown Viewer channel for Daffy remains plan-free; ordinary Hub identity-token
+generation is unchanged. Instructor alone does not qualify after **1 February
+2027 at 00:00 UTC**.
+
+The shared launcher covers image viewing (`image_view` alias included), keyboard
+and LED control, intrinsics/extrinsics calibration, and graph plotting, including
+browser mode. Empty/form backend apps also require authorization. Native DTS
+checks eligibility before installation/robot startup, verifies signed desktop
+inventories and immutable backend identities, and creates a private session.
+Both the compiled backend and frozen desktop guard verify the dedicated Viewer
+grant and fresh challenges. They do not accept renderer, identity, or
+`develop:dts` credentials in its place.
+
+Keep the launching DTS process alive. Signed proofs bind the account/identity,
+computer, app, backend URL, consumer, component versions/digests and one-use
+tickets. Heartbeats are ten seconds; proofs last at most thirty seconds.
+Normal grant caches permit offline relaunch for at most 24 hours, developer
+grants one hour, shortened by known identity/entitlement/grace expiry. Explicit
+Hub denial invalidates cached permission; revocation of a previously issued
+offline grant can take until its signed expiry. Clock rollback and monotonic
+expiry are checked.
+
+Browser mode needs no Electron installation. Its one-use fragment ticket is
+exchanged for an HttpOnly SameSite cookie and removed from the address bar.
+HTTP, DTPS queues/events, WebSockets and debug routes share the same live lease.
+Backend readiness is authenticated; minimal health exposes no account data.
+Authorization loss ends connections, stops workers/subscriptions, and stops
+keyboard PWM without disabling emergency-stop mechanisms.
+
+### Viewer development and host delegation
+
+Unsigned/custom frontends, source/backend mounts and `electron .` require
+`develop:duckietown-viewer` from a currently active Hub staff or superuser account.
+An ordinary plan, repository access or `develop:dts` alone is insufficient.
+Shell/command overrides separately require their normal `develop:dts` grant.
+
+Use an installed Viewer-capable native DTS and keep preparation running:
+
+```shell
+dts viewer prepare --app intrinsics_calibrator \
+    --directory "$HOME/.cache/duckietown-viewer-dev" \
+    --url http://localhost:8080/app/ --broker-host 192.168.1.23
+```
+
+Choose a broker address reachable from DTS, the backend container and desktop;
+the example IP must be replaced with your DTS host's address. The private
+`backend.json` and `desktop.json` handoffs bind that exact app/endpoint and are
+removed on exit. Pass `--viewer-handoff .../backend.json` to `dts devel run`
+and `--viewer-handoff .../desktop.json` to source Electron. The
+[backend](https://github.com/duckietown/dt-duckietown-viewer#source-development)
+and [desktop](https://github.com/duckietown/electron-viewer#source-development)
+guides cover ports and native guard preparation.
+
+`--no-pull` only uses a cached, approved immutable image; it does not authorize
+custom images. Bare URLs and host-runner flags cannot skip authorization.
+Delegated native frontends consume the same private, app/URL/device-bound
+session through the shared host-runner directory, without receiving a DT2 token
+or enrolling a second computer. Both DTS installations and signed command sets
+must support Viewer protocol 1. Native Windows ARM64 DTS wheels are not added by
+the desktop/guard build matrix.
+
+### Viewer artifacts, provisioning and recovery
+
+Use separate keys:
+
+- Each Hub mounts its own unencrypted Ed25519 Viewer authorization PEM at
+  `/run/secrets/duckietown_viewer.key`.
+- `DTV_AUTH_PUBLIC_KEYS` is exactly the two-issuer map for
+  `https://hub.duckietown.com` and `https://staging-hub.duckietown.com`.
+  Use distinct Viewer keys, not DT2/developer/renderer keys.
+- `DTV_RELEASE_PUBLIC_KEY` pins the independent Viewer artifact signer.
+  Only protected `viewer-signing` jobs receive `DTV_RELEASE_SIGNING_KEY`.
+  No Hub private key belongs in a build/signing job.
+
+Provision in this order:
+
+1. Deploy the Hub endpoint and dedicated keys.
+2. Configure matching public trust and publish the native
+   `duckietown-viewer-guard==1.0.0` wheels using
+   [the guard workflow](.github/workflows/viewer-guard.yml).
+3. Pin the approved full shell-tools SHA as `DTV_DTS_TOOLS_REF` in desktop/backend
+   repositories. Build/seal both components and the immutable backend catalog.
+4. Publish verified Ente ZIPs/catalog through `dts desktop viewer devel release`.
+   Uploads are downloaded and byte-checked before latest pointers change.
+5. Ship Viewer-capable native DTS 6.3.0+ and coordinated signed Ente commands on
+   the host and any delegated guest. A renderer-only older build is insufficient.
+
+Ente artifacts/caches live separately from legacy Daffy under the
+`assets/duckietown-viewer/ente` delivery namespace. Install/update verifies
+signatures, safe extraction and complete inventories, then atomically selects a
+version. `dts desktop viewer update` also refreshes the signed backend catalog.
+Old unsigned caches are not Ente fallbacks. On integrity failure, replace only
+the affected Duckietown Viewer installation for Ente with an update; preserve Daffy and profile
+credentials. For permission-cache errors, quarantine only the profile's affected
+`databases/viewer-sessions` entries while DTS is stopped. Removing a cache does
+not revoke an issued permission.
+
+Public keys cannot be overridden at runtime. Rotation requires coordinated
+native DTS/guard/backend/desktop builds and newly sealed artifacts, not simply
+changing an environment variable. Protect release environments/branches and
+review signing-tool revisions.
+
+Focused Hub, source/native DTS, launcher, gateway, safety and Electron tests are
+available in their repositories. `tools/viewer_guard/test_native.py` builds an
+isolated guard/frozen sidecar/compiled backend using ephemeral test trust and
+checks real DTPS HTTP/WebSockets, denial-before-import, tampering and shutdown
+within 35 seconds after DTS exits. Run it with the shell build interpreter and
+`--backend-python` pointing to an environment with backend/common dependencies.
+Physical robot tests, complete production Docker/GUI builds and the real
+cross-platform/delegation matrix remain release gates.
+
+These protections harden supported clients. Public source, arbitrary robot
+protocols, old binaries and already-downloaded images cannot be revoked by
+client-side enforcement.

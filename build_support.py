@@ -18,6 +18,8 @@ PROTECTED_MODULES = (
     "dt_shell.integrity",
     "dt_shell.profile",
     "dt_shell.renderer",
+    "dt_shell.viewer",
+    "dt_shell.viewer_runtime",
     "dt_shell.shell",
     "dt_shell_cli.dts",
     "dt_shell_cli.main",
@@ -104,12 +106,36 @@ def renderer_public_keys() -> str:
     )
 
 
+def viewer_release_public_key() -> str:
+    value = _public_key("DTV_RELEASE_PUBLIC_KEY")
+    excluded = (
+        release_public_key(), commands_public_key(), renderer_release_public_key(),
+        *json.loads(developer_public_keys()).values(), *json.loads(renderer_public_keys()).values(),
+    )
+    if value in excluded:
+        raise RuntimeError("DTV_RELEASE_PUBLIC_KEY must be distinct from other DTS and renderer keys.")
+    return value
+
+
+def viewer_public_keys() -> str:
+    return _hub_public_keys(
+        "DTV_AUTH_PUBLIC_KEYS",
+        (
+            release_public_key(), commands_public_key(), renderer_release_public_key(),
+            viewer_release_public_key(), *json.loads(developer_public_keys()).values(),
+            *json.loads(renderer_public_keys()).values(),
+        ),
+    )
+
+
 def native_extensions():
     public_key = release_public_key()
     command_key = commands_public_key()
     developer_keys = developer_public_keys()
     renderer_release_key = renderer_release_public_key()
     renderer_keys = renderer_public_keys()
+    viewer_release_key = viewer_release_public_key()
+    viewer_keys = viewer_public_keys()
     if public_key == command_key:
         raise RuntimeError(
             "DTS_RELEASE_PUBLIC_KEY and DTS_COMMANDS_PUBLIC_KEY must identify different keys."
@@ -127,6 +153,8 @@ def native_extensions():
         stream.write(
             f'static const char DTM_RELEASE_PUBLIC_KEY[] = "{renderer_release_key}";\n'
             f"static const char DTM_RENDERER_PUBLIC_KEYS[] = {json.dumps(renderer_keys)};\n"
+            f'static const char DTV_RELEASE_PUBLIC_KEY[] = "{viewer_release_key}";\n'
+            f"static const char DTV_AUTH_PUBLIC_KEYS[] = {json.dumps(viewer_keys)};\n"
         )
     extensions = [
         Extension(name, ["lib/" + name.replace(".", "/") + ".py"])

@@ -23,6 +23,8 @@ cdef extern from "dts_release_key.h":
     const char DTS_DEVELOPER_PUBLIC_KEYS[]
     const char DTM_RELEASE_PUBLIC_KEY[]
     const char DTM_RENDERER_PUBLIC_KEYS[]
+    const char DTV_RELEASE_PUBLIC_KEY[]
+    const char DTV_AUTH_PUBLIC_KEYS[]
 
 cdef object _developer_session = None
 cdef object _native_modules = None
@@ -33,6 +35,14 @@ def renderer_trust():
     return (
         (<bytes>DTM_RELEASE_PUBLIC_KEY).decode("ascii"),
         json.loads((<bytes>DTM_RENDERER_PUBLIC_KEYS).decode("ascii")),
+    )
+
+
+def viewer_trust():
+    verify_installation()
+    return (
+        (<bytes>DTV_RELEASE_PUBLIC_KEY).decode("ascii"),
+        json.loads((<bytes>DTV_AUTH_PUBLIC_KEYS).decode("ascii")),
     )
 
 

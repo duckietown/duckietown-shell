@@ -373,6 +373,40 @@ def _cache_bytes(path: Path) -> bytes:
 
 
 class RendererSession:
+    label = "renderer"
+    cache_namespace = "renderer"
+    route_prefix = "renderer"
+    bind_host = "127.0.0.1"
+    hub_endpoint = "/api/v1/auth/token/renderer/"
+    maintenance_interval = 30
+
+    def _trusted_keys(self):
+        return _trust()
+
+    def _profile_required(self):
+        if self.shell.profile is None or self.shell.profile.distro is None or self.shell.profile.distro.name != "ente":
+            raise UserError("Duckiematrix is exclusive to 'ente'. Select an 'ente' DTS profile.")
+
+    def _cache_variant(self):
+        return ""
+
+    def _request_parameters(self):
+        return {**self.parameters, "launch_key": self.launch_key, "development": self.development}
+
+    def _broker_headers(self):
+        return {"Content-Type": "application/json"}
+
+    def _broker_allowed(self, headers):
+        return True
+
+    def _broker_challenge(self, challenge):
+        return {"challenge": challenge}
+
+    def _handle_challenge(self, request):
+        if not isinstance(request, dict) or set(request) != {"challenge"}:
+            raise UserError(f"The {self.label} challenge has an invalid structure.")
+        return self.proof(request["challenge"])
+
     def __init__(
         self,
         shell,
@@ -387,9 +421,8 @@ class RendererSession:
         self.release = release
         if not development and release is None:
             raise UserError("Normal renderer sessions require a verified official release.")
-        if shell.profile is None or shell.profile.distro is None or shell.profile.distro.name != "ente":
-            raise UserError("Duckiematrix is exclusive to 'ente'. Select an 'ente' DTS profile.")
-        _, self.issuer_keys = _trust()
+        self._profile_required()
+        _, self.issuer_keys = self._trusted_keys()
         self.issuer = DTHUB_URL.rstrip("/")
         if self.issuer not in self.issuer_keys:
             raise UserError("This Hub URL is not an approved renderer-authorization issuer.")
@@ -404,9 +437,9 @@ class RendererSession:
         cache_id = hashlib.sha256(
             f"{self.issuer}:{self.identity_sha256}:{self.parameters['device_id']}".encode("ascii")
         ).hexdigest()
-        cache = Path(shell.profile.database("renderer").yaml).parent / "renderer-sessions"
+        cache = Path(shell.profile.database(self.cache_namespace).yaml).parent / f"{self.cache_namespace}-sessions"
         self.key_path = cache / f"{cache_id}.pem"
-        self.grant_path = cache / f"{cache_id}-{'develop' if development else 'use'}.json"
+        self.grant_path = cache / f"{cache_id}-{'develop' if development else 'use'}{self._cache_variant()}.json"
         try:
             cache.mkdir(parents=True, exist_ok=True, mode=0o700)
             with FileLock(str(self.key_path) + ".lock", timeout=60):
@@ -446,7 +479,7 @@ class RendererSession:
                 self._refresh()
         except (OSError, ValueError, UnicodeError, Timeout) as error:
             raise UserError(
-                f"Could not read or save the renderer authorization cache: {error}. "
+                f"Could not read or save the {self.cache_namespace} authorization cache: {error}. "
                 "Repair the cache; invalid cache data is not accepted."
             ) from error
         self.deadline = time.monotonic() + (self.claims["expires_at"] - time.time())
@@ -460,7 +493,7 @@ class RendererSession:
 
         class Handler(BaseHTTPRequestHandler):
             def log_message(self, format, *args):
-                logger.debug("Renderer session: " + (format % args))
+                logger.debug(f"{owner.cache_namespace.capitalize()} session: " + (format % args))
 
             def _reply(self, status, body):
                 content = _canonical(body)
@@ -477,11 +510,11 @@ class RendererSession:
             def _allowed(self):
                 return self.path == owner.path and (
                     self.headers.get("Origin") is None or self.headers.get("Origin") == owner.origin
-                )
+                ) and owner._broker_allowed(self.headers)
 
             def do_OPTIONS(self):
                 if not self._allowed():
-                    self._reply(403, {"error": "Renderer session origin or path was rejected."})
+                    self._reply(403, {"error": f"{owner.cache_namespace.capitalize()} session origin or path was rejected."})
                     return
                 self.send_response(204)
                 if owner.origin is not None:
@@ -493,26 +526,24 @@ class RendererSession:
 
             def do_POST(self):
                 if not self._allowed():
-                    self._reply(403, {"error": "Renderer session origin or path was rejected."})
+                    self._reply(403, {"error": f"{owner.cache_namespace.capitalize()} session origin or path was rejected."})
                     return
                 try:
                     length = int(self.headers.get("Content-Length", "0"))
                     if not 0 < length <= 4096:
-                        raise UserError("The renderer challenge has an invalid size.")
+                        raise UserError(f"The {owner.cache_namespace} challenge has an invalid size.")
                     self.connection.settimeout(3)
                     request = _json(self.rfile.read(length), 4096)
-                    if not isinstance(request, dict) or set(request) != {"challenge"}:
-                        raise UserError("The renderer challenge has an invalid structure.")
-                    response = owner.proof(request["challenge"])
+                    response = owner._handle_challenge(request)
                 except (UserError, ValueError, OSError) as error:
-                    logger.error(f"Renderer session request denied: {error}")
+                    logger.error(f"{owner.cache_namespace.capitalize()} session request denied: {error}")
                     self._reply(403, {"error": str(error)})
                     return
                 self._reply(200, response)
 
-        self.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        self.server = ThreadingHTTPServer((self.bind_host, 0), Handler)
         self.server.daemon_threads = True
-        self.path = f"/renderer/{self.session_id}/proof"
+        self.path = f"/{self.route_prefix}/{self.session_id}/proof"
         self.url = f"http://127.0.0.1:{self.server.server_port}{self.path}"
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.maintenance = threading.Thread(target=self._maintain, daemon=True)
@@ -523,12 +554,12 @@ class RendererSession:
                 connection.request(
                     "POST",
                     self.path,
-                    body=_canonical({"challenge": base64.b64encode(secrets.token_bytes(32)).decode("ascii")}),
-                    headers={"Content-Type": "application/json"},
+                    body=_canonical(self._broker_challenge(base64.b64encode(secrets.token_bytes(32)).decode("ascii"))),
+                    headers=self._broker_headers(),
                 )
                 response = connection.getresponse()
                 if response.status != 200 or "proof" not in _json(response.read(MAX_JSON_BYTES + 1)):
-                    raise UserError("The renderer session broker did not become responsive.")
+                    raise UserError(f"The {self.cache_namespace} session broker did not become responsive.")
             finally:
                 connection.close()
         except (OSError, http.client.HTTPException, UserError):
@@ -551,13 +582,9 @@ class RendererSession:
     def _request(self) -> str:
         try:
             with requests.post(
-                self.issuer + "/api/v1/auth/token/renderer/",
+                self.issuer + self.hub_endpoint,
                 headers={"Authorization": f"Token {self.identity}"},
-                json={
-                    **self.parameters,
-                    "launch_key": self.launch_key,
-                    "development": self.development,
-                },
+                json=self._request_parameters(),
                 timeout=(5, 10),
                 allow_redirects=False,
                 stream=True,
@@ -595,36 +622,42 @@ class RendererSession:
         self.grant, self.claims = grant, claims
 
     def _current(self) -> None:
-        _trust()
+        self._trusted_keys()
         identity, token = _identity(self.shell)
         if identity != self.identity or token.uid != self.uid:
-            raise UserError("The active DTS identity changed during the renderer session.")
+            raise UserError(f"The active DTS identity changed during the {self.cache_namespace} session.")
         try:
             device_id = dt_shell_device.get_device_id()
         except dt_shell_device.DeviceIdentityError as error:
             raise UserError(str(error)) from error
         if device_id != self.parameters["device_id"]:
-            raise UserError("The DTS computer identity changed during the renderer session.")
+            raise UserError(f"The DTS computer identity changed during the {self.cache_namespace} session.")
 
-    def proof(self, challenge: str) -> dict:
+    def proof(self, challenge: str, *, consumer=None) -> dict:
         try:
             decoded = base64.b64decode(challenge, validate=True)
         except (ValueError, TypeError, binascii.Error) as error:
-            raise UserError("The renderer challenge is not valid base64.") from error
+            raise UserError(f"The {self.cache_namespace} challenge is not valid base64.") from error
         if len(decoded) != 32 or base64.b64encode(decoded).decode("ascii") != challenge:
-            raise UserError("The renderer challenge must contain 32 random bytes.")
+            raise UserError(f"The {self.cache_namespace} challenge must contain 32 random bytes.")
         self._current()
         with self.lock:
             if self.stop_event.is_set() or self.error is not None:
-                raise UserError(self.error or "The DTS renderer session is closed.")
+                raise UserError(self.error or f"The DTS {self.cache_namespace} session is closed.")
             now = time.time()
             if now < self.last_wall - 5:
-                self.error = "The computer clock moved backwards during renderer authorization."
+                self.error = f"The computer clock moved backwards during {self.cache_namespace} authorization."
                 raise UserError(self.error)
             self.last_wall = now
             if now >= self.claims["expires_at"] or time.monotonic() >= self.deadline:
-                raise RendererGrantExpired("The DTS renderer permission has expired.")
-            claims = {
+                raise RendererGrantExpired(f"The DTS {self.cache_namespace} permission has expired.")
+            claims = self._proof_claims(challenge, now, consumer)
+            return {"grant": self.grant, "proof": _signed(_canonical(claims), self.key)}
+
+    def _proof_claims(self, challenge, now, consumer):
+        if consumer is not None:
+            raise UserError("Renderer proofs do not accept Viewer consumer roles.")
+        return {
                 "format": 1,
                 "audience": PROOF_AUDIENCE,
                 "session_id": self.session_id,
@@ -638,10 +671,9 @@ class RendererSession:
                 "issued_at": int(now),
                 "expires_at": min(int(now) + LEASE_SECONDS, self.claims["expires_at"]),
             }
-            return {"grant": self.grant, "proof": _signed(_canonical(claims), self.key)}
 
     def _maintain(self) -> None:
-        while not self.stop_event.wait(min(30, max(1, (self.claims["expires_at"] - time.time()) / 2))):
+        while not self.stop_event.wait(min(self.maintenance_interval, max(1, (self.claims["expires_at"] - time.time()) / 2))):
             try:
                 self._current()
                 if self.claims["expires_at"] - time.time() > 300:
@@ -657,9 +689,9 @@ class RendererSession:
                 if time.monotonic() < self.deadline:
                     continue
                 with self.lock:
-                    self.error = "The renderer permission expired while Duckietown Hub was unavailable."
+                    self.error = f"The {self.cache_namespace} permission expired while Duckietown Hub was unavailable."
             except (UserError, OSError) as error:
-                logger.error(f"Renderer session authorization ended: {error}")
+                logger.error(f"{self.cache_namespace.capitalize()} session authorization ended: {error}")
                 with self.lock:
                     self.error = str(error)
             if self.error is not None:

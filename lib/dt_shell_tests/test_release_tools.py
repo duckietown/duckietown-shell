@@ -60,6 +60,14 @@ class ReleaseToolTests(unittest.TestCase):
         self.renderer_release_public = Ed25519PrivateKey.generate().public_key().public_bytes(
             serialization.Encoding.Raw, serialization.PublicFormat.Raw
         ).hex()
+        self.viewer_release_public = Ed25519PrivateKey.generate().public_key().public_bytes(
+            serialization.Encoding.Raw, serialization.PublicFormat.Raw
+        ).hex()
+        self.viewer_keys = {
+            issuer: Ed25519PrivateKey.generate().public_key().public_bytes(
+                serialization.Encoding.Raw, serialization.PublicFormat.Raw
+            ).hex() for issuer in self.developer_keys
+        }
         environment = patch.dict(
             os.environ,
             {
@@ -68,6 +76,8 @@ class ReleaseToolTests(unittest.TestCase):
                 "DTS_DEVELOPER_PUBLIC_KEYS": json.dumps(self.developer_keys),
                 "DTM_RELEASE_PUBLIC_KEY": self.renderer_release_public,
                 "DTM_RENDERER_PUBLIC_KEYS": json.dumps(self.renderer_keys),
+                "DTV_RELEASE_PUBLIC_KEY": self.viewer_release_public,
+                "DTV_AUTH_PUBLIC_KEYS": json.dumps(self.viewer_keys),
             },
         )
         environment.start()
@@ -105,6 +115,8 @@ class ReleaseToolTests(unittest.TestCase):
                 + json.dumps(self.developer_keys, sort_keys=True, separators=(",", ":"))
                 + self.renderer_release_public
                 + json.dumps(self.renderer_keys, sort_keys=True, separators=(",", ":"))
+                + self.viewer_release_public
+                + json.dumps(self.viewer_keys, sort_keys=True, separators=(",", ":"))
             ).encode("ascii")
         data.update(extra or {})
         with ZipFile(path, "w") as archive:

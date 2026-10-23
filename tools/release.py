@@ -39,6 +39,8 @@ from build_support import (
     renderer_public_keys,
     renderer_release_public_key,
     release_public_key,
+    viewer_public_keys,
+    viewer_release_public_key,
 )
 
 PYTHONS = {"cp310", "cp311", "cp312"}
@@ -186,6 +188,8 @@ def read_wheel(
     for variable, expected in (
         ("DTM_RELEASE_PUBLIC_KEY", renderer_release_public_key()),
         ("DTM_RENDERER_PUBLIC_KEYS", renderer_public_keys()),
+        ("DTV_RELEASE_PUBLIC_KEY", viewer_release_public_key()),
+        ("DTV_AUTH_PUBLIC_KEYS", viewer_public_keys()),
     ):
         if expected.encode("ascii") not in data[native_modules["dt_shell_release"]]:
             raise ValueError(f"'{path.name}' was not built with the exact {variable}.")

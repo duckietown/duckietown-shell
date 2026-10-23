@@ -1,0 +1,91 @@
+name: Build native Viewer guards
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Approved full shell commit to release
+        required: true
+
+permissions:
+  contents: read
+
+env:
+  DTS_RELEASE_PUBLIC_KEY: ${{ vars.DTS_RELEASE_PUBLIC_KEY }}
+  DTS_COMMANDS_PUBLIC_KEY: ${{ vars.DTS_COMMANDS_PUBLIC_KEY }}
+  DTS_DEVELOPER_PUBLIC_KEYS: ${{ vars.DTS_DEVELOPER_PUBLIC_KEYS }}
+  DTM_RELEASE_PUBLIC_KEY: ${{ vars.DTM_RELEASE_PUBLIC_KEY }}
+  DTM_RENDERER_PUBLIC_KEYS: ${{ vars.DTM_RENDERER_PUBLIC_KEYS }}
+  DTV_RELEASE_PUBLIC_KEY: ${{ vars.DTV_RELEASE_PUBLIC_KEY }}
+  DTV_AUTH_PUBLIC_KEYS: ${{ vars.DTV_AUTH_PUBLIC_KEYS }}
+
+jobs:
+  build:
+    environment: viewer-build
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-24.04, ubuntu-24.04-arm, macos-15-intel, macos-15, windows-2022, windows-11-arm]
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Require an approved immutable revision
+        shell: bash
+        env:
+          APPROVED_REF: ${{ inputs.ref }}
+        run: '[[ "$APPROVED_REF" =~ ^[0-9a-f]{40}$ ]]'
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build native Linux wheels in manylinux
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          arch="$(uname -m)"
+          docker run --rm -v "$PWD:/project" -w /project \
+            -e DTS_RELEASE_PUBLIC_KEY -e DTS_COMMANDS_PUBLIC_KEY -e DTS_DEVELOPER_PUBLIC_KEYS \
+            -e DTM_RELEASE_PUBLIC_KEY -e DTM_RENDERER_PUBLIC_KEYS \
+            -e DTV_RELEASE_PUBLIC_KEY -e DTV_AUTH_PUBLIC_KEYS \
+            "quay.io/pypa/manylinux2014_${arch}" bash -ec '
+              /opt/python/cp312-cp312/bin/python -m pip install -r tools/viewer_guard/requirements-build.txt
+              /opt/python/cp312-cp312/bin/python tools/viewer_guard/setup.py bdist_wheel --dist-dir guard-dist
+              auditwheel repair guard-dist/*.whl --wheel-dir guard-wheels
+            '
+      - name: Build native macOS/Windows wheels
+        if: runner.os != 'Linux'
+        shell: bash
+        run: |
+          python -m pip install -r tools/viewer_guard/requirements-build.txt
+          python tools/viewer_guard/setup.py bdist_wheel --dist-dir guard-wheels
+      - name: Install and test the exact native guard
+        shell: bash
+        run: |
+          python -m pip install guard-wheels/*.whl
+          python -c 'import json, os, duckietown_viewer_guard as g; assert g.native_trust() == (os.environ["DTV_RELEASE_PUBLIC_KEY"], json.loads(os.environ["DTV_AUTH_PUBLIC_KEYS"]))'
+          python -m pip install -r lib/dt_shell/assets/requirements.txt
+          PYTHONPATH=lib python -m unittest dt_shell_tests.test_viewer
+      - name: Check existing POSIX renderer compatibility
+        if: runner.os != 'Windows'
+        shell: bash
+        run: PYTHONPATH=lib python -m unittest dt_shell_tests.test_renderer
+      - uses: actions/upload-artifact@v4
+        with:
+          name: viewer-guard-${{ matrix.runner }}
+          path: guard-wheels/*.whl
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    environment: viewer-guard-pypi
+    runs-on: ubuntu-24.04
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: viewer-guard-*
+          path: dist
+          merge-multiple: true
+      - uses: pypa/gh-action-pypi-publish@release/v1

@@ -24,6 +24,14 @@ Official builds authenticate every external command set. `dts update` downloads 
 
 Duckiematrix is exclusive to 'ente'. `dts matrix run` supplies a separate signed Renderer permission and must stay running throughout Renderer use. Only DTS contacts the Hub; no identity token is passed to the Renderer. Valid cached permissions allow offline relaunches until their original expiry, at most 24 hours for normal use or one hour for staff/superuser Renderer development, shortened by known identity/plan expiry and the grace deadline where applicable. Ordinary DTS 'ente' authorization must also remain valid. See [Renderer authorization](devel.md#duckiematrix-renderer-authorization) for protocol details, cache recovery, and Unity Editor development.
 
+Ente Duckietown Viewer desktop and browser apps use a separate signed Viewer
+permission with the same plan, grace, computer and bounded-offline rules. Keep
+the launching DTS process running. Direct app/container/URL launches are not
+authorization exceptions; source work requires its own staff/superuser Viewer
+developer permission. Daffy retains its separate plan-free Viewer artifacts.
+See [Viewer authorization](devel.md#duckietown-viewer-authorization) for developer
+preparation, signed releases, host delegation and coordinated rollout.
+
 ## Prerequisites
 
 In addition to a supported CPython interpreter, host development and robot commands use:
@@ -251,7 +259,7 @@ to compile a book locally.
 
 ## Authenticate a Duckietown Token
 
-Normal identity tokens are generated through [Duckietown Hub](https://hub.duckietown.com/token) without requiring a plan. 'ente' plan/device permissions and DTS/Renderer developer permissions are issued separately; they must not replace the identity token stored by `dts tok set`.
+Normal identity tokens are generated through [Duckietown Hub](https://hub.duckietown.com/token) without requiring a plan. 'ente' plan/device permissions and DTS/Renderer/Viewer developer permissions are issued separately; they must not replace the identity token stored by `dts tok set`.
 
 Run the command `dts tok set` to set the Duckietown authentication token:
 
