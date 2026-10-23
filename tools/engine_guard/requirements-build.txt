@@ -1,0 +1,4 @@
+Cython>=3.0.12,<4
+setuptools>=78.1.1,<82
+wheel>=0.45,<1
+auditwheel>=6.4,<7; sys_platform == "linux"

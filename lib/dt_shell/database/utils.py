@@ -3,19 +3,19 @@ from typing import Optional
 
 from dt_shell_cli import logger
 from .database import DTShellDatabase
-from ..constants import DTShellConstants
+from ..constants import DB_INSTALLED_DEPENDENCIES, DTShellConstants
 from ..utils import indent_block
 
 
 class InstalledDependenciesDatabase(DTShellDatabase):
 
     @classmethod
-    def load(cls, profile):
-        from ..profile import ShellProfile
-        profile: ShellProfile
-        # ---
-        name: str = "installed_dependencies"
-        return profile.database(name, cls=InstalledDependenciesDatabase)
+    def load(cls, venv_dir: str) -> "InstalledDependenciesDatabase":
+        location = os.path.join(os.path.abspath(venv_dir), ".dts")
+        database = cls.open(DB_INSTALLED_DEPENDENCIES, location=location)
+        if not isinstance(database, cls):
+            raise TypeError(f"Invalid dependency cache type: {type(database).__name__}")
+        return database
 
     def contains(self, dependencies_fpath: Optional[str]) -> bool:
         # no dependencies filepath? => do no have it

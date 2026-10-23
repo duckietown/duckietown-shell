@@ -12,7 +12,7 @@ class DTCommand(DTCommandAbs):
     @staticmethod
     def command(shell: DTShell, args: List[str]):
         # install dependencies
-        cache: InstalledDependenciesDatabase = InstalledDependenciesDatabase.load(shell.profile)
+        cache: InstalledDependenciesDatabase = InstalledDependenciesDatabase.load(sys.prefix)
         # - shell
         dtslogger.info("Installing shell dependencies...")
         pip_install(sys.executable, SHELL_REQUIREMENTS_LIST)

@@ -10,6 +10,7 @@ from dt_shell.commands.repository import CommandsRepository
 from dt_shell.constants import DB_USER_COMMAND_SETS_REPOSITORIES
 from dt_shell.database import DTShellDatabase
 from dt_shell.utils import run_cmd
+from dt_shell.integrity import is_release_build
 
 
 class DTCommand(DTCommandAbs):
@@ -24,6 +25,24 @@ class DTCommand(DTCommandAbs):
         parsed.repository = parsed.repository.strip("/")
         if parsed.repository.endswith(".git"):
             parsed.repository = parsed.repository[:-4]
+        if is_release_build():
+            url = parsed.repository
+            if not url.startswith(("https://", "http://", "git@")):
+                url = f"https://{url}" if url.startswith("github.com/") else f"https://github.com/{url}"
+            repository = CommandsRepository.from_remoteurl(url, parsed.branch)
+            name = f"{repository.username}__{repository.project}"
+            db = shell.profile.database(DB_USER_COMMAND_SETS_REPOSITORIES)
+            if db.contains(name):
+                dtslogger.info(f"Command set '{name}' is already installed.")
+                return
+            cs = CommandSet(
+                name=name, path=os.path.join(shell.profile.path, "commands", name),
+                profile=shell.profile, repository=repository,
+            )
+            cs.ensure_commands_exist()
+            db.set(name, repository.as_dict())
+            dtslogger.info(f"Verified signed command set '{name}' installed successfully.")
+            return
         # - public URL
         if ":" not in parsed.repository:
             dtslogger.debug(f"Checking if '{parsed.repository}' is a public repository.")

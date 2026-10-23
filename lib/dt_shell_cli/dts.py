@@ -3,15 +3,20 @@ import os
 import sys
 from typing import Optional, Dict, List
 
+import cython
+
 # NOTE: DO NOT IMPORT DT_SHELL HERE
 
 from . import logger
 
 # noinspection PyPep8Naming
 def dts():
+    if cython.compiled:
+        from dt_shell_release import verify_installation
+        verify_installation()
+
     # make sure we have not imported dt_shell yet
-    modules = [m.__name__ for m in sys.modules.values() if m]
-    if "dt_shell" in modules:
+    if sys.modules.get("dt_shell") is not None:
         logger.fatal("The module 'dt_shell' was found imported before we had a chance to update "
                      "the PYTHONPATH. This should not have happened. Please, contact technical support.")
         return
@@ -36,6 +41,7 @@ def dts():
 
     # import dt_shell
     import dt_shell
+    from dt_shell.authorization import require_ente_plan
     from dt_shell.constants import DTShellConstants, EMBEDDED_COMMAND_SET_NAME
     from dt_shell.logging import setup_logging_color, dts_print
     from dt_shell.checks.environment import abort_if_running_with_sudo
@@ -157,7 +163,7 @@ def dts():
             if len(subcommands) > 0:
                 command_description_set = shell.profile.command_descriptions
                 if command_description_set:
-                    for argument in arguments:
+                    for argument in arguments[: e.last_matched.level + 1]:
                         command_description_set = command_description_set[argument]["subcommands"] if argument in command_description_set else {}
                 subcommand_strings = []
                 keys = sorted(subcommands.keys())
@@ -166,11 +172,12 @@ def dts():
                     subcommand_strings.append("\t%-*s%s" % (length, subcommand, command_description_set[subcommand]["description"] if subcommand in command_description_set else ""))
                 subcommands_list: str = "\n\t\t".join(subcommand_strings)
                 # the partially matched command has subcommands
-                if word:
+                if word and word not in ("--help", "-h"):
                     dts_print(
                         f"Sub-command '{word}' not recognized.\n"
                         f"Available sub-commands are:\n\n\t\t{subcommands_list}"
                     )
+                    sys.exit(2)
                 else:
                     dts_print(f"Available sub-commands are:\n\n\t\t{subcommands_list}")
             else:
@@ -182,7 +189,14 @@ def dts():
         env: ShellCommandEnvironmentAbs = command.environment
         logger.debug(f"Running command '{command.selector}' in environment '{env.__class__.__name__}'")
         try:
+            from dt_shell.integrity import verify_release_integrity
+            verify_release_integrity()
+            command.command_set.verify_integrity(command.path)
+            require_ente_plan(shell, command)
             env.execute(shell, arguments)
+        except UserError as e:
+            dts_print(str(e), "red")
+            sys.exit(1)
         except ShellInitException:
             logger.error("An error occurred, the reason for the error should be printed above.")
             exit(99)

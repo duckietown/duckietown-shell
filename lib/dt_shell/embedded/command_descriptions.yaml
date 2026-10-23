@@ -1,5 +1,14 @@
 commands:
   description: Get the available DTS commands
+developer:
+  description: Manage signed staff/superuser developer authorization
+  subcommands:
+    status:
+      description: Inspect the local signed developer grant without renewing it
+    renew:
+      description: Request a new developer grant after checking current Hub privileges
+    clear:
+      description: Remove the cached developer grant for this account and computer
 exit: &exit
   description: Exit the DTS
 quit: *exit
@@ -35,9 +44,23 @@ tok: &tok
     verify:
       description: Verify a DT token
 token: *tok
+plan:
+  description: Check plan access to 'ente' and manage computer registration
+  subcommands:
+    status:
+      description: Show account plans, the plan granting 'ente' access, and computer registration
+    transfer:
+      description: Register this computer for 'ente', waiting for old authorizations to expire if needed
 uninstall:
   description: Uninstall a command set
 update:
   description: Update a command set
 version:
   description: Get the version information for the DTS and command sets
+viewer:
+  description: Manage live native Viewer sessions
+  subcommands:
+    host_info:
+      description: Report the native desktop computer and pinned Viewer trust for delegation
+    prepare:
+      description: Prepare a bounded staff/superuser-only Viewer developer session

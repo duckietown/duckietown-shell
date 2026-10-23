@@ -328,7 +328,7 @@ class DTShell(Cmd):
 
         # add custom PYTHONPATH
         if "DTSHELL_PYTHONPATH" in os.environ:
-            for path in os.environ["DTSHELL_PYTHONPATH"].split(":")[::-1]:
+            for path in os.environ["DTSHELL_PYTHONPATH"].split(os.pathsep)[::-1]:
                 # add new path to PYTHONPATH for this session
                 path: str = os.path.abspath(path)
                 if path in sys.path:
@@ -340,7 +340,7 @@ class DTShell(Cmd):
         super(DTShell, self).__init__()
 
         # remove the char `-` from the list of word separators, this allows us to suggest flags
-        if self.use_rawinput and self.completekey:
+        if self.use_rawinput and self.completekey and sys.platform != "win32":
             import readline
             readline.set_completer_delims(readline.get_completer_delims().replace("-", "", 1))
 
@@ -638,6 +638,8 @@ class DTShell(Cmd):
             raise CommandsLoadingException("Some commands could not be loaded. Detailed error messages are "
                                            "reported above.")
 
+        self._skeleton = skeleton
+
     def reload_commands(self, skeleton: bool):
         # remove installed commands
         installed_commands = self.commands.keys()
@@ -866,8 +868,9 @@ class DTShell(Cmd):
             # update command set
             logger.info(f"Updating the command set '{cs.name}'...")
             self.profile.events.new("shell/commandset/update", {"command_set": cs.as_dict()})
-            cs.update()
-            logger.info(f"Command set '{cs.name}' updated!")
+            changed = cs.update(force=True)
+            logger.info(f"Command set '{cs.name}' updated!" if changed
+                        else f"Command set '{cs.name}' is already up-to-date.")
 
     def _configure(self, readonly: bool = False) -> bool:
         modified_config: bool = False

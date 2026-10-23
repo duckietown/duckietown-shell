@@ -3,6 +3,9 @@ import sys
 
 from setuptools import setup, find_packages
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from build_support import NativeBuildPy, native_extensions
+
 
 def get_version(filename):
     import ast
@@ -49,7 +52,8 @@ shell_requires = [
     "dtproject>=1.0.12,<2",
     "dt-authentication>=2.1.4,<3",
     'dt-data-api>=2.1.1,<3',
-    "setuptools>=78.1.1,<82"
+    "setuptools>=78.1.1,<82",
+    "cryptography>=44,<51",
 ]
 
 compatibility_requires = [
@@ -82,8 +86,9 @@ setup(
         'dt_shell_cli': 'lib/dt_shell_cli',
     },
     packages=find_packages(where="lib", exclude=["dt_shell_tests"]),
-    # we want the python 2 version to download it, and then exit with an error
-    # python_requires='>=3.10',
+    python_requires=">=3.10,<3.13",
+    ext_modules=native_extensions(),
+    cmdclass={"build_py": NativeBuildPy},
 
     tests_require=[],
     install_requires=install_requires,
@@ -93,6 +98,7 @@ setup(
 
     # without this, the stuff is included but not installed
     include_package_data=True,
+    exclude_package_data={"": ["*.pyc"]},
     package_data={
         'dt_shell': [
             'embedded/*',
@@ -111,7 +117,7 @@ setup(
 
     entry_points={
         'console_scripts': [
-            'dts = dt_shell_cli.dts:dts',
+            'dts = dt_shell_release:launch',
         ]
     }
 )

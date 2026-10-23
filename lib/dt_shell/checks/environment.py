@@ -1,4 +1,3 @@
-import grp
 import os
 import subprocess
 import sys
@@ -11,6 +10,8 @@ from .. import logger
 
 
 def running_with_sudo() -> bool:
+    if sys.platform == "win32":
+        return False
     return os.geteuid() == 0
 
 
@@ -75,6 +76,10 @@ def check_executable_exists(cmdname: str) -> None:
 
 
 def check_user_in_docker_group() -> None:
+    if not on_linux():
+        return
+    import grp
+
     # first, let's see if there exists a group "docker"
     group_names = [g.gr_name for g in grp.getgrall()]
     G = "docker"
